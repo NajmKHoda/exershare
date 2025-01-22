@@ -3,6 +3,8 @@ import { Tabs } from 'expo-router';
 import { SQLiteDatabase, SQLiteProvider } from 'expo-sqlite';
 import { PlatformColor } from 'react-native';
 import TabSymbol from '@/lib/components/navigation/TabSymbol';
+import { Exercise } from '@/lib/data/Exercise';
+import { Workout } from '@/lib/data/Workout';
 
 export default function RootLayout() {
     return (
@@ -39,22 +41,8 @@ const themeColors: ThemeColors = {
 }
 
 async function initDatabase(db: SQLiteDatabase) {
-    await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS exercises (
-            id INTEGER PRIMARY KEY NOT NULL,
-            name TEXT NOT NULL,
-            sets TEXT NOT NULL,
-            notes TEXT,
-            categories TEXT
-        );
-        
-        INSERT OR IGNORE INTO exercises (id, name, sets) VALUES
-            (1, 'Bench Press', '3x12'),
-            (2, 'Lateral Pulldown', '3x12'),
-            (3, 'Arnold Press', '3x12'),
-            (4, 'Cable Row', '3x12'),
-            (5, 'Pressdowns/Overheads', '3x12'),
-            (6, 'EZ-Bar Bicep Curls', '3x12'),
-            (7, 'Chest/Delt Flys', '3x12');
-    `);
+    await Promise.all([
+        Exercise.init(db),
+        Workout.init(db)
+    ]);
 }
