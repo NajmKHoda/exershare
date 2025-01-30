@@ -12,6 +12,7 @@ export default function Index() {
     const themeColors = useThemeColors();
     const db = useSQLiteContext();
     const [routine, setRoutine] = useState<Routine | null>(null);
+    const [date, setDate] = useState<Date>(new Date());
     
     // Obtain the active routine
     useEffect(() => {  
@@ -21,11 +22,23 @@ export default function Index() {
         })();
     }, []);
 
-    const exerciseList = routine?.workouts[2]?.exercises ?? [];
+    const weekDay = date.getDay();
+    const workout = routine?.workouts[weekDay];
+    const exerciseList = workout?.exercises ?? [];
+
+    function onDayChange(amount: number) {
+        const newDate = new Date(date);
+        newDate.setDate(newDate.getDate() + amount);
+        setDate(newDate);
+    }
 
     return (
         <View style={{ backgroundColor: themeColors.background, ...styles.container }}>
-            <RoutineHeader />
+            <RoutineHeader
+                routineName={ routine?.name ?? '' }
+                workoutName={ workout?.name ?? 'Rest Day' }
+                date = { date }
+                onDayChange={ onDayChange }/>
             <View style={ styles.body }>
                 <View style={ styles.entryOptions }>
                     <LabelButton symbolName='play.fill' label='Exercise Mode' />

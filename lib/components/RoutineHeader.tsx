@@ -1,10 +1,17 @@
 import { SymbolView } from 'expo-symbols';
-import { StyleSheet, View, Text, PlatformColor } from 'react-native';
+import { StyleSheet, View, Text, PlatformColor, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../hooks/useThemeColors';
 import ThemeText from './theme/ThemeText';
 
-export default function RoutineHeader() {
+interface Props {
+    routineName: string,
+    workoutName: string,
+    date: Date,
+    onDayChange?: (amount: number) => unknown
+}
+
+export default function RoutineHeader({ routineName, workoutName, date, onDayChange }: Props) {
     const themeColors = useThemeColors();
 
     return (
@@ -12,13 +19,19 @@ export default function RoutineHeader() {
             backgroundColor: themeColors.backgroundSecondary, 
             ...styles.container
         }}>
-            <SymbolView size={ 40 } name='chevron.left' />
+            <Pressable onPress={ () => onDayChange && onDayChange(-1) }>
+                <SymbolView size={ 40 } name='chevron.left' />
+            </Pressable>
             <View style={ styles.info }>
-                <ThemeText style={ styles.secondaryInfo }>PUSH, PULL, LEGS</ThemeText>
-                <ThemeText style={ styles.workoutName }>Push Day A</ThemeText>
-                <ThemeText style={ styles.secondaryInfo }>Today, January 1st</ThemeText>
+                <ThemeText style={ styles.secondaryInfo }>{ routineName.toUpperCase() }</ThemeText>
+                <ThemeText style={ styles.workoutName }>{ workoutName }</ThemeText>
+                <ThemeText style={ styles.secondaryInfo }>{
+                    date.toLocaleDateString('en-US', { dateStyle: 'full' })}
+                </ThemeText>
             </View>
-            <SymbolView size={ 40 } name='chevron.right' />
+            <Pressable onPress={ () => onDayChange && onDayChange(1) }>
+                <SymbolView size={ 40 } name='chevron.right' />
+            </Pressable>
         </SafeAreaView>
     );
 }
@@ -33,6 +46,7 @@ const styles = StyleSheet.create({
     },
 
     info: {
+        alignItems: 'center',
         justifyContent: 'center',
         gap: 10
     },
