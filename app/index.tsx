@@ -2,23 +2,26 @@ import LabelButton from '@/lib/components/controls/LabelButton';
 import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
-import { Exercise } from '@/lib/data/Exercise';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Button, StyleSheet, View } from 'react-native';
 import { useState, useEffect } from 'react';
+import { Routine } from '@/lib/data/Routine';
 
 export default function Index() {
     const themeColors = useThemeColors();
     const db = useSQLiteContext();
-    const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [routine, setRoutine] = useState<Routine | null>(null);
     
-    useEffect(() => {
+    // Obtain the active routine
+    useEffect(() => {  
         (async () => {
-            const result = await db.getAllAsync<Exercise>('SELECT * FROM exercises ORDER BY id');
-            setExercises(result)
+            const routine = await Routine.pullActive(db);
+            setRoutine(routine);
         })();
-    }, []); 
+    }, []);
+
+    const exerciseList = routine?.workouts[2]?.exercises ?? [];
 
     return (
         <View style={{ backgroundColor: themeColors.background, ...styles.container }}>
@@ -31,7 +34,7 @@ export default function Index() {
                 <View>
                     <ThemeText style={ styles.exerciseCaption }>EXERCISES</ThemeText>
                     <View>
-                        <ExerciseList exercises={ exercises } />
+                        <ExerciseList exercises={ exerciseList } />
                     </View>
                 </View>
                 <Button title='Routine Options' />

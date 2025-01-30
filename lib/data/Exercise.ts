@@ -53,11 +53,18 @@ export class Exercise {
         `);
     }
 
-    static async saveMany(exercises: Exercise[], db?: SQLiteDatabase) {
-        db ??= useSQLiteContext();
-
+    static async saveMany(exercises: Exercise[], db: SQLiteDatabase) {
         // Save all exercises using a prepared statement
-        const upsert = await db.prepareAsync(upsertStatement);
+        const upsert = await db.prepareAsync(`
+            INSERT INTO exercises (id, name, sets, notes, categories)
+                VALUES (($id), ($name), ($sets), ($notes), ($categories))
+            ON CONFLICT(id) DO UPDATE SET 
+                name = ($name),
+                sets = ($sets),
+                notes = ($notes),
+                categories = ($categories);
+        `);
+
         await Promise.all(exercises.map(exercise => {
             const rawData = exercise.serialize();
             return upsert.executeAsync({
@@ -73,16 +80,6 @@ export class Exercise {
         await upsert.finalizeAsync();
     }
 
-    /*
-    static async fromDatabase(id: number, db?: SQLiteDatabase) {
-        if (!Number.isInteger(id)) return null;
-        db ??= useSQLiteContext();
-
-        const dbExercise = await db.getFirstAsync<RawExercise>('SELECT * FROM exercises WHERE id = (?)', id);
-        return dbExercise ? new Exercise(dbExercise) : null;
-    }
-    */
-
     serialize(): RawExercise {
         return {
             id: this.id,
@@ -93,21 +90,12 @@ export class Exercise {
         }
     }
 
-    async save(db?: SQLiteDatabase) {
-        db ??= useSQLiteContext();
-
-        const rawData = this.serialize();
-        await db.runAsync(upsertStatement, {
-            $id: rawData.id,
-            $name: rawData.name,
-            $sets: rawData.sets,
-            $notes: rawData.notes,
-            $categories: rawData.categories
-        });
+    async save(db: SQLiteDatabase) {
+        await Exercise.saveMany([ this ], db);
     }
 }
 
-export interface RawExercise {
+interface RawExercise {
     id: number
     name: string,
     sets: string,
@@ -119,13 +107,3 @@ interface Set {
     reps: number,
     weight: number
 }
-
-const upsertStatement = `
-    INSERT INTO exercises (id, name, sets, notes, categories)
-        VALUES (($id), ($name), ($sets), ($notes), ($categories))
-    ON CONFLICT(id) DO UPDATE SET 
-        name = ($name),
-        sets = ($sets),
-        notes = ($notes),
-        categories = ($categories);
-`;

@@ -1,12 +1,16 @@
 import { ThemeColors, ThemeColorsConsumer, ThemeColorsProvider } from '@/lib/hooks/useThemeColors';
 import { Tabs } from 'expo-router';
-import { SQLiteDatabase, SQLiteProvider } from 'expo-sqlite';
+import { openDatabaseSync, SQLiteProvider } from 'expo-sqlite';
 import { PlatformColor } from 'react-native';
 import TabSymbol from '@/lib/components/navigation/TabSymbol';
-import { Exercise } from '@/lib/data/Exercise';
-import { Workout } from '@/lib/data/Workout';
+import { initDatabase } from '@/lib/data/database';
+import { useDrizzleStudio } from 'expo-drizzle-studio-plugin'; 
+
+const db = openDatabaseSync('app.db');
 
 export default function RootLayout() {
+    useDrizzleStudio(db);
+
     return (
         <SQLiteProvider databaseName='app.db' onInit={ initDatabase } >
         <ThemeColorsProvider value={ themeColors }>
@@ -38,11 +42,4 @@ const themeColors: ThemeColors = {
     accent: PlatformColor('link'),
     background: PlatformColor('systemBackground'),
     backgroundSecondary: PlatformColor('secondarySystemBackground')
-}
-
-async function initDatabase(db: SQLiteDatabase) {
-    await Promise.all([
-        Exercise.init(db),
-        Workout.init(db)
-    ]);
 }
