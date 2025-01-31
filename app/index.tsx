@@ -4,9 +4,11 @@ import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Button, StyleSheet, View } from 'react-native';
+import { Button, Image, StyleSheet, View } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Routine } from '@/lib/data/Routine';
+import { Images } from '@/assets/images/images';
+import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 
 export default function Index() {
     const themeColors = useThemeColors();
@@ -40,16 +42,22 @@ export default function Index() {
                 date = { date }
                 onDayChange={ onDayChange }/>
             <View style={ styles.body }>
-                <View style={ styles.entryOptions }>
-                    <LabelButton symbolName='play.fill' label='Exercise Mode' />
-                    <LabelButton symbolName='note.text' label='Manual Entry' />
-                </View>
-                <View>
-                    <ThemeText style={ styles.exerciseCaption }>EXERCISES</ThemeText>
-                    <View>
-                        <ExerciseList exercises={ exerciseList } />
+            { workout ?
+                <>
+                    <View style={ styles.entryOptions }>
+                        <LabelButton symbolName='play.fill' label='Exercise Mode' />
+                        <LabelButton symbolName='note.text' label='Manual Entry' />
                     </View>
-                </View>
+                    <View>
+                        <ThemeText style={ styles.exerciseCaption }>EXERCISES</ThemeText>
+                        <View>
+                            <ExerciseList exercises={ exerciseList } />
+                        </View>
+                    </View>
+                </>
+                :
+                <RestDayPlaceholder />
+            }
                 <Button title='Routine Options' />
             </View>
         </View>
