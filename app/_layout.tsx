@@ -47,5 +47,6 @@ const themeColors: ThemeColors = {
     primary: PlatformColor('label'),
     accent: PlatformColor('link'),
     background: PlatformColor('systemBackground'),
-    backgroundSecondary: PlatformColor('secondarySystemBackground')
+    backgroundSecondary: PlatformColor('secondarySystemBackground'),
+    separator: PlatformColor('opaqueSeparator')
 }

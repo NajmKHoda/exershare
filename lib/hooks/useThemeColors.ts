@@ -5,14 +5,16 @@ export interface ThemeColors {
     primary: ColorValue,
     accent: ColorValue,
     background: ColorValue,
-    backgroundSecondary: ColorValue
+    backgroundSecondary: ColorValue,
+    separator: ColorValue
 }
 
 const defaultThemeColors: ThemeColors = {
     primary: '',
     accent: '',
     background: '',
-    backgroundSecondary: ''
+    backgroundSecondary: '',
+    separator: ''
 }
 
 const themeColorsContext = createContext<ThemeColors>(defaultThemeColors);
