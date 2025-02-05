@@ -23,7 +23,10 @@ export default function Layout() {
                 screenOptions={{
                     headerShown: false,
                     tabBarPosition: 'top',
-                    sceneStyle: { backgroundColor: colors.background }
+                    sceneStyle: {
+                        backgroundColor: colors.background,
+                        ...styles.tabScreen
+                    }
                 }}
                 tabBar={ props => <LibraryTabBar { ...props } /> }
             >   
@@ -51,7 +54,9 @@ const styles = StyleSheet.create({
         fontWeight: 700
     },
 
-    body: {
-        flex: 1
+    tabScreen: {
+        paddingHorizontal: 20,
+        alignItems: 'stretch'
     }
+
 })

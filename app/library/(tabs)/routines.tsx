@@ -1,5 +1,7 @@
-import { Text } from 'react-native';
+import ActiveRoutineView from '@/lib/components/ActiveRoutineView';
 
 export default function RoutinesScreen() {
-    return <Text>Exercises Page</Text>;
+    return (
+        <ActiveRoutineView />
+    )
 }
