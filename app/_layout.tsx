@@ -29,6 +29,12 @@ export default function RootLayout() {
                             title: 'Home',
                             tabBarIcon: TabSymbol('dumbbell.fill')
                         }} />
+                    <Tabs.Screen
+                        name='library/(tabs)'
+                        options={{
+                            title: 'Library',
+                            tabBarIcon: TabSymbol('book.closed.fill')
+                        }} />
                 </Tabs>
             )}
         </ThemeColorsConsumer>
