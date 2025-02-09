@@ -1,6 +1,6 @@
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { StyleSheet, View } from 'react-native';
-import ThemeText from '../theme/ThemeText';
+import ThemeText from '@/lib/components/theme/ThemeText';
 import { SymbolView } from 'expo-symbols';
 
 interface Props {

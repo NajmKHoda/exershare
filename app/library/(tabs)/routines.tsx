@@ -1,9 +1,8 @@
 import ActiveRoutineView from '@/lib/components/ActiveRoutineView';
-import TextButton from '@/lib/components/controls/TextButton';
-import ListItem from '@/lib/components/layout/ListItem';
 import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import SearchableList from '@/lib/components/lists/SearchableList/SearchableList';
 
 export default function RoutinesScreen() {
     const routines = useSQLiteQuery<{ name: string, id: number}>(`
@@ -14,16 +13,7 @@ export default function RoutinesScreen() {
         <View style={ styles.container }>
             <ActiveRoutineView />
             <Separator />
-            <View style={ styles.options }>
-                <TextButton style={ styles.optionText } label='+ New' />
-                <TextButton style={ styles.optionText } label='Filter / Sort' />
-            </View>
-            <FlatList
-                data={ routines }
-                renderItem={ ({ item }) => <ListItem label={ item.name } /> }
-                keyExtractor={ ({ id }) => id.toString() }
-                ItemSeparatorComponent={ Separator }
-            />
+            <SearchableList data={ routines } />
         </View>
     )
 }
@@ -36,11 +26,17 @@ const styles = StyleSheet.create({
     options: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        gap: 20
     },
 
     optionText: {
         fontSize: 20,
         lineHeight: 20
+    },
+
+    flatListContent: {
+        borderRadius: 10,
+        overflow: 'hidden'
     }
 });

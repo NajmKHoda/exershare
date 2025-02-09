@@ -1,7 +1,8 @@
-import ListItem from '@/lib/components/layout/ListItem';
 import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
-import { FlatList, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import SearchableList from '@/lib/components/lists/SearchableList/SearchableList';
+import { useState } from 'react';
 
 export default function ExercisesScreen() {
     const exercises = useSQLiteQuery<{ id: number, name: string }>(`
@@ -9,11 +10,15 @@ export default function ExercisesScreen() {
     `, true);
 
     return (
-        <FlatList
-            data={ exercises }
-            renderItem={ ({ item }) => <ListItem label={ item.name } />}
-            keyExtractor={ ({ id }) => id.toString() }
-            ItemSeparatorComponent={ Separator }
-        />
+        <View style={ styles.container }>
+            <Separator />
+            <SearchableList data={ exercises } />
+        </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        gap: 10
+    }
+});
