@@ -15,7 +15,7 @@ export async function initDatabase(db: SQLiteDatabase) {
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
         );
     `);
-    
+    /*
     const upperWorkout = new Workout(1, 'Upper Body A', [
         simpleExercise(1, 'Bench Press'),
         simpleExercise(2, 'Lateral Pulldown'),
@@ -47,6 +47,7 @@ export async function initDatabase(db: SQLiteDatabase) {
 
     await exampleRoutine.save(db);
     await db.execAsync(`INSERT OR IGNORE INTO user (id, active_routine_id) VALUES (1, 1);`);
+    */
 }
 
 // debug

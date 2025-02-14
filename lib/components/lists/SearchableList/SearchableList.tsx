@@ -4,11 +4,17 @@ import ListHeaderControls from '@/lib/components/lists/SearchableList/ListHeader
 import Separator from '@/lib/components/layout/Separator';
 import ListItem from './ListItem';
 
-interface Props {
-    data: { name: string, id: number }[];
+interface SerializableData {
+    name: string,
+    id: number
 }
 
-export default function SearchableList({ data }: Props) {
+interface Props<T extends SerializableData> {
+    data: T[],
+    onItemPress?: (item: T) => unknown
+}
+
+export default function SearchableList<T extends SerializableData>({ data, onItemPress }: Props<T>) {
     const [searchValue, setSearchValue] = useState('');
 
     const filteredData = data.filter(({ name }) => name
@@ -21,7 +27,12 @@ export default function SearchableList({ data }: Props) {
             <ListHeaderControls searchValue={ searchValue } onSearchChange={ setSearchValue }/>
             <FlatList
                 data={ filteredData }
-                renderItem={ ({ item }) => <ListItem label={ item.name } /> }
+                renderItem={ ({ item }) =>
+                    <ListItem
+                        label={ item.name }
+                        onPress={ onItemPress && (() => onItemPress(item)) }
+                    />
+                }
                 keyExtractor={ ({ id }) => id.toString() }
                 ItemSeparatorComponent={ Separator }
                 contentContainerStyle={ styles.flatListContent }

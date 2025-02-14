@@ -53,6 +53,14 @@ export class Exercise {
         `);
     }
 
+    static async pullOne(id: number, db: SQLiteDatabase): Promise<Exercise | null> {
+        const result = await db.getFirstAsync<RawExercise>(`
+            SELECT * FROM exercises WHERE id = ?
+        `, id);
+
+        return result ? new Exercise(result) : null;
+    }
+
     static async saveMany(exercises: Exercise[], db: SQLiteDatabase) {
         // Save all exercises using a prepared statement
         const upsert = await db.prepareAsync(`
@@ -103,7 +111,7 @@ interface RawExercise {
     categories: string | null
 }
 
-interface Set {
+export interface Set {
     reps: number,
     weight: number
 }
