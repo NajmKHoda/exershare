@@ -9,7 +9,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 
 export default function ExercisesScreen() {
     const db = useSQLiteContext();
-    const [exercises, refreshQuery] = useSQLiteQuery<ListEntry>(`
+    const [exercises, rerunQuery] = useSQLiteQuery<ListEntry>(`
         SELECT name, id FROM exercises ORDER BY name;
     `, true);
 
@@ -33,7 +33,10 @@ export default function ExercisesScreen() {
                 <ExerciseModal 
                     visible={ modalVisible } 
                     exercise={ selectedExercise } 
-                    onClose={ () => setModalVisible(false) } 
+                    onClose={() => {
+                        setModalVisible(false);
+                        rerunQuery();
+                    }} 
                 />
             ) }
         </View>
