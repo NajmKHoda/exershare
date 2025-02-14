@@ -6,7 +6,15 @@ export interface ThemeColors {
     accent: ColorValue,
     background: ColorValue,
     backgroundSecondary: ColorValue,
-    separator: ColorValue
+    separator: ColorValue,
+
+    // Standard colors
+    red: ColorValue,
+    orange: ColorValue,
+    yellow: ColorValue,
+    green: ColorValue,
+    blue: ColorValue,
+    purple: ColorValue
 }
 
 const defaultThemeColors: ThemeColors = {
@@ -14,7 +22,14 @@ const defaultThemeColors: ThemeColors = {
     accent: '',
     background: '',
     backgroundSecondary: '',
-    separator: ''
+    separator: '',
+    
+    red: '',
+    orange: '',
+    yellow: '',
+    green: '',
+    blue: '',
+    purple: ''
 }
 
 const themeColorsContext = createContext<ThemeColors>(defaultThemeColors);
