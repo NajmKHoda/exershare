@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import SearchableList from '@/lib/components/lists/SearchableList/SearchableList';
 
 export default function RoutinesScreen() {
-    const routines = useSQLiteQuery<{ name: string, id: number}>(`
+    const [routines] = useSQLiteQuery<{ name: string, id: number}>(`
         SELECT name, id FROM routines ORDER BY name;
     `, true);
 

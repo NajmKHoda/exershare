@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import SearchableList from '@/lib/components/lists/SearchableList/SearchableList';
 
 export default function WorkoutsScreen() {
-    const workouts = useSQLiteQuery<{ id: number, name: string }>(`
+    const [workouts] = useSQLiteQuery<{ id: number, name: string }>(`
         SELECT name, id FROM workouts ORDER BY name;
     `, true);
 

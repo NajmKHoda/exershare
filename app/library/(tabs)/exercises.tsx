@@ -9,7 +9,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 
 export default function ExercisesScreen() {
     const db = useSQLiteContext();
-    const exercises = useSQLiteQuery<ListEntry>(`
+    const [exercises, refreshQuery] = useSQLiteQuery<ListEntry>(`
         SELECT name, id FROM exercises ORDER BY name;
     `, true);
 

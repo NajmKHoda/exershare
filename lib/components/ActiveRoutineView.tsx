@@ -6,7 +6,7 @@ import useSQLiteQuery from '../hooks/useSQLiteQuery';
 
 export default function ActiveRoutineView() {
     const colors = useThemeColors();
-    const queryResult = useSQLiteQuery<{ name: string }>(`
+    const [queryResult] = useSQLiteQuery<{ name: string }>(`
         SELECT routines.name FROM routines
         JOIN user ON routines.id = user.active_routine_id;
     `);
