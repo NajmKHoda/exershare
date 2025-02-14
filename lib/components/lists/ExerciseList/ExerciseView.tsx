@@ -20,14 +20,14 @@ export default function ExerciseView({ exercise }: Props) {
             completionSymbol = <SymbolView
                 name='checkmark'
                 weight='black'
-                tintColor={ PlatformColor('systemGreen') as unknown as string }
+                tintColor={ themeColors.green as string }
                 size={ 22 } />;
             break;
         case 'in-progress':
             completionSymbol = <SymbolView
                 name='ellipsis'
                 weight='black'
-                tintColor={ PlatformColor('systemOrange') as unknown as string }
+                tintColor={ themeColors.orange as string }
                 size={ 22 } />;
     }
 

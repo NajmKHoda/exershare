@@ -74,7 +74,7 @@ export default function SetList({ sets, onSetsChange }: Props) {
                             <SymbolView
                                 name='xmark.circle.fill'
                                 size={ 24 }
-                                tintColor={canDelete ? '#FF3B30' : '#8E8E93' } />
+                                tintColor={ (canDelete ? colors.red : colors.gray) as string } />
                         </Pressable>
                     </View>
                 )}

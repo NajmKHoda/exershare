@@ -49,11 +49,12 @@ const themeColors: ThemeColors = {
     background: PlatformColor('systemBackground'),
     backgroundSecondary: PlatformColor('secondarySystemBackground'),
     separator: PlatformColor('opaqueSeparator'),
-    
+
     red: PlatformColor('systemRed'),
     orange: PlatformColor('systemOrange'),
     yellow: PlatformColor('systemYellow'),
     green: PlatformColor('systemGreen'),
     blue: PlatformColor('systemBlue'),
-    purple: PlatformColor('systemPurple')
+    purple: PlatformColor('systemPurple'),
+    gray: PlatformColor('systemGray')
 }
