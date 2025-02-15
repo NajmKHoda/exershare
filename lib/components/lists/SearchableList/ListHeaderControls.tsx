@@ -5,13 +5,18 @@ import TextButton from '../../controls/TextButton';
 interface Props {
     searchValue?: string,
     onSearchChange?: (value: string) => unknown;
+    onAddPress?: () => unknown;
 }
 
-export default function ListHeaderControls({ searchValue, onSearchChange }: Props)  {
+export default function ListHeaderControls({ searchValue, onSearchChange, onAddPress }: Props)  {
     return (
         <View style={ styles.container }>
             <SearchField value={ searchValue } onChange={ onSearchChange } />
-            <TextButton style={ styles.optionText } label='+ New' />
+            <TextButton
+                style={ styles.optionText }
+                symbol='plus'
+                label='New'
+                onPress={ onAddPress } />
         </View>
     );
 };

@@ -88,6 +88,18 @@ export class Exercise {
         await upsert.finalizeAsync();
     }
 
+    static async create(name: string, sets: Set[], notes: string, categories: string[], db: SQLiteDatabase) {
+        const exercise = new Exercise(-1, name, sets, notes, categories);
+        const serialized = exercise.serialize();
+
+        const result = await db.runAsync(`
+            INSERT INTO exercises (name, sets, notes, categories) VALUES (?, ?, ?, ?);
+        `, serialized.name, serialized.sets, serialized.notes, serialized.categories);
+
+        exercise.id = result.lastInsertRowId;
+        return exercise;
+    }
+
     async save(db: SQLiteDatabase) {
         await Exercise.saveMany([ this ], db);
     }

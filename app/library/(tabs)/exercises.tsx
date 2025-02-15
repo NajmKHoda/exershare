@@ -22,23 +22,27 @@ export default function ExercisesScreen() {
         setModalVisible(true);
     }
 
+    async function handleItemAdd() {
+        setSelectedExercise(null);
+        setModalVisible(true);
+    }
+
     return (
         <View style={ styles.container }>
             <Separator />
             <SearchableList 
                 data={ exercises } 
                 onItemPress={ handleItemPress }
+                onItemAdd={ handleItemAdd }
             />
-            { selectedExercise && (
-                <ExerciseModal 
-                    visible={ modalVisible } 
-                    exercise={ selectedExercise } 
-                    onClose={() => {
-                        setModalVisible(false);
-                        rerunQuery();
-                    }} 
-                />
-            ) }
+            <ExerciseModal 
+                visible={ modalVisible } 
+                exercise={ selectedExercise } 
+                onClose={() => {
+                    setModalVisible(false);
+                    rerunQuery();
+                }} 
+            />
         </View>
     );
 }

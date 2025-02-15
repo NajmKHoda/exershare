@@ -8,46 +8,59 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useState, useEffect } from 'react';
 
 interface Props {
-    exercise: Exercise;
+    exercise: Exercise | null;
     visible: boolean;
     onClose: () => unknown;
 }
 
 export default function ExerciseModal({ exercise, visible, onClose }: Props) {
-    const [curExercise, setCurExercise] = useState({
-        name: exercise.name,
-        sets: exercise.sets,
-        notes: exercise.notes,
-        categories: exercise.categories
-    });
+    const [curExercise, setCurExercise] = useState(exerciseOrDefault);
+    
+    // Reset state when a new exercise is introduced
+    useEffect(() => setCurExercise(exerciseOrDefault), [exercise]);
 
     const db = useSQLiteContext();
     const colors = useThemeColors();
 
-    useEffect(() => {
-        setCurExercise({
-            name: exercise.name,
-            sets: exercise.sets,
-            notes: exercise.notes,
-            categories: exercise.categories
-        });
-    }, [exercise]);
+    function exerciseOrDefault() {
+        return {
+            name: exercise?.name || '',
+            sets: exercise?.sets || [
+                { reps: 12, weight: 25 },
+                { reps: 12, weight: 25 },
+                { reps: 12, weight: 25 }
+            ],
+            notes: exercise?.notes || '',
+            categories: exercise?.categories || []
+        };
+    }
 
     async function handleSave() {
-        const updatedExercise = new Exercise(
-            exercise.id,
-            curExercise.name,
-            curExercise.sets,
-            curExercise.notes,
-            curExercise.categories
-        );
-
-        await updatedExercise.save(db);
+        if (exercise) {
+            // Save existing exercise
+            const updatedExercise = new Exercise(
+                exercise.id,
+                curExercise.name,
+                curExercise.sets,
+                curExercise.notes,
+                curExercise.categories
+            );
+            await updatedExercise.save(db);
+        } else {
+            // Create new exercise
+            await Exercise.create(
+                curExercise.name,
+                curExercise.sets,
+                curExercise.notes,
+                curExercise.categories,
+                db
+            );
+        }
         onClose();
     }
 
     async function handleDelete() {
-        await exercise.delete(db);
+        await exercise!.delete(db);
         onClose();
     }   
 
@@ -81,11 +94,13 @@ export default function ExerciseModal({ exercise, visible, onClose }: Props) {
                     <SetList
                         sets={ curExercise.sets }
                         onSetsChange={ sets => setCurExercise({ ...curExercise, sets }) } />
-                    <TextButton
-                        label='Delete Exercise'
-                        symbol='trash'
-                        style={[ styles.deleteButton, { color: colors.red }]}
-                        onPress={ handleDelete } />
+                    { exercise &&
+                        <TextButton
+                            label='Delete Exercise'
+                            symbol='trash'
+                            style={[ styles.deleteButton, { color: colors.red }]}
+                            onPress={ handleDelete } />
+                    }
                 </View>
             </View>
         </Modal>

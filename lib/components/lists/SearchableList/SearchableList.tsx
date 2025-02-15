@@ -12,9 +12,10 @@ interface SerializableData {
 interface Props<T extends SerializableData> {
     data: T[],
     onItemPress?: (item: T) => unknown
+    onItemAdd?: () => unknown
 }
 
-export default function SearchableList<T extends SerializableData>({ data, onItemPress }: Props<T>) {
+export default function SearchableList<T extends SerializableData>({ data, onItemPress, onItemAdd }: Props<T>) {
     const [searchValue, setSearchValue] = useState('');
 
     const filteredData = data.filter(({ name }) => name
@@ -24,7 +25,10 @@ export default function SearchableList<T extends SerializableData>({ data, onIte
 
     return (
         <>
-            <ListHeaderControls searchValue={ searchValue } onSearchChange={ setSearchValue }/>
+            <ListHeaderControls
+                searchValue={ searchValue }
+                onSearchChange={ setSearchValue }
+                onAddPress={ onItemAdd } />
             <FlatList
                 data={ filteredData }
                 renderItem={ ({ item }) =>
