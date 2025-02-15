@@ -111,7 +111,7 @@ export class Routine {
         const workouts: (Workout | null)[] = new Array(7).fill(null);
         for (const rawWorkout of rawWorkouts) {
             const { name, position, workout_id } = rawWorkout;
-            const workout = new Workout(workout_id, name, exercises[position]);
+            const workout = new Workout(workout_id, name, exercises[position] || []);
             workouts[position] = workout;
         }
 

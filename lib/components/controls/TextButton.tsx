@@ -14,9 +14,13 @@ interface Props {
 export default function TextButton({ onPress, label, symbol, style, symbolSize }: Props) {
     const colors = useThemeColors();
 
+    const flattenedStyles = StyleSheet.flatten(style);
+    const textColor = flattenedStyles.color || colors.accent;
+    const fontSize = flattenedStyles.fontSize || symbolSize || 16;
+
     return (
         <Pressable style={ styles.container } onPress={ onPress }>
-            { symbol && <SymbolView name={ symbol } size={ symbolSize ?? 16 } tintColor={ colors.accent as string } /> }
+            { symbol && <SymbolView name={ symbol } size={ fontSize } tintColor={ textColor as string } /> }
             <ThemeText style={[ {
                 color: colors.accent,
                 fontWeight: 'bold'
@@ -31,6 +35,7 @@ export default function TextButton({ onPress, label, symbol, style, symbolSize }
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
+        justifyContent: 'center',
         alignItems: 'center',
         gap: 5
     }

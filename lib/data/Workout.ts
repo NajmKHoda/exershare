@@ -32,7 +32,7 @@ export class Workout {
 
     static async saveMany(workouts: Workout[], db: SQLiteDatabase) {
         // Prepare statements
-        const [upsertQuery, linkQuery] = await Promise.all([
+        const [upsertQuery, linkQuery, deleteLinksQuery] = await Promise.all([
             db.prepareAsync(`
                 INSERT INTO workouts (id, name) VALUES ($id, $name)
                 ON CONFLICT(id) DO UPDATE SET name = $name;
@@ -41,6 +41,9 @@ export class Workout {
                 INSERT INTO exercise_instances (position, workout_id, exercise_id) VALUES
                     ($position, $workoutId, $exerciseId)
                 ON CONFLICT(position, workout_id) DO UPDATE SET exercise_id = $exerciseId;
+            `),
+            db.prepareAsync(`
+                DELETE FROM exercise_instances WHERE workout_id = $id AND position >= $size;
             `)
         ]);
 
@@ -71,6 +74,13 @@ export class Workout {
                     })
                 ))
             )
+            // Delete any excess links
+            .concat(workouts.map(workout =>
+                deleteLinksQuery.executeAsync({
+                    $id: workout.id,
+                    $size: workout.exercises.length
+                })
+            ) as Promise<any>[])
         );
 
         await Promise.all([ upsertQuery.finalizeAsync(), linkQuery.finalizeAsync() ]);

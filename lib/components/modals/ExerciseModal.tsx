@@ -46,6 +46,11 @@ export default function ExerciseModal({ exercise, visible, onClose }: Props) {
         onClose();
     }
 
+    async function handleDelete() {
+        await exercise.delete(db);
+        onClose();
+    }   
+
     return (
         <Modal
             visible={ visible }
@@ -76,6 +81,11 @@ export default function ExerciseModal({ exercise, visible, onClose }: Props) {
                     <SetList
                         sets={ curExercise.sets }
                         onSetsChange={ sets => setCurExercise({ ...curExercise, sets }) } />
+                    <TextButton
+                        label='Delete Exercise'
+                        symbol='trash'
+                        style={[ styles.deleteButton, { color: colors.red }]}
+                        onPress={ handleDelete } />
                 </View>
             </View>
         </Modal>
@@ -92,8 +102,9 @@ const styles = StyleSheet.create({
     },
 
     container: {
+        alignItems: 'stretch',
         padding: 20,
-        gap: 20,
+        gap: 30,
         borderRadius: 20,
     },
 
@@ -103,6 +114,11 @@ const styles = StyleSheet.create({
     },
 
     control: {
+        fontSize: 20,
+        lineHeight: 22
+    },
+
+    deleteButton: {
         fontSize: 20,
         lineHeight: 22
     }

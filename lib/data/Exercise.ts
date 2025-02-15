@@ -88,7 +88,46 @@ export class Exercise {
         await upsert.finalizeAsync();
     }
 
-    serialize(): RawExercise {
+    async save(db: SQLiteDatabase) {
+        await Exercise.saveMany([ this ], db);
+    }
+
+    async delete(db: SQLiteDatabase) {
+        // Get affected workout IDs before deletion
+        const affectedWorkoutIds = (await db.getAllAsync<{ workout_id: number }>(`
+            SELECT DISTINCT workout_id 
+            FROM exercise_instances 
+            WHERE exercise_id = ?
+        `, this.id)).map(row => row.workout_id);
+
+        // Delete the exercise_instances and exercise itself
+        await db.runAsync('DELETE FROM exercise_instances WHERE exercise_id = ?', this.id);
+        await db.runAsync('DELETE FROM exercises WHERE id = ?', this.id);
+
+        if (!affectedWorkoutIds.length) return;
+        
+        // Reorder exercise_instances for the affected workouts
+        await db.execAsync(`
+            WITH RankedExercises AS (
+                SELECT
+                    ROW_NUMBER() OVER (PARTITION BY workout_id ORDER BY position) - 1 AS new_position,
+                    position,
+                    workout_id,
+                    exercise_id
+                FROM exercise_instances
+                WHERE workout_id IN (${ affectedWorkoutIds.join(",") })
+            )
+            UPDATE exercise_instances
+            SET position = RankedExercises.new_position
+            FROM RankedExercises
+            WHERE
+                exercise_instances.position = RankedExercises.position
+                AND exercise_instances.workout_id = RankedExercises.workout_id
+                AND exercise_instances.exercise_id = RankedExercises.exercise_id;
+        `);
+    }
+
+    private serialize(): RawExercise {
         return {
             id: this.id,
             name: this.name,
@@ -96,10 +135,6 @@ export class Exercise {
             notes: this.notes,
             categories: this.categories.join(',')
         }
-    }
-
-    async save(db: SQLiteDatabase) {
-        await Exercise.saveMany([ this ], db);
     }
 }
 
