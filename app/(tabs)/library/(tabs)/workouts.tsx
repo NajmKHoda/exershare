@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
-import WorkoutModal from '@/lib/components/modals/WorkoutModal';
+import WorkoutModal from '@/lib/components/modals/WorkoutModal/WorkoutModal';
 import { Workout } from '@/lib/data/Workout';
 import { useSQLiteContext } from 'expo-sqlite';
 import SelectList from '@/lib/components/lists/SelectList';

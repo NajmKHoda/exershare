@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Workout } from '@/lib/data/Workout';
-import LabeledTextField from '../controls/LabeledTextField';
-import EditModal from './EditModal';
-import { Pressable, StyleSheet, View } from 'react-native';
-import ExerciseSelectModal from './ExerciseSelectModal';
-import Separator from '../layout/Separator';
+import LabeledTextField from '../../controls/LabeledTextField';
+import EditModal from '../EditModal';
+import { StyleSheet } from 'react-native';
+import ExerciseSelectModal from '../ExerciseSelectModal';
+import Separator from '../../layout/Separator';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import ThemeText from '../theme/ThemeText';
-import AddFooter from '../lists/elements/AddFooter';
-import { DataItem } from '../lists/SearchableList';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
-import { SymbolView } from 'expo-symbols';
+import AddFooter from '../../lists/elements/AddFooter';
+import { DataItem } from '../../lists/SearchableList';
+import ReorderableList, { reorderItems } from 'react-native-reorderable-list'
+import ExerciseEntry from './ExerciseEntry';
 
 interface Props {
     workout: Workout | null;
@@ -23,7 +22,6 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
     const db = useSQLiteContext();
     const [curWorkout, setCurWorkout] = useState<WorkoutData>(workoutOrDefault);
     const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
-    const colors = useThemeColors();
     
     // Reset state when a new workout is provided
     useEffect(() => setCurWorkout(workoutOrDefault), [workout]);
@@ -61,29 +59,6 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
         onClose();
     }
 
-    const renderItem = ({ item, drag, getIndex }: RenderItemParams<DataItem>) => {
-        const index = getIndex();
-        if (index === undefined) return null;
-
-        return (
-            <View style={[ styles.exerciseContainer, { backgroundColor: colors.backgroundSecondary } ]}>
-                <Pressable onLongPress={ drag } style={ styles.exerciseDragHandle }>
-                    <SymbolView name='chevron.up.chevron.down' size={ 24 } tintColor={ colors.primary as string } />
-                    <ThemeText style={ styles.exerciseText }>{ item.name }</ThemeText>
-                </Pressable>
-                <Pressable onPress={() => {
-                    console.log(`foo; ${index}`);
-                    setCurWorkout({ 
-                        ...curWorkout, 
-                        exercises: curWorkout.exercises.filter((_, i) => i !== index)
-                    });
-                }}>
-                    <SymbolView name='xmark.circle.fill' size={ 24 } tintColor={ colors.red as string } />
-                </Pressable>
-            </View>
-        );
-    };
-
     return (
         <EditModal
             visible={ visible }
@@ -96,13 +71,24 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
                 initialValue={ curWorkout.name }
                 onValueChange={ name => setCurWorkout({ ...curWorkout, name }) }
             />
-            <DraggableFlatList
+            <ReorderableList
                 data={ curWorkout.exercises }
-                keyExtractor={ (_, i) => i.toString() }
-                onDragEnd={ ({ data }) => setCurWorkout({ ...curWorkout, exercises: data }) }
+                keyExtractor={ (e, i) => `${e.id}-${i}` }
+                onReorder={({ from, to }) => setCurWorkout({
+                    ...curWorkout,
+                    exercises: reorderItems(curWorkout.exercises, from, to)
+                })}
                 ItemSeparatorComponent={ Separator }
                 contentContainerStyle={ styles.exerciseListContainer }
-                renderItem={ renderItem }
+                renderItem={({ item, index }) => 
+                    <ExerciseEntry 
+                        item={ item }
+                        index={ index }
+                        onRemove={() => setCurWorkout({
+                            ...curWorkout,
+                            exercises: curWorkout.exercises.filter((_, i) => i !== index)
+                        })} />
+                }
                 ListFooterComponent={(
                     <AddFooter onAdd={ () => setExerciseModalVisible(true) } />
                 )} />
