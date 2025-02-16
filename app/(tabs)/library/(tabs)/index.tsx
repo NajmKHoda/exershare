@@ -2,7 +2,7 @@ import ActiveRoutineView from '@/lib/components/ActiveRoutineView';
 import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
-import SearchableList from '@/lib/components/lists/SearchableList/SearchableList';
+import SelectList from '@/lib/components/lists/SelectList';
 
 export default function RoutinesScreen() {
     const [routines] = useSQLiteQuery<{ name: string, id: number}>(`
@@ -13,7 +13,7 @@ export default function RoutinesScreen() {
         <View style={ styles.container }>
             <ActiveRoutineView />
             <Separator />
-            <SearchableList data={ routines } />
+            <SelectList data={ routines } />
         </View>
     )
 }

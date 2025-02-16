@@ -1,14 +1,17 @@
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleSheet, View } from 'react-native';
 import ThemeText from '@/lib/components/theme/ThemeText';
-import { SymbolView } from 'expo-symbols';
+import { SFSymbol, SymbolView } from 'expo-symbols';
 
 interface Props {
     label: string,
+    symbolName: SFSymbol,
+    symbolColor?: string,
+    symbolSize?: number,
     onPress?: () => unknown
 }
 
-export default function ListItem({ label, onPress }: Props) {
+export default function ListItem({ label, symbolName, symbolColor, symbolSize, onPress }: Props) {
     const colors = useThemeColors();
 
     return (
@@ -21,9 +24,9 @@ export default function ListItem({ label, onPress }: Props) {
         >
             <ThemeText style={ styles.label }>{ label }</ThemeText>
             <SymbolView
-                name='chevron.right'
-                size={ 24 }
-                tintColor={ colors.primary as string } />
+                name={ symbolName }
+                size={ symbolSize ?? 24 }
+                tintColor={ symbolColor ?? colors.primary as string } />
         </Pressable>
     );
 }

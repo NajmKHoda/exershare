@@ -2,10 +2,10 @@ import { useState } from 'react';
 import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
-import SearchableList from '@/lib/components/lists/SearchableList/SearchableList';
 import WorkoutModal from '@/lib/components/modals/WorkoutModal';
 import { Workout } from '@/lib/data/Workout';
 import { useSQLiteContext } from 'expo-sqlite';
+import SelectList from '@/lib/components/lists/SelectList';
 
 export default function WorkoutsScreen() {
     const db = useSQLiteContext();
@@ -25,9 +25,9 @@ export default function WorkoutsScreen() {
     return (
         <View style={ styles.container }>
             <Separator />
-            <SearchableList
+            <SelectList
                 data={ workouts }
-                onItemPress={ handleItemPress }
+                onSelect={ handleItemPress }
             />
             <WorkoutModal 
                 visible={ modalVisible } 
