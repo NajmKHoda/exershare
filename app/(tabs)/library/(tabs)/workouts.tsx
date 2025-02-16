@@ -22,12 +22,18 @@ export default function WorkoutsScreen() {
         setModalVisible(true);
     }
 
+    async function handleItemAdd() {
+        setSelectedWorkout(null);
+        setModalVisible(true);
+    }
+
     return (
         <View style={ styles.container }>
             <Separator />
             <SelectList
                 data={ workouts }
                 onSelect={ handleItemPress }
+                onItemAdd={ handleItemAdd }
             />
             <WorkoutModal 
                 visible={ modalVisible } 
