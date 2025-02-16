@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import TextButton from '../controls/TextButton';
 import ThemeText from '../theme/ThemeText';
@@ -24,31 +24,33 @@ export default function ExerciseSelectModal({ visible, onAdd, onClose }: Props) 
             visible={ visible }
             onRequestClose={ onClose }
         >
-            <SafeAreaView style={ styles.safeArea } edges={[ 'top' ]}>
-                <View style={[ styles.container, { backgroundColor: colors.background } ]}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <TextButton
-                            label='Back'
-                            symbol='chevron.left'
-                            style={{ fontSize: 20 }}
-                            onPress={ onClose } />
-                        <TextButton
-                            label='Add'
-                            symbol='plus'
-                            style={{ fontSize: 20 }}
-                            onPress={ () => {
-                                onAdd?.(selectedExercises);
-                                setSelectedExercises([]);
-                                onClose?.();
-                            }} />
+            <SafeAreaProvider>
+                <SafeAreaView style={ styles.safeArea } edges={[ 'top' ]}>
+                    <View style={[ styles.container, { backgroundColor: colors.background } ]}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <TextButton
+                                label='Back'
+                                symbol='chevron.left'
+                                style={{ fontSize: 20 }}
+                                onPress={ onClose } />
+                            <TextButton
+                                label='Add'
+                                symbol='plus'
+                                style={{ fontSize: 20 }}
+                                onPress={ () => {
+                                    onAdd?.(selectedExercises);
+                                    setSelectedExercises([]);
+                                    onClose?.();
+                                }} />
+                        </View>
+                        <ThemeText style={ styles.title }>Add Exercises</ThemeText>
+                        <RefList
+                            dbName='exercises'
+                            selectedItems={ selectedExercises }
+                            setSelectedItems={ setSelectedExercises } />
                     </View>
-                    <ThemeText style={ styles.title }>Add Exercises</ThemeText>
-                    <RefList
-                        dbName='exercises'
-                        selectedItems={ selectedExercises }
-                        setSelectedItems={ setSelectedExercises } />
-                </View>
-            </SafeAreaView>
+                </SafeAreaView>
+            </SafeAreaProvider>
         </Modal>
     );
 }
