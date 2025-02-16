@@ -6,11 +6,27 @@ export class Routine {
     id: number;
     name: string;
     workouts: (Workout | null)[];
+    private shallow: boolean;
+    private workoutIds: (number | null)[];
 
-    constructor(id: number, name: string, workouts: (Workout | null)[]) {
+    constructor(id: number, name: string, workouts: (Workout | null)[]);
+    constructor(id: number, name: string, workoutIds: (number | null)[]);
+    constructor(id: number, name: string, third: (Workout | null)[] | (number | null)[]) {
+        if (third.length !== 7) 
+            throw new Error("Routine requires an array of length 7.");
+
         this.id = id;
         this.name = name;
-        this.workouts = workouts;
+        
+        if (third.some(x => typeof x === 'number')) {
+            this.shallow = true;
+            this.workoutIds = third as (number | null)[];
+            this.workouts = [];
+        } else {
+            this.shallow = false;
+            this.workouts = third as (Workout | null)[];
+            this.workoutIds = [];
+        }
     }
 
     static async init(db: SQLiteDatabase) {
@@ -31,12 +47,11 @@ export class Routine {
         `)
     }
     
-    static async pullActive(db: SQLiteDatabase) {
-        
+    static async pullOne(id: number, db: SQLiteDatabase) {
         const routineQuery = await db.getFirstAsync<{ name: string, id: number }>(`
             SELECT routines.name, routines.id FROM routines
-            JOIN user ON routines.id = user.active_routine_id;
-        `);
+            WHERE routines.id = ?;
+        `, [id]);
         if (!routineQuery) return null;
 
         const [rawWorkouts, rawExercises] = await Promise.all([
@@ -50,11 +65,10 @@ export class Routine {
                     workout_instances.position,
                     workouts.name
                 FROM workout_instances
-                JOIN user
-                    ON workout_instances.routine_id = user.active_routine_id
                 JOIN workouts
-                    ON workout_instances.workout_id = workouts.id;
-            `),
+                    ON workout_instances.workout_id = workouts.id
+                WHERE workout_instances.routine_id = ?;
+            `, [id]),
         
             db.getAllAsync<{
                 workout_position: number,
@@ -70,10 +84,9 @@ export class Routine {
                         workout_instances.position AS workout_position,
                         workout_instances.workout_id
                     FROM workout_instances
-                    JOIN user
-                        ON workout_instances.routine_id = user.active_routine_id
                     JOIN workouts
                         ON workout_instances.workout_id = workouts.id
+                    WHERE workout_instances.routine_id = ?
                 )
                 SELECT
                     routine_workouts.workout_position,
@@ -88,7 +101,7 @@ export class Routine {
                     ON exercise_instances.workout_id = routine_workouts.workout_id
                 JOIN exercises
                     ON exercise_instances.exercise_id = exercises.id;
-            `)
+            `, [id])
         ]);
         
         // Create and sort exercises
@@ -118,6 +131,38 @@ export class Routine {
         return new Routine(routineQuery.id, routineQuery.name, workouts);
     }
 
+    static async pullActive(db: SQLiteDatabase) {
+        const activeRoutineIdQuery = await db.getFirstAsync<{ active_routine_id: number }>(`
+            SELECT user.active_routine_id FROM user;
+        `);
+        if (!activeRoutineIdQuery) return null;
+
+        return this.pullOne(activeRoutineIdQuery.active_routine_id, db);
+    }
+
+    static async create(name: string, workoutIds: (number | null)[], db: SQLiteDatabase) {
+        const result = await db.runAsync('INSERT INTO routines (name) VALUES (?)', name);
+        const routineId = result.lastInsertRowId;
+
+        const linkQuery = await db.prepareAsync(`
+            INSERT INTO workout_instances (position, routine_id, workout_id)
+                VALUES ($position, $routineId, $workoutId);
+        `);
+
+        try {
+            await Promise.all(workoutIds
+                .filter(x => x !== null)
+                .map((workoutId, pos) => linkQuery.executeAsync({
+                    $position: pos,
+                    $routineId: routineId,
+                    $workoutId: workoutId
+                }))
+            );
+        } finally {
+            await linkQuery.finalizeAsync();
+        }
+    }
+
     async save(db: SQLiteDatabase) {
         await Promise.all([
             // Save routine
@@ -132,8 +177,8 @@ export class Routine {
                 $name: this.name
             }),
 
-            // Save associated workouts
-            Workout.saveMany(this.workouts.filter(x => x != null), db)
+            // Save associated workouts (if this isn't a shallow Routine)
+            !this.shallow && Workout.saveMany(this.workouts.filter(x => x != null), db)
         ]);
 
         // Prepare linking query
@@ -143,19 +188,36 @@ export class Routine {
             ON CONFLICT (position, routine_id) DO UPDATE SET
                 workout_id = $workoutId;
         `);
-
+        
+        // For workouts that were just turned null
+        const delinkQuery = await db.prepareAsync(`
+            DELETE FROM workout_instances
+                WHERE routine_id = $routineId AND position = $position;
+        `);
+        
+        const workoutIds = this.shallow ? this.workoutIds : this.workouts.map(w => w?.id ?? null);
+        
         // Link workouts with routine
-        await Promise.all(this.workouts
-            .map((workout, i) => {
-                if (!workout) return;
-                return linkQuery.executeAsync({
-                    $position: i,
-                    $routineId: this.id,
-                    $workoutId: workout.id
-                })
-            })
+        await Promise.all(workoutIds
+            .map((workoutId, pos) =>
+                workoutId === null ?
+                    delinkQuery.executeAsync({
+                        $routineId: this.id,
+                        $position: pos
+                    }) :
+                    linkQuery.executeAsync({
+                        $position: pos,
+                        $routineId: this.id,
+                        $workoutId: workoutId
+                    })
+            )
         );
 
-        await linkQuery.finalizeAsync();
+        await Promise.all([ linkQuery.finalizeAsync(), delinkQuery.finalizeAsync() ]);
+    }
+
+    async delete(db: SQLiteDatabase) {
+        await db.runAsync('DELETE FROM workout_instances WHERE routine_id = ?', this.id);
+        await db.runAsync('DELETE FROM routines WHERE id = ?', this.id);
     }
 }
