@@ -3,13 +3,15 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { Workout } from '@/lib/data/Workout';
 import LabeledTextField from '../controls/LabeledTextField';
 import EditModal from './EditModal';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import ExerciseSelectModal from './ExerciseSelectModal';
 import Separator from '../layout/Separator';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import ThemeText from '../theme/ThemeText';
 import AddFooter from '../lists/elements/AddFooter';
 import { DataItem } from '../lists/SearchableList';
+import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import { SymbolView } from 'expo-symbols';
 
 interface Props {
     workout: Workout | null;
@@ -59,6 +61,23 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
         onClose();
     }
 
+    const renderItem = ({ item, drag }: RenderItemParams<DataItem>) => {
+        return (
+            <View style={[ styles.exerciseContainer, { backgroundColor: colors.backgroundSecondary } ]}>
+                <Pressable onLongPress={ drag } style={ styles.exerciseDragHandle }>
+                    <SymbolView name='chevron.up.chevron.down' size={ 24 } tintColor={ colors.primary as string } />
+                    <ThemeText style={ styles.exerciseText }>{ item.name }</ThemeText>
+                </Pressable>
+                <Pressable onPress={() => setCurWorkout({ 
+                    ...curWorkout, 
+                    exercises: curWorkout.exercises.filter(e => e.id !== item.id)
+                })}>
+                    <SymbolView name='xmark.circle.fill' size={ 24 } tintColor={ colors.red as string } />
+                </Pressable>
+            </View>
+        );
+    };
+
     return (
         <EditModal
             visible={ visible }
@@ -71,20 +90,16 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
                 initialValue={ curWorkout.name }
                 onValueChange={ name => setCurWorkout({ ...curWorkout, name }) }
             />
-            <FlatList
+            <DraggableFlatList
                 data={ curWorkout.exercises }
                 keyExtractor={ (_, i) => i.toString() }
+                onDragEnd={ ({ data }) => setCurWorkout({ ...curWorkout, exercises: data }) }
                 ItemSeparatorComponent={ Separator }
                 contentContainerStyle={ styles.exerciseListContainer }
-                renderItem={({ item, index }) => (
-                    <View style={[ styles.exerciseContainer, { backgroundColor: colors.backgroundSecondary } ]}>
-                        <ThemeText>{ index + 1 }. { item.name }</ThemeText>
-                    </View>
-                )}
+                renderItem={ renderItem }
                 ListFooterComponent={(
                     <AddFooter onAdd={ () => setExerciseModalVisible(true) } />
-                )}
-                />
+                )} />
             <ExerciseSelectModal
                 visible={ exerciseModalVisible }
                 onAdd={exercises => setCurWorkout({
@@ -106,7 +121,17 @@ const styles = StyleSheet.create({
     exerciseContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15
+        padding: 12
+    },
+
+    exerciseDragHandle: {
+        flex: 1,
+        flexDirection: 'row',
+        gap: 10
+    },
+
+    exerciseText: {
+        fontSize: 20
     }
 });
 
