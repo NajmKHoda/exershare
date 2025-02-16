@@ -5,6 +5,7 @@ import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import ThemeText from '../theme/ThemeText';
+import AddFooter from './elements/AddFooter';
 
 interface Props {
     sets: Set[];
@@ -34,18 +35,7 @@ export default function SetList({ sets, onSetsChange }: Props) {
                 ItemSeparatorComponent={ Separator }
                 contentContainerStyle={ styles.listContainer }
                 ListFooterComponent={
-                    <>
-                        { sets.length > 0 && <Separator /> }
-                        <Pressable
-                            onPress={ () => onSetsChange?.([...sets, { reps: 12, weight: 25 }]) } 
-                            style={{
-                                backgroundColor: colors.accent as string,
-                                ...styles.addButton 
-                            }}
-                        >
-                            <SymbolView name='plus' size={ 24 } tintColor={ colors.primary as string } />
-                        </Pressable>
-                    </>
+                    <AddFooter onAdd={() => onSetsChange?.([...sets, { reps: 12, weight: 25 }])} />
                 }
                 renderItem={({ item, index }) => (
                     <View style={[ styles.row, {

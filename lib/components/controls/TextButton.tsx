@@ -15,8 +15,8 @@ export default function TextButton({ onPress, label, symbol, style, symbolSize }
     const colors = useThemeColors();
 
     const flattenedStyles = StyleSheet.flatten(style);
-    const textColor = flattenedStyles.color || colors.accent;
-    const fontSize = flattenedStyles.fontSize || symbolSize || 16;
+    const textColor = flattenedStyles?.color || colors.accent;
+    const fontSize = flattenedStyles?.fontSize || symbolSize || 16;
 
     return (
         <Pressable style={ styles.container } onPress={ onPress }>
