@@ -30,7 +30,7 @@ export default function Layout() {
                 }}
                 tabBar={ props => <LibraryTabBar { ...props } /> }
             >   
-                <Tabs.Screen name='routines' options={{ title: 'Routines' }} />
+                <Tabs.Screen name='index' options={{ title: 'Routines' }} />
                 <Tabs.Screen name='workouts' options={{ title: 'Workouts' }} />
                 <Tabs.Screen name='exercises' options={{ title: 'Exercises' }} />
             </Tabs>

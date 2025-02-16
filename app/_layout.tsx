@@ -1,8 +1,7 @@
-import { ThemeColors, ThemeColorsConsumer, ThemeColorsProvider } from '@/lib/hooks/useThemeColors';
-import { Tabs } from 'expo-router';
+import { ThemeColors, ThemeColorsProvider } from '@/lib/hooks/useThemeColors';
+import { Stack } from 'expo-router';
 import { openDatabaseSync, SQLiteProvider } from 'expo-sqlite';
 import { PlatformColor } from 'react-native';
-import TabSymbol from '@/lib/components/navigation/TabSymbol';
 import { initDatabase } from '@/lib/data/database';
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin'; 
 
@@ -14,30 +13,7 @@ export default function RootLayout() {
     return (
         <SQLiteProvider databaseName='app.db' onInit={ initDatabase } >
         <ThemeColorsProvider value={ themeColors }>
-        <ThemeColorsConsumer>
-            {themeColors => (
-                <Tabs screenOptions={{
-                    headerShown: false,
-                    tabBarStyle: {
-                        backgroundColor: themeColors.backgroundSecondary,
-                        borderTopWidth: 0
-                    }
-                }} >
-                    <Tabs.Screen
-                        name='index'
-                        options={{
-                            title: 'Home',
-                            tabBarIcon: TabSymbol('dumbbell.fill')
-                        }} />
-                    <Tabs.Screen
-                        name='library/(tabs)'
-                        options={{
-                            title: 'Library',
-                            tabBarIcon: TabSymbol('book.closed.fill')
-                        }} />
-                </Tabs>
-            )}
-        </ThemeColorsConsumer>
+            <Stack screenOptions={{ headerShown: false }}/>
         </ThemeColorsProvider>
         </SQLiteProvider>
     );
