@@ -4,6 +4,7 @@ import { openDatabaseSync, SQLiteProvider } from 'expo-sqlite';
 import { PlatformColor } from 'react-native';
 import { initDatabase } from '@/lib/data/database';
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin'; 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const db = openDatabaseSync('app.db');
 
@@ -13,7 +14,9 @@ export default function RootLayout() {
     return (
         <SQLiteProvider databaseName='app.db' onInit={ initDatabase } >
         <ThemeColorsProvider value={ themeColors }>
+        <GestureHandlerRootView>
             <Stack screenOptions={{ headerShown: false }}/>
+        </GestureHandlerRootView>
         </ThemeColorsProvider>
         </SQLiteProvider>
     );
