@@ -52,6 +52,8 @@ export default function ExerciseModal({ exercise, visible, onClose }: Props) {
                 db
             );
         }
+
+        setCurExercise(exerciseOrDefault);
         onClose();
     }
 

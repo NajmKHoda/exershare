@@ -50,6 +50,7 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
             );
         }
 
+        setCurWorkout(workoutOrDefault);
         onClose();
     }
 

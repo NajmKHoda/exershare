@@ -54,6 +54,7 @@ export default function RoutineModal({ routine, visible, onClose }: Props) {
             );
         }
 
+        setCurRoutine(routineOrDefault);
         onClose();
     }
 
