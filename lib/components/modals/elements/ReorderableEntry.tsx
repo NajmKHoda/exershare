@@ -11,7 +11,7 @@ interface Props {
     onRemove: (index: number) => void
 }
 
-export default function ExerciseEntry({ item, index, onRemove }: Props) {
+export default function ReorderableEntry({ item, index, onRemove }: Props) {
     const colors = useThemeColors();
     const drag = useReorderableDrag();
 

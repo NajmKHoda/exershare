@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { StyleSheet, View } from 'react-native';
 import TextButton from '../controls/TextButton';
 import ThemeText from '../theme/ThemeText';
-import RefList from '../lists/RefList';
+import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
+import MultiselectList from '../lists/MultiselectList';
 import { DataItem } from '../lists/SearchableList';
+import SlideUpModal from './SlideUpModal';
 
 interface Props {
     visible: boolean;
@@ -14,55 +14,40 @@ interface Props {
 }
 
 export default function ExerciseSelectModal({ visible, onAdd, onClose }: Props) {
-    const colors = useThemeColors();
     const [selectedExercises, setSelectedExercises] = useState<DataItem[]>([]);
+    const [dbExercises] = useSQLiteQuery<DataItem>(
+        `SELECT id, name FROM exercises ORDER BY name;`,
+        true
+    );
 
     return (
-        <Modal 
-            animationType='slide'
-            transparent={ true }
-            visible={ visible }
-            onRequestClose={ onClose }
-        >
-            <SafeAreaProvider>
-                <SafeAreaView style={ styles.safeArea } edges={[ 'top' ]}>
-                    <View style={[ styles.container, { backgroundColor: colors.background } ]}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                            <TextButton
-                                label='Back'
-                                symbol='chevron.left'
-                                style={{ fontSize: 20 }}
-                                onPress={ onClose } />
-                            <TextButton
-                                label='Add'
-                                symbol='plus'
-                                style={{ fontSize: 20 }}
-                                onPress={ () => {
-                                    onAdd?.(selectedExercises);
-                                    setSelectedExercises([]);
-                                    onClose?.();
-                                }} />
-                        </View>
-                        <ThemeText style={ styles.title }>Add Exercises</ThemeText>
-                        <RefList
-                            dbName='exercises'
-                            selectedItems={ selectedExercises }
-                            setSelectedItems={ setSelectedExercises } />
-                    </View>
-                </SafeAreaView>
-            </SafeAreaProvider>
-        </Modal>
+        <SlideUpModal visible={visible} onClose={onClose}>
+            <View style={styles.controls}>
+                <TextButton
+                    label='Back'
+                    symbol='chevron.left'
+                    style={{ fontSize: 20 }}
+                    onPress={onClose} />
+                <TextButton
+                    label='Add'
+                    symbol='plus'
+                    style={{ fontSize: 20 }}
+                    onPress={() => {
+                        onAdd?.(selectedExercises);
+                        setSelectedExercises([]);
+                        onClose?.();
+                    }} />
+            </View>
+            <ThemeText style={styles.title}>Add Exercises</ThemeText>
+            <MultiselectList
+                data={dbExercises}
+                selectedItems={selectedExercises}
+                setSelectedItems={setSelectedExercises} />
+        </SlideUpModal>
     );
 }
 
 const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        alignItems: 'stretch',
-        paddingTop: 20,
-        backgroundColor: 'rgba(0,0,0,0.5)'
-    },
-
     container: {
         flex: 1,
         alignItems: 'stretch',
@@ -70,6 +55,12 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20
+    },
+
+    controls: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
     },
 
     title: {

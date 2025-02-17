@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Workout } from '@/lib/data/Workout';
-import LabeledTextField from '../../controls/LabeledTextField';
-import EditModal from '../EditModal';
+import LabeledTextField from '../controls/LabeledTextField';
+import EditModal from './EditModal';
 import { StyleSheet } from 'react-native';
-import ExerciseSelectModal from '../ExerciseSelectModal';
-import Separator from '../../layout/Separator';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import AddFooter from '../../lists/elements/AddFooter';
-import { DataItem } from '../../lists/SearchableList';
+import ExerciseSelectModal from './ExerciseSelectModal';
+import Separator from '../layout/Separator';
+import AddFooter from '../lists/elements/AddFooter';
+import { DataItem } from '../lists/SearchableList';
 import ReorderableList, { reorderItems } from 'react-native-reorderable-list'
-import ExerciseEntry from './ExerciseEntry';
+import ReorderableEntry from './elements/ReorderableEntry';
 
 interface Props {
     workout: Workout | null;
@@ -28,8 +27,8 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
 
     function workoutOrDefault() {
         return {
-            name: workout?.name || '',
-            exercises: (workout?.exercises.map(({ id, name }) => ({ id, name })) || [])
+            name: workout?.name ?? '',
+            exercises: workout?.exercises.map(({ id, name }) => ({ id, name })) ?? []
         };
     }
 
@@ -81,7 +80,7 @@ export default function WorkoutModal({ workout, visible, onClose }: Props) {
                 ItemSeparatorComponent={ Separator }
                 contentContainerStyle={ styles.exerciseListContainer }
                 renderItem={({ item, index }) => 
-                    <ExerciseEntry 
+                    <ReorderableEntry 
                         item={ item }
                         index={ index }
                         onRemove={() => setCurWorkout({

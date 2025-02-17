@@ -3,17 +3,41 @@ import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
 import SelectList from '@/lib/components/lists/SelectList';
+import { useState } from 'react';
+import { DataItem } from '@/lib/components/lists/SearchableList';
+import { Routine } from '@/lib/data/Routine';
+import { useSQLiteContext } from 'expo-sqlite';
+import RoutineModal from '@/lib/components/modals/RoutineModal';
 
 export default function RoutinesScreen() {
-    const [routines] = useSQLiteQuery<{ name: string, id: number}>(`
-        SELECT name, id FROM routines ORDER BY name;
-    `, true);
+    const db = useSQLiteContext();
+    const [routines, rerunQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
+    const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
+    const [isEditModalVisible, setEditModalVisible] = useState(false);
+
+    async function handleItemSelect({ id }: DataItem) {
+        const routine = await Routine.pullOne(id, db);
+        setEditingRoutine(routine);
+        setEditModalVisible(true);
+    }
+
+    function handleItemAdd() {
+        setEditingRoutine(null);
+        setEditModalVisible(true);
+    }
 
     return (
         <View style={ styles.container }>
             <ActiveRoutineView />
             <Separator />
-            <SelectList data={ routines } />
+            <SelectList data={ routines } onSelect={ handleItemSelect } onItemAdd={ handleItemAdd }/>
+            <RoutineModal
+                visible={ isEditModalVisible }
+                routine={ editingRoutine }
+                onClose={ () => {
+                    setEditModalVisible(false);
+                    rerunQuery();
+                }} />
         </View>
     )
 }
