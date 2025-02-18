@@ -21,13 +21,11 @@ export default function ExerciseSelectModal({ visible, onAdd, onClose }: Props) 
     );
 
     return (
-        <SlideUpModal visible={visible} onClose={onClose}>
-            <View style={styles.controls}>
-                <TextButton
-                    label='Back'
-                    symbol='chevron.left'
-                    style={{ fontSize: 20 }}
-                    onPress={onClose} />
+        <SlideUpModal
+            visible={ visible}
+            onClose={ onClose }
+            title="Add Exercises"
+            additionalControls={
                 <TextButton
                     label='Add'
                     symbol='plus'
@@ -37,12 +35,12 @@ export default function ExerciseSelectModal({ visible, onAdd, onClose }: Props) 
                         setSelectedExercises([]);
                         onClose?.();
                     }} />
-            </View>
-            <ThemeText style={styles.title}>Add Exercises</ThemeText>
+            }
+        >
             <MultiselectList
-                data={dbExercises}
-                selectedItems={selectedExercises}
-                setSelectedItems={setSelectedExercises} />
+                data={ dbExercises }
+                selectedItems={ selectedExercises }
+                setSelectedItems={ setSelectedExercises } />
         </SlideUpModal>
     );
 }

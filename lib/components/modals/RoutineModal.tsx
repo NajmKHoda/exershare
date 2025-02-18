@@ -4,7 +4,7 @@ import { Routine } from '@/lib/data/Routine';
 import LabeledTextField from '../controls/LabeledTextField';
 import EditModal from './EditModal';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import WorkoutSelectModal from './WorkoutSelectModal';
+import DatabaseSelectModal from './DatabaseSelectModal';
 import { DataItem } from '../lists/SearchableList';
 import { FlatList } from 'react-native-gesture-handler';
 import Separator from '../layout/Separator';
@@ -99,14 +99,15 @@ export default function RoutineModal({ routine, visible, onClose }: Props) {
                         </Pressable>
                     </View>
                 )} />
-            <WorkoutSelectModal
+            <DatabaseSelectModal
                 visible={ dayToSet !== null }
+                dbName='workouts'
+                title='Select Workout'
                 onSelect={ workout => setCurRoutine({
                     ...curRoutine,
                     workouts: curRoutine.workouts.map((w, i) => i === dayToSet ? workout : w)
                 })}
-                onClose={() => setDayToSet(null)}
-            />
+                onClose={() => setDayToSet(null)} />
         </EditModal>
     );
 };
