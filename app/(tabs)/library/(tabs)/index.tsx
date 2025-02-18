@@ -10,8 +10,14 @@ import { useSQLiteContext } from 'expo-sqlite';
 import RoutineModal from '@/lib/components/modals/RoutineModal';
 
 export default function RoutinesScreen() {
+    // Database and queries
     const db = useSQLiteContext();
-    const [routines, rerunQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
+    const [routines, rerunRoutinesQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
+    const [activeRoutineResult, rerunActiveRoutineQuery] = useSQLiteQuery<{ name: string }>(`
+        SELECT routines.name FROM routines
+        JOIN user ON routines.id = user.active_routine_id;
+    `);
+
     const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
     const [isEditModalVisible, setEditModalVisible] = useState(false);
 
@@ -28,7 +34,9 @@ export default function RoutinesScreen() {
 
     return (
         <View style={ styles.container }>
-            <ActiveRoutineView />
+            <ActiveRoutineView
+                activeRoutineName={ activeRoutineResult?.name ?? 'None' }
+                onRefresh={ rerunActiveRoutineQuery }/>
             <Separator />
             <SelectList data={ routines } onSelect={ handleItemSelect } onItemAdd={ handleItemAdd }/>
             <RoutineModal
@@ -36,7 +44,8 @@ export default function RoutinesScreen() {
                 routine={ editingRoutine }
                 onClose={ () => {
                     setEditModalVisible(false);
-                    rerunQuery();
+                    rerunRoutinesQuery();
+                    rerunActiveRoutineQuery();
                 }} />
         </View>
     )

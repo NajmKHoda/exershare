@@ -11,8 +11,10 @@ export async function initDatabase(db: SQLiteDatabase) {
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS user (
             id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1),
-            active_routine_id INTEGER NOT NULL,
+            active_routine_id INTEGER,
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
         );
+
+        INSERT OR IGNORE INTO user (id, active_routine_id) VALUES (1, NULL)
     `);
 }

@@ -217,7 +217,13 @@ export class Routine {
     }
 
     async delete(db: SQLiteDatabase) {
+        // Delete associated workout instances
         await db.runAsync('DELETE FROM workout_instances WHERE routine_id = ?', this.id);
+
+        // Nullify the active routine if it's this one
+        await db.runAsync('UPDATE user SET active_routine_id = NULL WHERE active_routine_id = ?', this.id);
+
+        // Finally, delete the routine itself
         await db.runAsync('DELETE FROM routines WHERE id = ?', this.id);
     }
 }
