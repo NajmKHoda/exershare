@@ -11,7 +11,7 @@ export default function ExerciseList({ exercises }: Props) {
         <FlatList
             data={ exercises }
             renderItem={ x => <ExerciseView exercise={ x.item } /> }
-            keyExtractor={ exercise => exercise.id.toString() }
+            keyExtractor={ (exercise, i) => `${exercise.id}-${i}` }
             ItemSeparatorComponent={ () => <View style={ styles.divider }/> }
             style={{ borderRadius: 10 }}/>
     );

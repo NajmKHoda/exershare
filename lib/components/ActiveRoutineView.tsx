@@ -6,20 +6,17 @@ import DatabaseSelectModal from './modals/DatabaseSelectModal';
 import { useState } from 'react';
 import { DataItem } from './lists/SearchableList';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useActiveRoutine } from '../hooks/useActiveRoutine';
 
-interface Props {
-    activeRoutineName: string,
-    onRefresh: () => unknown
-}
-
-export default function ActiveRoutineView({ activeRoutineName, onRefresh }: Props) {
+export default function ActiveRoutineView() {
     const db = useSQLiteContext();
     const colors = useThemeColors();
+    const { activeRoutine, refreshActiveRoutine } = useActiveRoutine();
     const [isModalVisible, setModalVisible] = useState(false);
 
     function handleRoutineSelect(routine: DataItem) {
         db.runAsync(`UPDATE user SET active_routine_id = ?;`, routine.id);
-        onRefresh();
+        refreshActiveRoutine();
     }
 
     return (
@@ -34,7 +31,7 @@ export default function ActiveRoutineView({ activeRoutineName, onRefresh }: Prop
                 <View style={ styles.info }>
                     <ThemeText>ACTIVE ROUTINE</ThemeText>
                     <ThemeText style={ styles.activeRoutineName }>
-                        { activeRoutineName }
+                        { activeRoutine?.name ?? 'None' }
                     </ThemeText>
                 </View>
                 <View style={ styles.options }>
@@ -44,6 +41,7 @@ export default function ActiveRoutineView({ activeRoutineName, onRefresh }: Prop
                     <SymbolView name='square.and.arrow.up.circle.fill' size={ 60 } />
                 </View>
             </View>
+
             <DatabaseSelectModal
                 visible={ isModalVisible }
                 onClose={ () => setModalVisible(false) }

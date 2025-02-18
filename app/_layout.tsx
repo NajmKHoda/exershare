@@ -6,6 +6,7 @@ import { initDatabase } from '@/lib/data/database';
 import { useDrizzleStudio } from 'expo-drizzle-studio-plugin'; 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActiveRoutineProvider } from '@/lib/hooks/useActiveRoutine';
 
 const db = openDatabaseSync('app.db');
 
@@ -15,11 +16,13 @@ export default function RootLayout() {
     return (
         <SQLiteProvider databaseName='app.db' onInit={ initDatabase } >
         <ThemeColorsProvider value={ themeColors }>
+        <ActiveRoutineProvider>
         <GestureHandlerRootView>
         <SafeAreaProvider>
             <Stack screenOptions={{ headerShown: false }}/>
         </SafeAreaProvider>
         </GestureHandlerRootView>
+        </ActiveRoutineProvider>
         </ThemeColorsProvider>
         </SQLiteProvider>
     );

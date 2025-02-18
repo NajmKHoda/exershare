@@ -4,28 +4,19 @@ import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Button, Image, StyleSheet, View } from 'react-native';
-import { useState, useEffect } from 'react';
-import { Routine } from '@/lib/data/Routine';
-import { Images } from '@/assets/images/images';
+import { Button, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
+import { useActiveRoutine } from '@/lib/hooks/useActiveRoutine';
 
 export default function Index() {
     const themeColors = useThemeColors();
     const db = useSQLiteContext();
-    const [routine, setRoutine] = useState<Routine | null>(null);
+    const { activeRoutine } = useActiveRoutine();
     const [date, setDate] = useState<Date>(new Date());
-    
-    // Obtain the active routine
-    useEffect(() => {  
-        (async () => {
-            const routine = await Routine.pullActive(db);
-            setRoutine(routine);
-        })();
-    }, []);
 
     const weekDay = date.getDay();
-    const workout = routine?.workouts[weekDay];
+    const workout = activeRoutine?.workouts[weekDay];
     const exerciseList = workout?.exercises ?? [];
 
     function onDayChange(amount: number) {
@@ -37,7 +28,7 @@ export default function Index() {
     return (
         <View style={{ backgroundColor: themeColors.background, ...styles.container }}>
             <RoutineHeader
-                routineName={ routine?.name ?? '' }
+                routineName={ activeRoutine?.name ?? '' }
                 workoutName={ workout?.name ?? 'Rest Day' }
                 date = { date }
                 onDayChange={ onDayChange }/>

@@ -2,6 +2,7 @@ import { DataItem } from '../lists/SearchableList';
 import SlideUpModal from './SlideUpModal';
 import SelectList from '../lists/SelectList';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
+import { useEffect } from 'react';
 
 interface Props {
     visible: boolean;
@@ -12,10 +13,14 @@ interface Props {
 }
 
 export default function DatabaseSelectModal({ visible, dbName, onSelect, onClose, title }: Props) {
-    const [data] = useSQLiteQuery<DataItem>(
+    const [data, refreshData] = useSQLiteQuery<DataItem>(
         `SELECT id, name FROM ${ dbName } ORDER BY name;`,
         true
     );
+
+    useEffect(() => {
+        if (visible) refreshData();
+    }, [visible]);
 
     return (
         <SlideUpModal visible={ visible } onClose={ onClose } title={ title || 'Select Item' }>
