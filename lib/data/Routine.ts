@@ -151,12 +151,14 @@ export class Routine {
 
         try {
             await Promise.all(workoutIds
-                .filter(x => x !== null)
-                .map((workoutId, pos) => linkQuery.executeAsync({
-                    $position: pos,
-                    $routineId: routineId,
-                    $workoutId: workoutId
-                }))
+                .map((workoutId, pos) => {
+                    if (workoutId === null) return null;
+                    return linkQuery.executeAsync({
+                        $position: pos,
+                        $routineId: routineId,
+                        $workoutId: workoutId
+                    })
+                })
             );
         } finally {
             await linkQuery.finalizeAsync();
