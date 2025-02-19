@@ -3,17 +3,25 @@ import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import { useSQLiteContext } from 'expo-sqlite';
 import { Button, StyleSheet, View } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 import { useActiveRoutine } from '@/lib/hooks/useActiveRoutine';
+import { WorkoutLog } from '@/lib/data/WorkoutLog';
+import { useSQLiteContext } from 'expo-sqlite';
 
 export default function Index() {
     const themeColors = useThemeColors();
-    const db = useSQLiteContext();
     const { activeRoutine } = useActiveRoutine();
+
+    const db = useSQLiteContext();
     const [date, setDate] = useState<Date>(new Date());
+
+    // For updating logs
+    const todayTimestamp = new Date().setHours(0, 0, 0, 0);
+    useEffect(() => {
+        WorkoutLog.updateLogs(activeRoutine, db);
+    }, [todayTimestamp]);
 
     const weekDay = date.getDay();
     const workout = activeRoutine?.workouts[weekDay];
