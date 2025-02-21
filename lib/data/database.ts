@@ -11,14 +11,16 @@ export async function initDatabase(db: SQLiteDatabase) {
     await Routine.init(db);
     await WorkoutLog.init(db);
 
-    await db.runAsync(`
+    await db.execAsync(`
         CREATE TABLE IF NOT EXISTS user (
             id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1),
             active_routine_id INTEGER,
             last_log_date TEXT NOT NULL,
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
         );
+    `);
 
+    await db.runAsync(`
         INSERT OR IGNORE INTO user (id, active_routine_id, last_log_date)
             VALUES (1, NULL, ?);
     `, serializeDate(new Date()));

@@ -1,9 +1,8 @@
 import { FlatList, PlatformColor, StyleSheet, View } from 'react-native'
-import { Exercise } from '@/lib/data/Exercise';
-import ExerciseView from './ExerciseView';
+import ExerciseView, { ExerciseInfo } from './ExerciseView';
 
 interface Props {
-    exercises: Exercise[]
+    exercises: ExerciseInfo[]
 }
 
 export default function ExerciseList({ exercises }: Props) {
@@ -11,7 +10,7 @@ export default function ExerciseList({ exercises }: Props) {
         <FlatList
             data={ exercises }
             renderItem={ x => <ExerciseView exercise={ x.item } /> }
-            keyExtractor={ (exercise, i) => `${exercise.id}-${i}` }
+            keyExtractor={ (_, i) => i.toString() }
             ItemSeparatorComponent={ () => <View style={ styles.divider }/> }
             style={{ borderRadius: 10 }}/>
     );

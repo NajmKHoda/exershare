@@ -1,18 +1,16 @@
-import { Exercise } from '@/lib/data/Exercise';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import { PlatformColor, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import ThemeText from '../../theme/ThemeText';
 import { SymbolView } from 'expo-symbols';
 
 interface Props {
-    exercise: Exercise
+    exercise: ExerciseInfo;
 }
 
 export default function ExerciseView({ exercise }: Props) {
     const themeColors = useThemeColors();
 
-    const { name } = exercise;
-    const completion: string = 'complete'; // Temporary hack
+    const { name, completion } = exercise;
 
     let completionSymbol: React.ReactNode | undefined = undefined;
     switch (completion) {
@@ -55,3 +53,8 @@ const styles = StyleSheet.create({
         lineHeight: 22
     }
 })
+
+export interface ExerciseInfo {
+    name: string;
+    completion: 'complete' | 'in-progress' | 'incomplete';
+}

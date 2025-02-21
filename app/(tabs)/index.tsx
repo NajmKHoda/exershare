@@ -9,23 +9,66 @@ import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 import { useActiveRoutine } from '@/lib/hooks/useActiveRoutine';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
+import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
 
 export default function Index() {
     const themeColors = useThemeColors();
     const { activeRoutine } = useActiveRoutine();
 
-    const db = useSQLiteContext();
+    // Date values for the current view
     const [date, setDate] = useState<Date>(new Date());
-
-    // For updating logs
+    const dateTimestamp = new Date(date).setHours(0, 0, 0, 0);
     const todayTimestamp = new Date().setHours(0, 0, 0, 0);
+
+    // Loads the log of the view date from the database
+    const db = useSQLiteContext();
+    const [log, setLog] = useState<WorkoutLog | null>(null);
+    useEffect(() => {
+        // If the date is in the future, don't load a log
+        if (dateTimestamp > todayTimestamp) {
+            setLog(null);
+            return;
+        }
+
+        async function loadLog() {
+            const loadedLog = await WorkoutLog.getLog(date, db);
+            setLog(loadedLog);
+        }
+        loadLog();
+    }, [date.getTime()]);
+
+    // Update logs when the today-date changes
     useEffect(() => {
         WorkoutLog.updateLogs(activeRoutine, db);
-    }, [todayTimestamp]);
+    }, [todayTimestamp, activeRoutine?.id]);
 
-    const weekDay = date.getDay();
-    const workout = activeRoutine?.workouts[weekDay];
-    const exerciseList = workout?.exercises ?? [];
+    // Populate information for the view date
+    let exerciseList: ExerciseInfo[];
+    let routineName: string;
+    let workoutName: string;
+    let showPlaceholder: boolean;
+    if (dateTimestamp > todayTimestamp) {
+        const weekDay = date.getDay();
+        const workout = activeRoutine?.workouts[weekDay];
+
+        // Get projected workout for this future date
+        exerciseList = workout?.exercises.map(x => ({
+            name: x.name,
+            completion: 'incomplete'
+        })) ?? [];
+        routineName = activeRoutine?.name ?? 'No Routine';
+        workoutName = workout?.name ?? 'Rest Day';
+        showPlaceholder = !workout;
+    } else {
+        // Retrieve information from the log
+        exerciseList = Array.from(log?.exercises ?? []).map(([name, completed]) => ({
+            name,
+            completion: completed ? 'complete' : 'incomplete'
+        }));
+        routineName = log?.routineName ?? 'No Routine';
+        workoutName = log?.workoutName ?? 'Rest Day';
+        showPlaceholder = !log;
+    }
 
     function onDayChange(amount: number) {
         const newDate = new Date(date);
@@ -36,12 +79,14 @@ export default function Index() {
     return (
         <View style={{ backgroundColor: themeColors.background, ...styles.container }}>
             <RoutineHeader
-                routineName={ activeRoutine?.name ?? '' }
-                workoutName={ workout?.name ?? 'Rest Day' }
+                routineName={ routineName }
+                workoutName={ workoutName }
                 date = { date }
                 onDayChange={ onDayChange }/>
             <View style={ styles.body }>
-            { workout ?
+            { showPlaceholder ?
+                <RestDayPlaceholder />
+                :
                 <>
                     <View style={ styles.entryOptions }>
                         <LabelButton symbolName='play.fill' label='Exercise Mode' />
@@ -54,8 +99,6 @@ export default function Index() {
                         </View>
                     </View>
                 </>
-                :
-                <RestDayPlaceholder />
             }
                 <Button title='Routine Options' />
             </View>
