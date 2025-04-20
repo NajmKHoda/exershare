@@ -35,7 +35,6 @@ export default function TextButton({ onPress, label, Icon, style, iconSize }: Pr
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        justifyContent: 'center',
         alignItems: 'center',
         gap: 5
     }

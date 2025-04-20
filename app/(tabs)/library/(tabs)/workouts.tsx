@@ -1,29 +1,28 @@
-import { useState } from 'react';
 import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
-import WorkoutModal from '@/lib/components/modals/WorkoutModal';
-import { Workout } from '@/lib/data/Workout';
-import { useSQLiteContext } from 'expo-sqlite';
 import SelectList from '@/lib/components/lists/SelectList';
 import { DataItem } from '@/lib/components/lists/SearchableList';
+import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 export default function WorkoutsScreen() {
-    const db = useSQLiteContext();
     const [workouts, rerunQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM workouts ORDER BY name;`, true);
     
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+    // Refresh data when screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            rerunQuery();
+        }, [])
+    );
 
-    async function handleItemPress({ id }: { id: number }) {
-        const workout = await Workout.pullOne(id, db);
-        setSelectedWorkout(workout);
-        setModalVisible(true);
+    function handleItemPress({ id }: { id: number }) {
+        router.push(`/workout/${id}`);
     }
 
-    async function handleItemAdd() {
-        setSelectedWorkout(null);
-        setModalVisible(true);
+    function handleItemAdd() {
+        router.push('/workout/new');
     }
 
     return (
@@ -33,14 +32,6 @@ export default function WorkoutsScreen() {
                 data={ workouts }
                 onSelect={ handleItemPress }
                 onItemAdd={ handleItemAdd }
-            />
-            <WorkoutModal 
-                visible={ modalVisible } 
-                workout={ selectedWorkout }
-                onClose={() => {
-                    setModalVisible(false);
-                    rerunQuery();
-                }} 
             />
         </View>
     );

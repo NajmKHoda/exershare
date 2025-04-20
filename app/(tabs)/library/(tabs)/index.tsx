@@ -3,31 +3,31 @@ import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
 import SelectList from '@/lib/components/lists/SelectList';
-import { useState } from 'react';
 import { DataItem } from '@/lib/components/lists/SearchableList';
-import { Routine } from '@/lib/data/Routine';
-import { useSQLiteContext } from 'expo-sqlite';
-import RoutineModal from '@/lib/components/modals/RoutineModal';
 import { useActiveRoutine } from '@/lib/hooks/useActiveRoutine';
+import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 export default function RoutinesScreen() {
     // Database and queries
-    const db = useSQLiteContext();
     const [routines, rerunRoutinesQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
     const { refreshActiveRoutine } = useActiveRoutine();
 
-    const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
-    const [isEditModalVisible, setEditModalVisible] = useState(false);
+    // Refresh data when screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            rerunRoutinesQuery();
+            refreshActiveRoutine();
+        }, [])
+    );
 
-    async function handleItemSelect({ id }: DataItem) {
-        const routine = await Routine.pullOne(id, db);
-        setEditingRoutine(routine);
-        setEditModalVisible(true);
+    function handleItemSelect({ id }: DataItem) {
+        router.push(`/routine/${id}`);
     }
 
     function handleItemAdd() {
-        setEditingRoutine(null);
-        setEditModalVisible(true);
+        router.push('/routine/new');
     }
 
     return (
@@ -35,14 +35,6 @@ export default function RoutinesScreen() {
             <ActiveRoutineView />
             <Separator />
             <SelectList data={ routines } onSelect={ handleItemSelect } onItemAdd={ handleItemAdd }/>
-            <RoutineModal
-                visible={ isEditModalVisible }
-                routine={ editingRoutine }
-                onClose={ () => {
-                    setEditModalVisible(false);
-                    rerunRoutinesQuery();
-                    refreshActiveRoutine();
-                }} />
         </View>
     )
 }

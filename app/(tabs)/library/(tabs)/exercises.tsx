@@ -1,30 +1,29 @@
-import { useState } from 'react';
 import Separator from '@/lib/components/layout/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
-import ExerciseModal from '@/lib/components/modals/ExerciseModal';
-import { Exercise } from '@/lib/data/Exercise';
-import { useSQLiteContext } from 'expo-sqlite';
 import SelectList from '@/lib/components/lists/SelectList';
+import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 export default function ExercisesScreen() {
-    const db = useSQLiteContext();
     const [exercises, rerunQuery] = useSQLiteQuery<ListEntry>(`
         SELECT name, id FROM exercises ORDER BY name;
     `, true);
 
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+    // Refresh data when screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            rerunQuery();
+        }, [])
+    );
 
-    async function handleItemPress(entry: ListEntry) {
-        const exercise = await Exercise.pullOne(entry.id, db);
-        setSelectedExercise(exercise);
-        setModalVisible(true);
+    function handleItemPress(entry: ListEntry) {
+        router.push(`/exercise/${entry.id}`);
     }
 
-    async function handleItemAdd() {
-        setSelectedExercise(null);
-        setModalVisible(true);
+    function handleItemAdd() {
+        router.push('/exercise/new');
     }
 
     return (
@@ -34,14 +33,6 @@ export default function ExercisesScreen() {
                 data={ exercises } 
                 onSelect={ handleItemPress }
                 onItemAdd={ handleItemAdd }
-            />
-            <ExerciseModal 
-                visible={ modalVisible } 
-                exercise={ selectedExercise } 
-                onClose={() => {
-                    setModalVisible(false);
-                    rerunQuery();
-                }} 
             />
         </View>
     );
