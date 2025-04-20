@@ -12,7 +12,6 @@ export async function initDatabase(db: SQLiteDatabase) {
     await WorkoutLog.init(db);
 
     await db.execAsync(`
-        DROP TABLE user;
         CREATE TABLE IF NOT EXISTS user (
             id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1),
             active_routine_id INTEGER,
