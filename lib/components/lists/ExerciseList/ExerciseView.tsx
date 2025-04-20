@@ -1,7 +1,7 @@
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { StyleSheet, View } from 'react-native';
 import ThemeText from '../../theme/ThemeText';
-import { SymbolView } from 'expo-symbols';
+import { Check, MoreHorizontal } from 'lucide-react-native';
 
 interface Props {
     exercise: ExerciseInfo;
@@ -15,18 +15,16 @@ export default function ExerciseView({ exercise }: Props) {
     let completionSymbol: React.ReactNode | undefined = undefined;
     switch (completion) {
         case 'complete':
-            completionSymbol = <SymbolView
-                name='checkmark'
-                weight='black'
-                tintColor={ themeColors.green as string }
-                size={ 22 } />;
+            completionSymbol = <Check 
+                strokeWidth={3}
+                color={themeColors.green as string}
+                size={22} />;
             break;
         case 'in-progress':
-            completionSymbol = <SymbolView
-                name='ellipsis'
-                weight='black'
-                tintColor={ themeColors.orange as string }
-                size={ 22 } />;
+            completionSymbol = <MoreHorizontal 
+                strokeWidth={3}
+                color={themeColors.orange as string}
+                size={22} />;
     }
 
     return (

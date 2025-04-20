@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import { SymbolView } from 'expo-symbols';
+import { Plus } from 'lucide-react-native';
 
 interface Props {
     onAdd: () => void;
@@ -17,7 +17,7 @@ export default function AddFooter({ onAdd }: Props) {
                 ...styles.addButton 
             }}
         >
-            <SymbolView name='plus' size={ 24 } tintColor={ colors.primary as string } />
+            <Plus size={24} color={colors.primary as string} />
         </Pressable>
     );
 }

@@ -1,6 +1,7 @@
 import SearchableList, { DataItem } from './SearchableList';
 import ListItem from './ListItem';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { Circle, CircleCheck } from 'lucide-react-native';
 
 interface Props {
     data: DataItem[];
@@ -27,9 +28,9 @@ export default function MultiselectList({ data, selectedItems, setSelectedItems 
             itemRenderer={(item) => (
                 <ListItem
                     label={ item.name }
-                    symbolName={ selectedIds.includes(item.id) ? 'checkmark.circle.fill' : 'circle' }
-                    symbolColor={ colors.accent as string }
-                    symbolSize={ 27}
+                    Icon={ selectedIds.includes(item.id) ? CircleCheck : Circle }
+                    iconColor={ colors.accent as string }
+                    iconSize={ 27}
                     onPress={ () => toggleSelection(item) }
                 />
             )}

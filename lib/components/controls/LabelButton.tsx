@@ -1,18 +1,18 @@
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import { SFSymbol, SymbolView } from 'expo-symbols';
-import { ColorValue, Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
+import { LucideIcon } from 'lucide-react-native';
 
 interface Props {
-    symbolName: SFSymbol,
+    Icon: LucideIcon,
     label: string
 }
 
-export default function LabelButton({ symbolName, label }: Props) {
+export default function LabelButton({ Icon, label }: Props) {
     const themeColors = useThemeColors();
 
     return (
         <Pressable style={{ backgroundColor: themeColors.accent, ...styles.container }}>
-            <SymbolView tintColor='#ffffff' name={ symbolName } />
+            <Icon color='#ffffff' size={24} />
             <Text style={ styles.label }>{ label }</Text>
         </Pressable>
     );

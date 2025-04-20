@@ -3,9 +3,9 @@ import { Set } from '@/lib/data/Exercise';
 import Separator from '../layout/Separator';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable } from 'react-native';
-import { SymbolView } from 'expo-symbols';
 import ThemeText from '../theme/ThemeText';
 import AddFooter from './elements/AddFooter';
+import { XCircle } from 'lucide-react-native';
 
 interface Props {
     sets: Set[];
@@ -61,10 +61,9 @@ export default function SetList({ sets, onSetsChange }: Props) {
                                 onSetsChange?.(updatedSets);
                             }}
                         >
-                            <SymbolView
-                                name='xmark.circle.fill'
+                            <XCircle
                                 size={ 24 }
-                                tintColor={ (canDelete ? colors.red : colors.gray) as string } />
+                                color={ (canDelete ? colors.red : colors.gray) as string } />
                         </Pressable>
                     </View>
                 )}

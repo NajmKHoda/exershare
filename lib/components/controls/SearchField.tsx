@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import { SymbolView } from 'expo-symbols';
 import { StyleSheet, TextInput, View } from 'react-native';
+import { Search } from 'lucide-react-native';
 
 interface Props {
     value?: string,
@@ -17,12 +17,10 @@ export default function SearchField({ value, onChange }: Props) {
             styles.container,
             { borderBottomColor: isFocused ? colors.accent : colors.primary }
         ]}>
-            <SymbolView
-                name='magnifyingglass'
-                size={ 24 }
-                weight='semibold'
-                tintColor={ (isFocused ? colors.accent : colors.primary) as string }
-                />
+            <Search
+                size={24}
+                color={(isFocused ? colors.accent : colors.primary) as string}
+            />
             <TextInput
                 style={{ color: colors.primary, ...styles.input }}
                 placeholder='Search...'

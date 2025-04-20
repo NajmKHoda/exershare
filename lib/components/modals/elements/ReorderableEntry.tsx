@@ -1,9 +1,9 @@
 import { View, Pressable, StyleSheet } from 'react-native';
-import { SymbolView } from 'expo-symbols';
 import ThemeText from '../../theme/ThemeText';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { useReorderableDrag } from 'react-native-reorderable-list';
 import { DataItem } from '../../lists/SearchableList';
+import { MoveVertical, XCircle } from 'lucide-react-native';
 
 interface Props {
     item: DataItem,
@@ -18,11 +18,11 @@ export default function ReorderableEntry({ item, index, onRemove }: Props) {
     return (
         <View style={[ styles.exerciseContainer, { backgroundColor: colors.backgroundSecondary } ]}>
             <Pressable style={ styles.exerciseDragHandle } onLongPress={ drag }>
-                <SymbolView name='chevron.up.chevron.down' size={ 24 } tintColor={ colors.primary as string } />
+                <MoveVertical size={ 24 } color={ colors.primary as string } />
                 <ThemeText style={ styles.exerciseText }>{ item.name }</ThemeText>
             </Pressable>
             <Pressable onPress={() => onRemove(index)}>
-                <SymbolView name='xmark.circle.fill' size={ 24 } tintColor={ colors.red as string } />
+                <XCircle size={ 24 } color={ colors.red as string } />
             </Pressable>
         </View>
     );

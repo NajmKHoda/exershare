@@ -1,6 +1,6 @@
-import TabSymbol from '@/lib/components/navigation/TabSymbol';
-import { useThemeColors } from '@/lib/hooks/useThemeColors'
+import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Tabs } from 'expo-router';
+import { Dumbbell, Book, LucideIcon } from 'lucide-react-native';
 
 export default function TabsLayout() {
     const colors = useThemeColors();
@@ -17,15 +17,26 @@ export default function TabsLayout() {
                 name='index'
                 options={{
                     title: 'Routines',
-                    tabBarIcon: TabSymbol('dumbbell.fill')
+                    tabBarIcon: TabIcon(Dumbbell)
                 }} />
             <Tabs.Screen
                 name='library/(tabs)'
                 options={{
                     title: 'Library',
-                    tabBarIcon: TabSymbol('book.closed.fill')
+                    tabBarIcon: TabIcon(Book)
                 }} />
         </Tabs>
     );
+}
 
+interface TabIconProps {
+    size: number,
+    focused: boolean,
+    color: string
+}
+
+function TabIcon(Icon: LucideIcon) {
+    return ({ color, size }: TabIconProps) => (
+        <Icon size={size} color={color} />
+    );
 }

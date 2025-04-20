@@ -1,5 +1,5 @@
-import { SymbolView } from 'expo-symbols';
-import { StyleSheet, View, Text, PlatformColor, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../hooks/useThemeColors';
 import ThemeText from './theme/ThemeText';
@@ -20,7 +20,7 @@ export default function RoutineHeader({ routineName, workoutName, date, onDayCha
             ...styles.container
         }}>
             <Pressable onPress={ () => onDayChange && onDayChange(-1) }>
-                <SymbolView size={ 40 } name='chevron.left' />
+                <ChevronLeft size={48} />
             </Pressable>
             <View style={ styles.info }>
                 <ThemeText style={ styles.secondaryInfo }>{ routineName.toUpperCase() }</ThemeText>
@@ -30,7 +30,7 @@ export default function RoutineHeader({ routineName, workoutName, date, onDayCha
                 </ThemeText>
             </View>
             <Pressable onPress={ () => onDayChange && onDayChange(1) }>
-                <SymbolView size={ 40 } name='chevron.right' />
+                <ChevronRight size={48} />
             </Pressable>
         </SafeAreaView>
     );
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 30,
+        paddingHorizontal: 15,
         paddingVertical: 15
     },
 

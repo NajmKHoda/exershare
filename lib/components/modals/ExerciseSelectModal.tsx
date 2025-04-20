@@ -6,6 +6,7 @@ import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import MultiselectList from '../lists/MultiselectList';
 import { DataItem } from '../lists/SearchableList';
 import SlideUpModal from './SlideUpModal';
+import { Plus } from 'lucide-react-native';
 
 interface Props {
     visible: boolean;
@@ -28,7 +29,7 @@ export default function ExerciseSelectModal({ visible, onAdd, onClose }: Props) 
             additionalControls={
                 <TextButton
                     label='Add'
-                    symbol='plus'
+                    Icon={Plus}
                     style={{ fontSize: 20 }}
                     onPress={() => {
                         onAdd?.(selectedExercises);

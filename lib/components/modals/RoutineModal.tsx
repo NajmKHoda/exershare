@@ -10,7 +10,7 @@ import { FlatList } from 'react-native-gesture-handler';
 import Separator from '../layout/Separator';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import ThemeText from '../theme/ThemeText';
-import { SymbolView } from 'expo-symbols';
+import { XCircle } from 'lucide-react-native';
 
 interface Props {
     routine: Routine | null;
@@ -92,10 +92,9 @@ export default function RoutineModal({ routine, visible, onClose }: Props) {
                             ...curRoutine,
                             workouts: curRoutine.workouts.map((w, i) => i === index ? null : w)
                         })}>
-                            <SymbolView
-                                name='xmark.circle.fill'
+                            <XCircle
                                 size={ 24 }
-                                tintColor={ (item ? colors.red : colors.gray) as string } />
+                                color={ (item ? colors.red : colors.gray) as string } />
                         </Pressable>
                     </View>
                 )} />

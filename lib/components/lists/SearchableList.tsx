@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import SearchField from '@/lib/components/controls/SearchField';
 import TextButton from '@/lib/components/controls/TextButton';
 import Separator from '@/lib/components/layout/Separator';
+import { Plus } from 'lucide-react-native';
 
 interface Props {
     data: DataItem[],
@@ -25,7 +26,7 @@ export default function SearchableList({ data, itemRenderer, onItemAdd }: Props)
                 { onItemAdd &&
                     <TextButton
                         style={ styles.optionText }
-                        symbol='plus'
+                        Icon={ Plus }
                         label='New'
                         onPress={ onItemAdd } />
                 }

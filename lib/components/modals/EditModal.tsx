@@ -1,6 +1,7 @@
 import { Modal, View, StyleSheet, KeyboardAvoidingView } from 'react-native';
 import TextButton from '../controls/TextButton';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { Save, Trash, X } from 'lucide-react-native';
 
 interface Props {
     visible: boolean;
@@ -26,22 +27,22 @@ export default function EditModal({ visible, onClose, onSave, onDelete, children
                         <View style={ styles.modalControls }>
                             <TextButton
                                 label='Cancel'
-                                symbol='xmark'
+                                Icon={X}
                                 onPress={ onClose }
-                                symbolSize={ 20 }
+                                iconSize={ 20 }
                                 style={ styles.control } />
                             <TextButton
                                 label='Save'
-                                symbol='square.and.arrow.down'
+                                Icon={ Save }
                                 onPress={ onSave }
-                                symbolSize={ 24 }
+                                iconSize={ 24 }
                                 style={ styles.control } />
                         </View>
                         { children }
                         { onDelete &&
                             <TextButton
                                 label='Delete'
-                                symbol='trash'
+                                Icon={ Trash }
                                 style={[ styles.deleteButton, { color: colors.red }]}
                                 onPress={ onDelete } />
                         }

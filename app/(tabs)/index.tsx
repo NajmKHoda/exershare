@@ -10,6 +10,7 @@ import { useActiveRoutine } from '@/lib/hooks/useActiveRoutine';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
 import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
+import { Play, FileText } from 'lucide-react-native';
 
 export default function Index() {
     const themeColors = useThemeColors();
@@ -89,8 +90,8 @@ export default function Index() {
                 :
                 <>
                     <View style={ styles.entryOptions }>
-                        <LabelButton symbolName='play.fill' label='Exercise Mode' />
-                        <LabelButton symbolName='note.text' label='Manual Entry' />
+                        <LabelButton Icon={Play} label='Exercise Mode' />
+                        <LabelButton Icon={FileText} label='Manual Entry' />
                     </View>
                     <View>
                         <ThemeText style={ styles.exerciseCaption }>EXERCISES</ThemeText>

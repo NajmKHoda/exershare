@@ -1,17 +1,17 @@
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleSheet, View } from 'react-native';
 import ThemeText from '@/lib/components/theme/ThemeText';
-import { SFSymbol, SymbolView } from 'expo-symbols';
+import { LucideIcon } from 'lucide-react-native';
 
 interface Props {
     label: string,
-    symbolName: SFSymbol,
-    symbolColor?: string,
-    symbolSize?: number,
+    Icon: LucideIcon,
+    iconColor?: string,
+    iconSize?: number,
     onPress?: () => unknown
 }
 
-export default function ListItem({ label, symbolName, symbolColor, symbolSize, onPress }: Props) {
+export default function ListItem({ label, Icon, iconColor, iconSize, onPress }: Props) {
     const colors = useThemeColors();
 
     return (
@@ -23,10 +23,9 @@ export default function ListItem({ label, symbolName, symbolColor, symbolSize, o
             onPress={ onPress }
         >
             <ThemeText style={ styles.label }>{ label }</ThemeText>
-            <SymbolView
-                name={ symbolName }
-                size={ symbolSize ?? 24 }
-                tintColor={ symbolColor ?? colors.primary as string } />
+            <Icon
+                size={ iconSize ?? 24 }
+                color={ iconColor ?? colors.primary as string } />
         </Pressable>
     );
 }

@@ -3,6 +3,7 @@ import { Modal, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import TextButton from '../controls/TextButton';
 import ThemeText from '../theme/ThemeText';
+import { ChevronLeft } from 'lucide-react-native';
 
 interface Props {
     visible: boolean,
@@ -28,7 +29,7 @@ export default function SlideUpModal({ visible, title, onClose, additionalContro
                         <View style={ styles.controls }>
                             <TextButton
                                 label='Back'
-                                symbol='chevron.left'
+                                Icon={ChevronLeft}
                                 style={{ fontSize: 20 }}
                                 onPress={ onClose } />
                             { additionalControls }
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
 
     controls: {
         flexDirection: 'row',
-        justifyContent: 'flex-start',
+        justifyContent: 'space-between',
         alignItems: 'center'
     },
 

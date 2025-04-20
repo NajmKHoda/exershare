@@ -1,12 +1,12 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import ThemeText from './theme/ThemeText';
 import { useThemeColors } from '../hooks/useThemeColors';
-import { SymbolView } from 'expo-symbols';
 import DatabaseSelectModal from './modals/DatabaseSelectModal';
 import { useState } from 'react';
 import { DataItem } from './lists/SearchableList';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useActiveRoutine } from '../hooks/useActiveRoutine';
+import { Pencil, Share } from 'lucide-react-native';
 
 export default function ActiveRoutineView() {
     const db = useSQLiteContext();
@@ -36,9 +36,9 @@ export default function ActiveRoutineView() {
                 </View>
                 <View style={ styles.options }>
                     <Pressable onPress={ () => setModalVisible(true) }>
-                        <SymbolView name='pencil.circle.fill' size={ 60 } />
+                        <Pencil size={ 40 } />
                     </Pressable>
-                    <SymbolView name='square.and.arrow.up.circle.fill' size={ 60 } />
+                    <Share size={ 40 } />
                 </View>
             </View>
 
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
     },
 
     options: {
-        flexDirection: 'row'
+        flexDirection: 'row',
+        gap: 16
     }
 });

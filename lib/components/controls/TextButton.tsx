@@ -1,26 +1,26 @@
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleProp, StyleSheet, TextStyle } from 'react-native';
 import ThemeText from '../theme/ThemeText';
-import { SFSymbol, SymbolView } from 'expo-symbols';
+import { LucideIcon } from 'lucide-react-native';
 
 interface Props {
     onPress?: () => unknown,
     label: string,
-    symbol?: SFSymbol,
-    symbolSize?: number,
+    Icon: LucideIcon,
+    iconSize?: number,
     style?: StyleProp<TextStyle>
 }
 
-export default function TextButton({ onPress, label, symbol, style, symbolSize }: Props) {
+export default function TextButton({ onPress, label, Icon, style, iconSize }: Props) {
     const colors = useThemeColors();
 
     const flattenedStyles = StyleSheet.flatten(style);
     const textColor = flattenedStyles?.color || colors.accent;
-    const fontSize = flattenedStyles?.fontSize || symbolSize || 16;
+    const fontSize = flattenedStyles?.fontSize || iconSize || 16;
 
     return (
         <Pressable style={ styles.container } onPress={ onPress }>
-            { symbol && <SymbolView name={ symbol } size={ fontSize } tintColor={ textColor as string } /> }
+            <Icon size={ fontSize } color={ textColor as string } />
             <ThemeText style={[ {
                 color: colors.accent,
                 fontWeight: 'bold'
