@@ -1,6 +1,6 @@
 import { View, TextInput, StyleSheet } from 'react-native';
 import ThemeText from '../theme/ThemeText';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 
 interface Props {
     name: string;
@@ -11,23 +11,24 @@ interface Props {
 
 export default function LabeledTextField({ name, initialValue, value, onValueChange }: Props) {
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
 
     return (
-        <View style={ styles.container }>
-            <ThemeText style={ styles.label }>{ name }:</ThemeText>
-            <View style={[ styles.inputContainer, { borderBottomColor: colors.primary } ]}>
+        <View style={resolvedStyles.container}>
+            <ThemeText style={resolvedStyles.label}>{name}:</ThemeText>
+            <View style={resolvedStyles.inputContainer}>
                 <TextInput
-                    style={[ styles.input, { color: colors.primary } ]}
-                    value={ value }
-                    defaultValue={ initialValue }
-                    onChangeText={ onValueChange }
+                    style={resolvedStyles.input}
+                    value={value}
+                    defaultValue={initialValue}
+                    onChangeText={onValueChange}
                 />
             </View>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -44,12 +45,14 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         flex: 1,
-        borderBottomWidth: 2
+        borderBottomWidth: 2,
+        borderBottomColor: colors.primary
     },
 
     input: {
         flex: 1,
         fontSize: 20,
-        lineHeight: 22
+        lineHeight: 22,
+        color: colors.primary
     },
 });

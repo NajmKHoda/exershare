@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import ThemeText from './theme/ThemeText';
-import { useThemeColors } from '../hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '../hooks/useThemeColors';
 import DatabaseSelectModal from './modals/DatabaseSelectModal';
 import { useState } from 'react';
 import { DataItem } from './lists/SearchableList';
@@ -11,6 +11,7 @@ import { Pencil, Share } from 'lucide-react-native';
 export default function ActiveRoutineView() {
     const db = useSQLiteContext();
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
     const { activeRoutine, refreshActiveRoutine } = useActiveRoutine();
     const [isModalVisible, setModalVisible] = useState(false);
 
@@ -21,45 +22,41 @@ export default function ActiveRoutineView() {
 
     return (
         <>
-            <View
-                style={{
-                    borderColor: colors.accent,
-                    backgroundColor: colors.backgroundSecondary,
-                    ...styles.container
-                }}
-            >
-                <View style={ styles.info }>
+            <View style={resolvedStyles.container}>
+                <View style={resolvedStyles.info}>
                     <ThemeText>ACTIVE ROUTINE</ThemeText>
-                    <ThemeText style={ styles.activeRoutineName }>
-                        { activeRoutine?.name ?? 'None' }
+                    <ThemeText style={resolvedStyles.activeRoutineName}>
+                        {activeRoutine?.name ?? 'None'}
                     </ThemeText>
                 </View>
-                <View style={ styles.options }>
-                    <Pressable onPress={ () => setModalVisible(true) }>
-                        <Pencil size={ 40 } />
+                <View style={resolvedStyles.options}>
+                    <Pressable onPress={() => setModalVisible(true)}>
+                        <Pencil size={40} />
                     </Pressable>
-                    <Share size={ 40 } />
+                    <Share size={40} />
                 </View>
             </View>
 
             <DatabaseSelectModal
-                visible={ isModalVisible }
-                onClose={ () => setModalVisible(false) }
+                visible={isModalVisible}
+                onClose={() => setModalVisible(false)}
                 dbName='routines'
                 title='Select Active Routine'
-                onSelect={ handleRoutineSelect } />
+                onSelect={handleRoutineSelect} />
         </>
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         borderRadius: 10,
         borderWidth: 3,
-        padding: 25
+        padding: 25,
+        borderColor: colors.accent,
+        backgroundColor: colors.backgroundSecondary
     },
 
     info: {

@@ -1,4 +1,4 @@
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Modal, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import TextButton from '../controls/TextButton';
@@ -15,6 +15,7 @@ interface Props {
 
 export default function SlideUpModal({ visible, title, onClose, additionalControls, children }: Props) {
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
 
     return (
         <Modal
@@ -24,17 +25,17 @@ export default function SlideUpModal({ visible, title, onClose, additionalContro
             onRequestClose={ onClose }
         >
             <SafeAreaProvider>
-                <SafeAreaView style={ styles.safeArea } edges={[ 'top' ]}>
-                    <View style={[ styles.container, { backgroundColor: colors.background } ]}>
-                        <View style={ styles.controls }>
+                <SafeAreaView style={ resolvedStyles.safeArea } edges={[ 'top' ]}>
+                    <View style={ resolvedStyles.container }>
+                        <View style={ resolvedStyles.controls }>
                             <TextButton
                                 label='Back'
                                 Icon={ChevronLeft}
-                                style={{ fontSize: 20 }}
+                                style={ resolvedStyles.backButton }
                                 onPress={ onClose } />
                             { additionalControls }
                         </View>
-                        { title && <ThemeText style={ styles.title }>{ title }</ThemeText> }
+                        { title && <ThemeText style={ resolvedStyles.title }>{ title }</ThemeText> }
                         { children }
                     </View>
                 </SafeAreaView>
@@ -43,7 +44,7 @@ export default function SlideUpModal({ visible, title, onClose, additionalContro
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     safeArea: {
         flex: 1,
         alignItems: 'stretch',
@@ -57,12 +58,17 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
+        backgroundColor: colors.background
     },
 
     controls: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center'
+    },
+
+    backButton: {
+        fontSize: 20
     },
 
     title: {

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ThemeText from '@/lib/components/theme/ThemeText';
@@ -7,28 +7,23 @@ import LibraryTabBar from '@/lib/components/navigation/LibraryTabBar';
 
 export default function Layout() {
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
   
     return (
         <>
             <SafeAreaView
                 edges={[ 'top' ]}
-                style={{
-                    backgroundColor: colors.backgroundSecondary,
-                    ...styles.headerContainer
-                }}
+                style={resolvedStyles.headerContainer}
             >
-                <ThemeText style={ styles.headerTitle }>Library</ThemeText>
+                <ThemeText style={resolvedStyles.headerTitle}>Library</ThemeText>
             </SafeAreaView>
             <Tabs
                 screenOptions={{
                     headerShown: false,
                     tabBarPosition: 'top',
-                    sceneStyle: {
-                        backgroundColor: colors.background,
-                        ...styles.tabScreen
-                    }
+                    sceneStyle: resolvedStyles.tabScreen
                 }}
-                tabBar={ props => <LibraryTabBar { ...props } /> }
+                tabBar={props => <LibraryTabBar {...props} />}
             >   
                 <Tabs.Screen name='index' options={{ title: 'Routines' }} />
                 <Tabs.Screen name='workouts' options={{ title: 'Workouts' }} />
@@ -38,14 +33,15 @@ export default function Layout() {
     );
   }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1
     },
 
     headerContainer: {
         paddingVertical: 10,
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
+        backgroundColor: colors.backgroundSecondary
     },
 
     headerTitle: {
@@ -56,7 +52,7 @@ const styles = StyleSheet.create({
 
     tabScreen: {
         paddingHorizontal: 20,
-        alignItems: 'stretch'
+        alignItems: 'stretch',
+        backgroundColor: colors.background
     }
-
 })

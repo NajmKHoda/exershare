@@ -2,7 +2,7 @@ import LabelButton from '@/lib/components/controls/LabelButton';
 import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Button, StyleSheet, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
@@ -14,6 +14,7 @@ import { Play, FileText } from 'lucide-react-native';
 
 export default function Index() {
     const themeColors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
     const { activeRoutine } = useActiveRoutine();
 
     // Date values for the current view
@@ -78,23 +79,23 @@ export default function Index() {
     }
 
     return (
-        <View style={{ backgroundColor: themeColors.background, ...styles.container }}>
+        <View style={resolvedStyles.container}>
             <RoutineHeader
                 routineName={ routineName }
                 workoutName={ workoutName }
                 date = { date }
                 onDayChange={ onDayChange }/>
-            <View style={ styles.body }>
+            <View style={ resolvedStyles.body }>
             { showPlaceholder ?
                 <RestDayPlaceholder />
                 :
                 <>
-                    <View style={ styles.entryOptions }>
+                    <View style={ resolvedStyles.entryOptions }>
                         <LabelButton Icon={Play} label='Exercise Mode' />
                         <LabelButton Icon={FileText} label='Manual Entry' />
                     </View>
                     <View>
-                        <ThemeText style={ styles.exerciseCaption }>EXERCISES</ThemeText>
+                        <ThemeText style={ resolvedStyles.exerciseCaption }>EXERCISES</ThemeText>
                         <View>
                             <ExerciseList exercises={ exerciseList } />
                         </View>
@@ -107,10 +108,11 @@ export default function Index() {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'stretch'
+        alignItems: 'stretch',
+        backgroundColor: colors.background
     },
 
     body: {

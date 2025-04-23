@@ -1,4 +1,4 @@
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
 
@@ -9,16 +9,17 @@ interface Props {
 
 export default function LabelButton({ Icon, label }: Props) {
     const themeColors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
 
     return (
-        <Pressable style={{ backgroundColor: themeColors.accent, ...styles.container }}>
+        <Pressable style={resolvedStyles.container}>
             <Icon color='#ffffff' size={24} />
-            <Text style={ styles.label }>{ label }</Text>
+            <Text style={resolvedStyles.label}>{ label }</Text>
         </Pressable>
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: 'row',
@@ -26,7 +27,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 15,
         borderRadius: 10,
-        gap: 5
+        gap: 5,
+        backgroundColor: colors.accent
     },
 
     label: {

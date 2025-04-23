@@ -1,4 +1,4 @@
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleSheet, View } from 'react-native';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { LucideIcon } from 'lucide-react-native';
@@ -13,29 +13,28 @@ interface Props {
 
 export default function ListItem({ label, Icon, iconColor, iconSize, onPress }: Props) {
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
 
     return (
         <Pressable
-            style={{
-                backgroundColor: colors.backgroundSecondary,
-                ...styles.container
-            }}
-            onPress={ onPress }
+            style={resolvedStyles.container}
+            onPress={onPress}
         >
-            <ThemeText style={ styles.label }>{ label }</ThemeText>
+            <ThemeText style={resolvedStyles.label}>{label}</ThemeText>
             <Icon
-                size={ iconSize ?? 24 }
-                color={ iconColor ?? colors.primary as string } />
+                size={iconSize ?? 24}
+                color={iconColor ?? colors.primary as string} />
         </Pressable>
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 15
+        padding: 15,
+        backgroundColor: colors.backgroundSecondary
     },
 
     label: {

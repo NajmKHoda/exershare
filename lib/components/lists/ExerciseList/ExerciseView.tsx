@@ -1,4 +1,4 @@
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { StyleSheet, View } from 'react-native';
 import ThemeText from '../../theme/ThemeText';
 import { Check, MoreHorizontal } from 'lucide-react-native';
@@ -9,6 +9,7 @@ interface Props {
 
 export default function ExerciseView({ exercise }: Props) {
     const themeColors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
 
     const { name, completion } = exercise;
 
@@ -28,22 +29,20 @@ export default function ExerciseView({ exercise }: Props) {
     }
 
     return (
-        <View style={{
-            backgroundColor: themeColors.backgroundSecondary,
-            ...styles.container
-        }}>
-            <ThemeText style={ styles.name }>{ name }</ThemeText>
+        <View style={resolvedStyles.container}>
+            <ThemeText style={resolvedStyles.name}>{ name }</ThemeText>
             { completionSymbol }
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         padding: 15,
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        backgroundColor: colors.backgroundSecondary
     },
 
     name: {

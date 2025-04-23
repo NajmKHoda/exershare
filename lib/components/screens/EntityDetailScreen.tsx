@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import TextButton from '../controls/TextButton';
 import { ChevronLeft, Save, Trash } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import ThemeText from '../theme/ThemeText';
 
 interface EntityDetailScreenProps {
@@ -18,46 +18,50 @@ interface EntityDetailScreenProps {
 export default function EntityDetailScreen({ title, onSave, onDelete, children, isNewEntity }: EntityDetailScreenProps) {
     const router = useRouter();
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
      
     return (
-        <View style={{ ...styles.container, backgroundColor: colors.background }}>
-            <SafeAreaView edges={['top']} style={{ ...styles.header, backgroundColor: colors.backgroundSecondary }}>
-                <TextButton label="Back" style={styles.back} Icon={ChevronLeft} onPress={() => router.back()} />
-                <ThemeText style={styles.title}>{title}</ThemeText>
+        <View style={resolvedStyles.container}>
+            <SafeAreaView edges={['top']} style={resolvedStyles.header}>
+                <TextButton label="Back" style={resolvedStyles.back} Icon={ChevronLeft} onPress={() => router.back()} />
+                <ThemeText style={resolvedStyles.title}>{title}</ThemeText>
             </SafeAreaView>
-            <View style={styles.childrenContainer}>
+            <View style={resolvedStyles.childrenContainer}>
                 {children}
             </View>
-            <SafeAreaView edges={['bottom']} style={{
-                ...styles.footer,
-                backgroundColor: colors.backgroundSecondary,
-                justifyContent: isNewEntity ? 'flex-end' : 'space-between'
-            }}>
+            <SafeAreaView edges={['bottom']} style={{ ...resolvedStyles.footer, justifyContent: isNewEntity ? 'flex-end' : 'space-between' }}>
                 {!isNewEntity &&
-                <TextButton label="Delete" style={{...styles.control, color: colors.red}} Icon={Trash} onPress={onDelete} />}
-                <TextButton label="Save" style={styles.control} Icon={Save} onPress={onSave} />
+                <TextButton label="Delete" style={resolvedStyles.deleteControl} Icon={Trash} onPress={onDelete} />}
+                <TextButton label="Save" style={resolvedStyles.control} Icon={Save} onPress={onSave} />
             </SafeAreaView>
         </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
+        backgroundColor: colors.background
     },
     header: {
         paddingHorizontal: 20,
         paddingTop: 5,
         paddingBottom: 10,
+        backgroundColor: colors.backgroundSecondary
     },
     footer: {
         flexDirection: 'row',
         paddingHorizontal: 20,
         paddingTop: 10,
         paddingBottom: 20,
+        backgroundColor: colors.backgroundSecondary,
     },
     control: {
         fontSize: 22
+    },
+    deleteControl: {
+        fontSize: 22,
+        color: colors.red
     },
     back: {
         fontSize: 20,

@@ -1,7 +1,7 @@
 import { StyleSheet, View, Pressable } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColors } from '../hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '../hooks/useThemeColors';
 import ThemeText from './theme/ThemeText';
 
 interface Props {
@@ -13,19 +13,17 @@ interface Props {
 
 export default function RoutineHeader({ routineName, workoutName, date, onDayChange }: Props) {
     const themeColors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
 
     return (
-        <SafeAreaView edges={[ 'top' ]} style={{
-            backgroundColor: themeColors.backgroundSecondary, 
-            ...styles.container
-        }}>
+        <SafeAreaView edges={[ 'top' ]} style={resolvedStyles.container}>
             <Pressable onPress={ () => onDayChange && onDayChange(-1) }>
                 <ChevronLeft size={48} />
             </Pressable>
-            <View style={ styles.info }>
-                <ThemeText style={ styles.secondaryInfo }>{ routineName.toUpperCase() }</ThemeText>
-                <ThemeText style={ styles.workoutName }>{ workoutName }</ThemeText>
-                <ThemeText style={ styles.secondaryInfo }>{
+            <View style={ resolvedStyles.info }>
+                <ThemeText style={ resolvedStyles.secondaryInfo }>{ routineName.toUpperCase() }</ThemeText>
+                <ThemeText style={ resolvedStyles.workoutName }>{ workoutName }</ThemeText>
+                <ThemeText style={ resolvedStyles.secondaryInfo }>{
                     date.toLocaleDateString('en-US', { dateStyle: 'full' })}
                 </ThemeText>
             </View>
@@ -36,13 +34,14 @@ export default function RoutineHeader({ routineName, workoutName, date, onDayCha
     );
 }
 
-const styles = StyleSheet.create({ 
+const styles = (colors: ThemeColors) => StyleSheet.create({ 
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 15,
-        paddingVertical: 15
+        paddingVertical: 15,
+        backgroundColor: colors.backgroundSecondary
     },
 
     info: {

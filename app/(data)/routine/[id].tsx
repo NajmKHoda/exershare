@@ -7,7 +7,7 @@ import { XCircle } from 'lucide-react-native';
 import { Routine } from '@/lib/data/Routine';
 import EntityDetailScreen from '@/lib/components/screens/EntityDetailScreen';
 import LabeledTextField from '@/lib/components/controls/LabeledTextField';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { FlatList } from 'react-native-gesture-handler';
 import { DataItem } from '@/lib/components/lists/SearchableList';
 import Separator from '@/lib/components/layout/Separator';
@@ -19,6 +19,7 @@ export default function RoutineScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const db = useSQLiteContext();
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
     const [routine, setRoutine] = useState<Routine | null>(null);
     const [currentState, setCurrentState] = useState({
         name: '',
@@ -99,12 +100,12 @@ export default function RoutineScreen() {
                 data={currentState.workouts}
                 ItemSeparatorComponent={Separator}
                 keyExtractor={(_, index) => index.toString()}
-                contentContainerStyle={styles.listContainer}
+                contentContainerStyle={resolvedStyles.listContainer}
                 scrollEnabled={false}
                 renderItem={({ item, index }) => (
-                    <View style={[styles.workoutRow, { backgroundColor: colors.backgroundSecondary }]}>
-                        <Pressable style={styles.selectRegion} onPress={() => setDayToSet(index)}>
-                            <ThemeText style={styles.entryText}>
+                    <View style={resolvedStyles.workoutRow}>
+                        <Pressable style={resolvedStyles.selectRegion} onPress={() => setDayToSet(index)}>
+                            <ThemeText style={resolvedStyles.entryText}>
                                 <Text style={{ fontWeight: 'bold' }}>{weekDays[index]}: </Text>
                                 {item?.name ?? 'Rest Day'}
                             </ThemeText>
@@ -135,7 +136,7 @@ export default function RoutineScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     listContainer: {
         borderRadius: 10,
         overflow: 'hidden'
@@ -144,7 +145,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 15
+        padding: 15,
+        backgroundColor: colors.backgroundSecondary
     },
     selectRegion: {
         flex: 1

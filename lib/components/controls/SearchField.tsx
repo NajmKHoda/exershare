@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { Search } from 'lucide-react-native';
 
@@ -11,21 +11,19 @@ interface Props {
 export default function SearchField({ value, onChange }: Props) {
     const colors = useThemeColors();
     const [isFocused, setIsFocused] = useState(false);
+    const resolvedStyles = useResolvedStyles(styles);
 
     return (
-        <View style={[
-            styles.container,
-            { borderBottomColor: isFocused ? colors.accent : colors.primary }
-        ]}>
+        <View style={{ ...resolvedStyles.container, borderBottomColor: isFocused ? colors.accent : colors.primary }}>
             <Search
                 size={24}
                 color={(isFocused ? colors.accent : colors.primary) as string}
             />
             <TextInput
-                style={{ color: colors.primary, ...styles.input }}
+                style={resolvedStyles.input}
                 placeholder='Search...'
-                value={ value }
-                onChangeText={ onChange }
+                value={value}
+                onChangeText={onChange}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
             />
@@ -33,7 +31,7 @@ export default function SearchField({ value, onChange }: Props) {
     );
 }
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: 'row',
@@ -43,10 +41,10 @@ const styles = StyleSheet.create({
         borderBottomWidth: 3,
         overflow: 'hidden'
     },
-
     input: {
         fontSize: 20,
         lineHeight: 24,
-        paddingVertical: 0
+        paddingVertical: 0,
+        color: colors.primary
     }
 });

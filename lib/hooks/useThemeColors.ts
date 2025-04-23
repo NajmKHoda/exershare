@@ -38,3 +38,7 @@ const themeColorsContext = createContext<ThemeColors>(defaultThemeColors);
 export const ThemeColorsProvider = themeColorsContext.Provider;
 export const ThemeColorsConsumer = themeColorsContext.Consumer;
 export const useThemeColors = () => useContext(themeColorsContext);
+export function useResolvedStyles<T>(styles: (colors: ThemeColors) => T): T {
+    const colors = useThemeColors();
+    return styles(colors);
+}

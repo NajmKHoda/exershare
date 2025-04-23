@@ -1,7 +1,7 @@
 import { View, StyleSheet, FlatList, TextInput } from 'react-native';
 import { Set } from '@/lib/data/Exercise';
 import Separator from '../layout/Separator';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable } from 'react-native';
 import ThemeText from '../theme/ThemeText';
 import AddFooter from './elements/AddFooter';
@@ -14,6 +14,7 @@ interface Props {
 
 export default function SetList({ sets, onSetsChange }: Props) {
     const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
 
     function handleChange(index: number, field: keyof Set, value: string) {
         const updatedSets = [...sets];
@@ -24,46 +25,44 @@ export default function SetList({ sets, onSetsChange }: Props) {
     const canDelete = sets.length > 1;
 
     return (
-        <View style={ styles.container }>
-            <View style={ styles.header }>
-                <ThemeText style={ styles.headerText }>Reps</ThemeText>
-                <ThemeText style={ styles.headerText }>Weight (lbs)</ThemeText>
+        <View style={resolvedStyles.container}>
+            <View style={resolvedStyles.header}>
+                <ThemeText style={resolvedStyles.headerText}>Reps</ThemeText>
+                <ThemeText style={resolvedStyles.headerText}>Weight (lbs)</ThemeText>
             </View>
             <FlatList
-                data={ sets }
-                keyExtractor={ (_, index) => index.toString() }
-                ItemSeparatorComponent={ Separator }
-                contentContainerStyle={ styles.listContainer }
+                data={sets}
+                keyExtractor={(_, index) => index.toString()}
+                ItemSeparatorComponent={Separator}
+                contentContainerStyle={resolvedStyles.listContainer}
                 ListFooterComponent={
                     <AddFooter onAdd={() => onSetsChange?.([...sets, { reps: 12, weight: 25 }])} />
                 }
                 renderItem={({ item, index }) => (
-                    <View style={[ styles.row, {
-                        backgroundColor: colors.backgroundSecondary as string
-                    }]}>
+                    <View style={resolvedStyles.row}>
                         <TextInput
-                            style={[ styles.cell, { color: colors.primary as string } ]}
-                            value={ item.reps.toString() }
-                            onChangeText={ (text) => handleChange(index, 'reps', text) }
+                            style={resolvedStyles.cell}
+                            value={item.reps.toString()}
+                            onChangeText={(text) => handleChange(index, 'reps', text)}
                             keyboardType='numeric'
                         />
                         <TextInput
-                            style={[ styles.cell, { color: colors.primary as string } ]}
-                            value={ item.weight.toString() }
-                            onChangeText={ (text) => handleChange(index, 'weight', text) }
+                            style={resolvedStyles.cell}
+                            value={item.weight.toString()}
+                            onChangeText={(text) => handleChange(index, 'weight', text)}
                             keyboardType='numeric'
                         />
                         <Pressable 
-                            style={ styles.deleteButton }
-                            disabled={ !canDelete }
+                            style={resolvedStyles.deleteButton}
+                            disabled={!canDelete}
                             onPress={() => {
                                 const updatedSets = sets.filter((_, i) => i !== index);
                                 onSetsChange?.(updatedSets);
                             }}
                         >
                             <XCircle
-                                size={ 24 }
-                                color={ (canDelete ? colors.red : colors.gray) as string } />
+                                size={24}
+                                color={(canDelete ? colors.red : colors.gray) as string} />
                         </Pressable>
                     </View>
                 )}
@@ -72,7 +71,7 @@ export default function SetList({ sets, onSetsChange }: Props) {
     );
 };
 
-const styles = StyleSheet.create({
+const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         gap: 5
     },
@@ -99,6 +98,7 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         paddingVertical: 10,
+        backgroundColor: colors.backgroundSecondary
     },
 
     cell: {
@@ -106,7 +106,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         padding: 0,
         fontSize: 20,
-        lineHeight: 22
+        lineHeight: 22,
+        color: colors.primary
     },
 
     deleteButton: {
