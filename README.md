@@ -1,7 +1,10 @@
-# Exershare Classic
+# Exershare
 
-Here lies Exershare Classic: born in React Native, died for the gains.
-2024–2025. Gone but not forgotten.
-May its modular routines rest in peace.
+A mobile workout app centered around community.
 
-He's succeeded by his son, Exershare Neo: a platform that seamlessly integrates coaching courses and workout planning. Minimize the video rewinding/note scribbling and maximize the gains.
+Exershare has some handy features, including
+- Tap-to-share routines
+- Competitive and co-op routines
+- Syncable workouts and exercises (change once, see everywhere)
+
+Exershare is built with React Native and SQLite. It is currently under development.
