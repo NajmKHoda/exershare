@@ -11,8 +11,12 @@ import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
 import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
 import { Play, FileText } from 'lucide-react-native';
+import { Redirect } from 'expo-router';
 
 export default function Index() {
+    // For testing
+    return <Redirect href='/login' />;
+
     const themeColors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
     const { activeRoutine } = useActiveRoutine();
