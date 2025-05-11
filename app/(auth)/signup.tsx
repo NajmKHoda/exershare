@@ -1,7 +1,8 @@
 import FormField from '@/lib/components/controls/FormField';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
-import { Link } from 'expo-router';
+import { supabase } from '@/lib/supabase';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -9,7 +10,21 @@ export default function SignUp() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
+    const [waiting, setWaiting] = useState(false);
+    const router = useRouter();
+
     const resolvedStyles = useResolvedStyles(styles);
+
+    async function handleSignUp() {
+        setWaiting(true);
+        const { error } =  await supabase.auth.signUp({
+            email: email,
+            password: password
+        });
+        setWaiting(false);
+
+        if (!error) router.push('/'); 
+    }
 
     return (
         <>
@@ -17,8 +32,8 @@ export default function SignUp() {
             <FormField name='email' keyboardType='email-address' value={email} onChange={setEmail} style={resolvedStyles.field} />
             <FormField name='password' isPassword value={password} onChange={setPassword} style={resolvedStyles.field} />
 
-            <Pressable style={resolvedStyles.button} onPress={() => {}}>
-                <ThemeText style={resolvedStyles.buttonLabel}>Sign Up</ThemeText>
+            <Pressable style={resolvedStyles.button} onPress={handleSignUp} disabled={waiting}>
+                <ThemeText style={resolvedStyles.buttonLabel}>{waiting ? 'Signing up...' : 'Sign Up'}</ThemeText>
             </Pressable>
             <Link style={resolvedStyles.link} href="/login">
                 or log in

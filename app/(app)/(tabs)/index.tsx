@@ -2,7 +2,7 @@ import LabelButton from '@/lib/components/controls/LabelButton';
 import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
-import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { Button, StyleSheet, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
@@ -11,13 +11,8 @@ import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
 import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
 import { Play, FileText } from 'lucide-react-native';
-import { Redirect } from 'expo-router';
 
 export default function Index() {
-    // For testing
-    return <Redirect href='/login' />;
-
-    const themeColors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
     const { activeRoutine } = useActiveRoutine();
 

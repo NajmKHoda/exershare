@@ -1,21 +1,36 @@
 import FormField from '@/lib/components/controls/FormField';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
-import { Link } from 'expo-router';
+import { supabase } from '@/lib/supabase';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 export default function Login() {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [waiting, setWaiting] = useState(false);
+    const router = useRouter();
+
     const resolvedStyles = useResolvedStyles(styles);
+
+    async function handleLogin() {
+        setWaiting(true);
+        const { error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        setWaiting(false);
+        
+        if (!error) router.push('/');
+    }
 
     return (
         <>
-            <FormField name='username' value={username} onChange={setUsername} style={resolvedStyles.usernameField} />
+            <FormField name='email address' keyboardType='email-address' value={email} onChange={setEmail} style={resolvedStyles.emailField} />
             <FormField name='password' isPassword value={password} onChange={setPassword} />
-            <Pressable style={resolvedStyles.button} onPress={() => {}}>
-                <ThemeText style={resolvedStyles.buttonLabel}>Login</ThemeText>
+            <Pressable style={resolvedStyles.button} onPress={handleLogin} disabled={waiting}>
+                <ThemeText style={resolvedStyles.buttonLabel}>{waiting ? 'Logging in...' : 'Login'}</ThemeText>
             </Pressable>
             <Link style={resolvedStyles.signUpLink} href='/signup'>
                 or sign up
@@ -25,7 +40,7 @@ export default function Login() {
 }
 
 const styles = (colors: ThemeColors) => StyleSheet.create({
-    usernameField: {
+    emailField: {
         marginBottom: 16,
     },
     button: {
