@@ -22,8 +22,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-sqlite",
-      "expo-crypto"
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true
