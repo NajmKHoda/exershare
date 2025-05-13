@@ -30,7 +30,7 @@ export default function WorkoutScreen() {
             if (id === 'new') return;
             
             try {
-                const loadedWorkout = await Workout.pullOne(parseInt(id), db);
+                const loadedWorkout = await Workout.pullOne(id, db);
                 if (loadedWorkout) {
                     setWorkout(loadedWorkout);
                     setCurrentState({

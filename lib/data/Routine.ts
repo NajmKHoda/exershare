@@ -1,26 +1,28 @@
 import { SQLiteDatabase } from 'expo-sqlite';
+import { randomUUID } from 'expo-crypto';
 import { Workout } from './Workout';
 import { Exercise } from './Exercise';
+import { supabase } from '../supabase';
 
 export class Routine {
-    id: number;
+    id: string;
     name: string;
     workouts: (Workout | null)[];
     private shallow: boolean;
-    private workoutIds: (number | null)[];
+    private workoutIds: (string | null)[];
 
-    constructor(id: number, name: string, workouts: (Workout | null)[]);
-    constructor(id: number, name: string, workoutIds: (number | null)[]);
-    constructor(id: number, name: string, third: (Workout | null)[] | (number | null)[]) {
+    constructor(id: string, name: string, workouts: (Workout | null)[]);
+    constructor(id: string, name: string, workoutIds: (string | null)[]);
+    constructor(id: string, name: string, third: (Workout | null)[] | (string | null)[]) {
         if (third.length !== 7) 
             throw new Error("Routine requires an array of length 7.");
 
         this.id = id;
         this.name = name;
-        
-        if (third.some(x => typeof x === 'number')) {
+
+        if (third.some(x => typeof x === 'string')) {
             this.shallow = true;
-            this.workoutIds = third as (number | null)[];
+            this.workoutIds = third as (string | null)[];
             this.workouts = [];
         } else {
             this.shallow = false;
@@ -32,23 +34,28 @@ export class Routine {
     static async init(db: SQLiteDatabase) {
         await db.execAsync(`
             CREATE TABLE IF NOT EXISTS routines (
-                id INTEGER PRIMARY KEY NOT NULL,
-                name TEXT NOT NULL
+                id TEXT PRIMARY KEY NOT NULL,
+                name TEXT NOT NULL,
+                dirty INTEGER NOT NULL DEFAULT 1
             );
             
             CREATE TABLE IF NOT EXISTS workout_instances (
-                position INTEGER NOT NULL,
-                routine_id INTEGER NOT NULL,
-                workout_id INTEGER NOT NULL,
+                position INTEGER NOT NULL CHECK(position >= 0 AND position < 7),
+                routine_id TEXT NOT NULL,
+                workout_id TEXT NOT NULL,
                 PRIMARY KEY (position, routine_id),
-                FOREIGN KEY (routine_id) REFERENCES routines(id),
+                FOREIGN KEY (routine_id) REFERENCES routines(id)
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE,
                 FOREIGN KEY (workout_id) REFERENCES workouts(id)
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE
             );
         `)
     }
-    
-    static async pullOne(id: number, db: SQLiteDatabase) {
-        const routineQuery = await db.getFirstAsync<{ name: string, id: number }>(`
+
+    static async pullOne(id: string, db: SQLiteDatabase) {
+        const routineQuery = await db.getFirstAsync<{ name: string, id: string }>(`
             SELECT routines.name, routines.id FROM routines
             WHERE routines.id = ?;
         `, [id]);
@@ -56,7 +63,7 @@ export class Routine {
 
         const [rawWorkouts, rawExercises] = await Promise.all([
             db.getAllAsync<{
-                workout_id: number,
+                workout_id: string,
                 position: number,
                 name: string
             }>(`
@@ -73,7 +80,7 @@ export class Routine {
             db.getAllAsync<{
                 workout_position: number,
                 exercise_position: number,
-                id: number,
+                id: string,
                 name: string,
                 sets: string,
                 notes: string,
@@ -81,16 +88,17 @@ export class Routine {
             }>(`
                 WITH routine_workouts AS (
                     SELECT
-                        workout_instances.position AS workout_position,
-                        workout_instances.workout_id
+                        ROW_NUMBER() OVER (ORDER BY position) - 1 AS workout_position,
+                        workout_id
                     FROM workout_instances
-                    JOIN workouts
-                        ON workout_instances.workout_id = workouts.id
-                    WHERE workout_instances.routine_id = ?
+                    WHERE routine_id = ?
                 )
                 SELECT
                     routine_workouts.workout_position,
-                    exercise_instances.position AS exercise_position,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY routine_workouts.workout_position
+                        ORDER BY exercise_instances.position
+                    ) - 1 AS exercise_position,
                     exercises.id,
                     exercises.name,
                     exercises.sets,
@@ -132,100 +140,98 @@ export class Routine {
     }
 
     static async pullActive(db: SQLiteDatabase) {
-        const activeRoutineIdQuery = await db.getFirstAsync<{ active_routine_id: number }>(`
+        const idQuery = await db.getFirstAsync<{ active_routine_id: string }>(`
             SELECT user.active_routine_id FROM user;
         `);
-        if (!activeRoutineIdQuery) return null;
+        if (!idQuery) return null;
 
-        return this.pullOne(activeRoutineIdQuery.active_routine_id, db);
+        return this.pullOne(idQuery.active_routine_id, db);
     }
 
-    static async create(name: string, workoutIds: (number | null)[], db: SQLiteDatabase) {
-        const result = await db.runAsync('INSERT INTO routines (name) VALUES (?)', name);
-        const routineId = result.lastInsertRowId;
+    static async create(name: string, workoutIds: (string | null)[], db: SQLiteDatabase) {
+        await db.withExclusiveTransactionAsync(async (transaction) => {
+            const id = randomUUID();
+            await transaction.runAsync('INSERT INTO routines (id, name) VALUES (?, ?)', id, name);
 
-        const linkQuery = await db.prepareAsync(`
-            INSERT INTO workout_instances (position, routine_id, workout_id)
-                VALUES ($position, $routineId, $workoutId);
-        `);
+            const linkQuery = await transaction.prepareAsync(`
+                INSERT INTO workout_instances (position, routine_id, workout_id)
+                    VALUES ($position, $routineId, $workoutId);
+            `);
 
-        try {
-            await Promise.all(workoutIds
-                .map((workoutId, pos) => {
-                    if (workoutId === null) return null;
-                    return linkQuery.executeAsync({
-                        $position: pos,
-                        $routineId: routineId,
-                        $workoutId: workoutId
+            try {
+                await Promise.all(workoutIds
+                    .map((workoutId, pos) => {
+                        if (workoutId === null) return null;
+                        return linkQuery.executeAsync({
+                            $position: pos,
+                            $routineId: id,
+                            $workoutId: workoutId
+                        })
                     })
-                })
-            );
-        } finally {
-            await linkQuery.finalizeAsync();
-        }
+                );
+            } finally {
+                await linkQuery.finalizeAsync();
+            }
+        });
     }
 
     async save(db: SQLiteDatabase) {
-        await Promise.all([
-            // Save routine
-            db.runAsync(`
-                INSERT INTO routines (id, name)
-                    VALUES ($id, $name)
-                ON CONFLICT (id) DO UPDATE SET
-                    id = $id,
-                    name = $name;
-            `, {
-                $id: this.id,
-                $name: this.name
-            }),
+        await db.withExclusiveTransactionAsync(async (transaction) => {
+            await Promise.all([
+                // Save routine
+                transaction.runAsync(`
+                    INSERT INTO routines (id, name)
+                        VALUES ($id, $name)
+                    ON CONFLICT (id) DO UPDATE SET name = $name, dirty = 1;
+                `, {
+                    $id: this.id,
+                    $name: this.name
+                }),
 
-            // Save associated workouts (if this isn't a shallow Routine)
-            !this.shallow && Workout.saveMany(this.workouts.filter(x => x != null), db)
-        ]);
+                // Save associated workouts (if this isn't a shallow Routine)
+                !this.shallow && Workout.saveMany(this.workouts.filter(x => x != null), db)
+            ]);
 
-        // Prepare linking query
-        const linkQuery = await db.prepareAsync(`
-            INSERT INTO workout_instances (position, routine_id, workout_id)
-                VALUES ($position, $routineId, $workoutId)
-            ON CONFLICT (position, routine_id) DO UPDATE SET
-                workout_id = $workoutId;
-        `);
-        
-        // For workouts that were just turned null
-        const delinkQuery = await db.prepareAsync(`
-            DELETE FROM workout_instances
-                WHERE routine_id = $routineId AND position = $position;
-        `);
-        
-        const workoutIds = this.shallow ? this.workoutIds : this.workouts.map(w => w?.id ?? null);
-        
-        // Link workouts with routine
-        await Promise.all(workoutIds
-            .map((workoutId, pos) =>
-                workoutId === null ?
-                    delinkQuery.executeAsync({
-                        $routineId: this.id,
-                        $position: pos
-                    }) :
-                    linkQuery.executeAsync({
-                        $position: pos,
-                        $routineId: this.id,
-                        $workoutId: workoutId
-                    })
-            )
-        );
-
-        await Promise.all([ linkQuery.finalizeAsync(), delinkQuery.finalizeAsync() ]);
+            // Prepare linking query
+            const linkQuery = await transaction.prepareAsync(`
+                INSERT INTO workout_instances (position, routine_id, workout_id)
+                    VALUES ($position, $routineId, $workoutId)
+                ON CONFLICT (position, routine_id) DO UPDATE SET
+                    workout_id = $workoutId;
+            `);
+            
+            // For workouts that were just turned null
+            const delinkQuery = await transaction.prepareAsync(`
+                DELETE FROM workout_instances
+                    WHERE routine_id = $routineId AND position = $position;
+            `);
+            
+            const workoutIds = this.shallow ? this.workoutIds : this.workouts.map(w => w?.id ?? null);
+            
+            try {
+                // Link workouts with routine
+                await Promise.all(workoutIds
+                    .map((workoutId, pos) =>
+                        workoutId === null ?
+                            delinkQuery.executeAsync({
+                                $routineId: this.id,
+                                $position: pos
+                            }) :
+                            linkQuery.executeAsync({
+                                $position: pos,
+                                $routineId: this.id,
+                                $workoutId: workoutId
+                            })
+                    )
+                );
+            } finally {
+                await Promise.all([ linkQuery.finalizeAsync(), delinkQuery.finalizeAsync() ]);
+            }
+        });
     }
 
     async delete(db: SQLiteDatabase) {
-        // Delete associated workout instances
-        await db.runAsync('DELETE FROM workout_instances WHERE routine_id = ?', this.id);
-
-        // Nullify the active routine if it's this one
-        await db.runAsync('UPDATE user SET active_routine_id = NULL WHERE active_routine_id = ?', this.id);
-
-        // Finally, delete the routine itself
         await db.runAsync('DELETE FROM routines WHERE id = ?', this.id);
+        await supabase.from('routines').delete().eq('id', this.id);
     }
 }

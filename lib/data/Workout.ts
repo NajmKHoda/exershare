@@ -1,19 +1,21 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 import { Exercise, RawExercise } from './Exercise';
+import { randomUUID } from 'expo-crypto';
+import { supabase } from '../supabase';
 
 export class Workout {
-    id: number;
+    id: string;
     name: string;
     exercises: Exercise[];
-    exerciseIds: number[];
+    exerciseIds: string[];
 
-    constructor(id: number, name: string, exercises: Exercise[]);
-    constructor(id: number, name: string, exerciseIds: number[]);
-    constructor(id: number, name: string, third: Exercise[] | number[]) {
+    constructor(id: string, name: string, exercises: Exercise[]);
+    constructor(id: string, name: string, exerciseIds: string[]);
+    constructor(id: string, name: string, third: Exercise[] | string[]) {
         this.id = id;
         this.name = name;
-        if (third.length > 0 && typeof third[0] === 'number') {
-            this.exerciseIds = third as number[];
+        if (third.length > 0 && typeof third[0] === 'string') {
+            this.exerciseIds = third as string[];
             this.exercises = [];
         } else {
             this.exercises = third as Exercise[];
@@ -24,17 +26,22 @@ export class Workout {
     static async init(db: SQLiteDatabase) {
         await db.execAsync(`
             CREATE TABLE IF NOT EXISTS workouts (
-                id INTEGER PRIMARY KEY NOT NULL,
-                name TEXT NOT NULL
+                id TEXT PRIMARY KEY NOT NULL,
+                name TEXT NOT NULL,
+                dirty INTEGER NOT NULL DEFAULT 1
             );
 
             CREATE TABLE IF NOT EXISTS exercise_instances (
-                position INTEGER NOT NULL CHECK(position >= 0 AND position < 7),
-                workout_id INTEGER NOT NULL,
-                exercise_id INTEGER NOT NULL,
+                position INTEGER NOT NULL,
+                workout_id TEXT NOT NULL,
+                exercise_id TEXT NOT NULL,
                 PRIMARY KEY (position, workout_id),
-                FOREIGN KEY (workout_id) REFERENCES workouts(id),
+                FOREIGN KEY (workout_id) REFERENCES workouts(id)
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE,
                 FOREIGN KEY (exercise_id) REFERENCES exercises(id)
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE
             );
         `);
     }
@@ -99,9 +106,9 @@ export class Workout {
         ]);
     }
 
-    static async create(name: string, exerciseIds: number[], db: SQLiteDatabase) {
-        const result = await db.runAsync(`INSERT INTO workouts (name) VALUES (?);`, name);
-        const workoutId = result.lastInsertRowId;
+    static async create(name: string, exerciseIds: string[], db: SQLiteDatabase) {
+        const id = randomUUID(); // Updated to use randomUUID
+        await db.runAsync(`INSERT INTO workouts (id, name) VALUES (?, ?);`, id, name);
 
         const linkQuery = await db.prepareAsync(`
             INSERT INTO exercise_instances (position, workout_id, exercise_id)
@@ -112,7 +119,7 @@ export class Workout {
             await Promise.all(exerciseIds.map((exerciseId, i) =>
                 linkQuery.executeAsync({
                     $position: i,
-                    $workoutId: workoutId,
+                    $workoutId: id,
                     $exerciseId: exerciseId
                 })
             ));
@@ -121,8 +128,8 @@ export class Workout {
         }
     }
     
-    static async pullOne(id: number, db: SQLiteDatabase) {
-        const result = await db.getFirstAsync<{ id: number, name: string }>(`
+    static async pullOne(id: string, db: SQLiteDatabase) {
+        const result = await db.getFirstAsync<{ name: string }>(`
             SELECT * FROM workouts WHERE id = ?;
         `, id);
 
@@ -141,7 +148,7 @@ export class Workout {
         `, id);
         const exercises = rawExercises.map(raw => new Exercise(raw));
         
-        return new Workout(result.id, result.name, exercises);
+        return new Workout(id, result.name, exercises);
     }
 
     async save(db: SQLiteDatabase) {
@@ -149,13 +156,8 @@ export class Workout {
     }
 
     async delete(db: SQLiteDatabase) {
-        // Delete all exercise_instances and workout_instances linked to this workout
-        await Promise.all([
-            db.runAsync('DELETE FROM exercise_instances WHERE workout_id = ?', this.id),
-            db.runAsync('DELETE FROM workout_instances WHERE workout_id = ?', this.id),
-        ]);
-
         // Delete the workout record
         await db.runAsync('DELETE FROM workouts WHERE id = ?', this.id);
+        await supabase.from('workouts').delete().eq('id', this.id);
     }
 }

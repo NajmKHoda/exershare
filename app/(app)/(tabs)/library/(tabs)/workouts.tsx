@@ -17,7 +17,7 @@ export default function WorkoutsScreen() {
         }, [])
     );
 
-    function handleItemPress({ id }: { id: number }) {
+    function handleItemPress({ id }: { id: string }) {
         router.push(`/workout/${id}`);
     }
 

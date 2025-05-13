@@ -45,6 +45,6 @@ const styles = StyleSheet.create({
 });
 
 interface ListEntry {
-    id: number,
+    id: string,
     name: string
 }

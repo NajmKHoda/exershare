@@ -33,7 +33,7 @@ export default function RoutineScreen() {
             if (id === 'new') return;
             
             try {
-                const loadedRoutine = await Routine.pullOne(parseInt(id), db);
+                const loadedRoutine = await Routine.pullOne(id, db);
                 if (loadedRoutine) {
                     setRoutine(loadedRoutine);
                     setCurrentState({

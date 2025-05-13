@@ -14,9 +14,11 @@ export async function initDatabase(db: SQLiteDatabase) {
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS user (
             id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1),
-            active_routine_id INTEGER,
+            active_routine_id TEXT,
             last_log_date TEXT NOT NULL,
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
+                ON DELETE SET NULL
+                ON UPDATE CASCADE
         );
     `);
 

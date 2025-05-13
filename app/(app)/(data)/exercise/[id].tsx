@@ -1,4 +1,4 @@
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Exercise } from '@/lib/data/Exercise';
@@ -9,6 +9,7 @@ import SetList from '@/lib/components/lists/SetList';
 export default function ExerciseScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const db = useSQLiteContext();
+    const router = useRouter();
     const [exercise, setExercise] = useState<Exercise | null>(null);
     const [currentState, setCurrentState] = useState({
         name: '',
@@ -27,7 +28,7 @@ export default function ExerciseScreen() {
             if (id === 'new') return;
             
             try {
-                const loadedExercise = await Exercise.pullOne(parseInt(id), db);
+                const loadedExercise = await Exercise.pullOne(id, db);
                 if (loadedExercise) {
                     setExercise(loadedExercise);
                     setCurrentState({
@@ -70,6 +71,7 @@ export default function ExerciseScreen() {
             }
             router.back();
         } catch (error) {
+
             console.error('Failed to save exercise:', error);
         }
     }

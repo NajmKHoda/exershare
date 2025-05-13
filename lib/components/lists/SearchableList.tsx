@@ -68,5 +68,5 @@ const styles = StyleSheet.create({
 
 export interface DataItem {
     name: string,
-    id: number
+    id: string
 }

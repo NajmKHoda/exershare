@@ -1,16 +1,18 @@
-import { SQLiteDatabase, useSQLiteContext } from 'expo-sqlite';
+import { SQLiteDatabase } from 'expo-sqlite';
+import { randomUUID } from 'expo-crypto';
+import { supabase } from '../supabase';
 
 export class Exercise {
-    id: number;
+    id: string;
     name: string;
     sets: Set[];
     notes: string;
     categories: string[];
 
     constructor(rawData: RawExercise);
-    constructor(id: number, name: string, sets: Set[], notes: string, categories: string[]);
-    constructor(arg1: RawExercise | number, name?: string, sets?: Set[], notes?: string, categories?: string[]) {
-        if (typeof arg1 === 'number') {
+    constructor(id: string, name: string, sets: Set[], notes: string, categories: string[]);
+    constructor(arg1: RawExercise | string, name?: string, sets?: Set[], notes?: string, categories?: string[]) {
+        if (typeof arg1 === 'string') {
             // Second definition
             let id = arg1; 
 
@@ -44,16 +46,17 @@ export class Exercise {
     static async init(db: SQLiteDatabase) {
         await db.execAsync(`
             CREATE TABLE IF NOT EXISTS exercises (
-                id INTEGER PRIMARY KEY NOT NULL,
+                id TEXT PRIMARY KEY NOT NULL,
+                dirty INTEGER NOT NULL DEFAULT 1,
                 name TEXT NOT NULL,
                 sets TEXT NOT NULL,
-                notes TEXT,
-                categories TEXT
+                notes TEXT NOT NULL DEFAULT '',
+                categories TEXT NOT NULL DEFAULT ''
             );
         `);
     }
 
-    static async pullOne(id: number, db: SQLiteDatabase): Promise<Exercise | null> {
+    static async pullOne(id: string, db: SQLiteDatabase): Promise<Exercise | null> {
         const result = await db.getFirstAsync<RawExercise>(`
             SELECT * FROM exercises WHERE id = ?
         `, id);
@@ -70,70 +73,66 @@ export class Exercise {
                 name = ($name),
                 sets = ($sets),
                 notes = ($notes),
-                categories = ($categories);
+                categories = ($categories),
+                dirty = 1;
         `);
+        
+        try {
+            const serialized = exercises.map(exercise => exercise.serialize());
 
-        await Promise.all(exercises.map(exercise => {
-            const rawData = exercise.serialize();
-            return upsert.executeAsync({
-                $id: rawData.id,
-                $name: rawData.name,
-                $sets: rawData.sets,
-                $notes: rawData.notes,
-                $categories: rawData.categories
-            });
-        }));
+            await Promise.all(serialized.map(e => {
+                return upsert.executeAsync({
+                    $id: e.id,
+                    $name: e.name,
+                    $sets: e.sets,
+                    $notes: e.notes,
+                    $categories: e.categories
+                });
+            }));
 
-        // Release the statement
-        await upsert.finalizeAsync();
+            const { error } = await supabase.from('exercises').upsert(serialized);
+            if (error) return;
+
+            await db.runAsync(`
+                UPDATE exercises SET dirty = 0
+                    WHERE id IN (${ exercises.map(_ => '?').join(', ') });`,
+                exercises.map(e => e.id)
+            );
+        } finally {
+            // Release the statement
+            await upsert.finalizeAsync();
+        }
     }
 
     static async create(name: string, sets: Set[], notes: string, categories: string[], db: SQLiteDatabase) {
-        const exercise = new Exercise(-1, name, sets, notes, categories);
+        const id = randomUUID();
+        const exercise = new Exercise(id, name, sets, notes, categories);
         const serialized = exercise.serialize();
 
         await db.runAsync(`
-            INSERT INTO exercises (name, sets, notes, categories) VALUES (?, ?, ?, ?);
-        `, serialized.name, serialized.sets, serialized.notes, serialized.categories);
+            INSERT INTO exercises (id, name, sets, notes, categories)
+            VALUES (?, ?, ?, ?, ?);
+        `,
+            serialized.id,
+            serialized.name,
+            serialized.sets,
+            serialized.notes,
+            serialized.categories
+        );
+
+        const { error } = await supabase.from('exercises').insert([serialized]);
+        if (error) return;
+
+        await db.runAsync(`UPDATE exercises SET dirty = 0 WHERE id = ?;`, serialized.id)
     }
 
     async save(db: SQLiteDatabase) {
         await Exercise.saveMany([ this ], db);
     }
 
-    async delete(db: SQLiteDatabase) {
-        // Get affected workout IDs before deletion
-        const affectedWorkoutIds = (await db.getAllAsync<{ workout_id: number }>(`
-            SELECT DISTINCT workout_id 
-            FROM exercise_instances 
-            WHERE exercise_id = ?
-        `, this.id)).map(row => row.workout_id);
-
-        // Delete the exercise_instances and exercise itself
-        await db.runAsync('DELETE FROM exercise_instances WHERE exercise_id = ?', this.id);
-        await db.runAsync('DELETE FROM exercises WHERE id = ?', this.id);
-
-        if (!affectedWorkoutIds.length) return;
-        
-        // Reorder exercise_instances for the affected workouts
-        await db.execAsync(`
-            WITH RankedExercises AS (
-                SELECT
-                    ROW_NUMBER() OVER (PARTITION BY workout_id ORDER BY position) - 1 AS new_position,
-                    position,
-                    workout_id,
-                    exercise_id
-                FROM exercise_instances
-                WHERE workout_id IN (${ affectedWorkoutIds.join(",") })
-            )
-            UPDATE exercise_instances
-            SET position = RankedExercises.new_position
-            FROM RankedExercises
-            WHERE
-                exercise_instances.position = RankedExercises.position
-                AND exercise_instances.workout_id = RankedExercises.workout_id
-                AND exercise_instances.exercise_id = RankedExercises.exercise_id;
-        `);
+    async delete(db: SQLiteDatabase) {        
+        await db.runAsync(`DELETE FROM exercises WHERE id = ?`, this.id);
+        await supabase.from('exercises').delete().eq('id', this.id);
     }
 
     private serialize(): RawExercise {
@@ -148,11 +147,11 @@ export class Exercise {
 }
 
 export interface RawExercise {
-    id: number
+    id: string,
     name: string,
     sets: string,
-    notes: string | null,
-    categories: string | null
+    notes: string,
+    categories: string
 }
 
 export interface Set {
