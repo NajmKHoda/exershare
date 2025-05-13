@@ -1,5 +1,5 @@
 import { SQLiteDatabase } from 'expo-sqlite';
-import { randomUUID } from 'expo-crypto';
+import { randomUUID } from '../uuid';
 import { supabase } from '../supabase';
 
 export class Exercise {
