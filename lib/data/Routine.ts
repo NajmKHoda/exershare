@@ -149,8 +149,9 @@ export class Routine {
     }
 
     static async create(name: string, workoutIds: (string | null)[], db: SQLiteDatabase) {
+        const id = randomUUID();
+
         await db.withExclusiveTransactionAsync(async (transaction) => {
-            const id = randomUUID();
             await transaction.runAsync('INSERT INTO routines (id, name) VALUES (?, ?)', id, name);
 
             const linkQuery = await transaction.prepareAsync(`
@@ -173,24 +174,31 @@ export class Routine {
                 await linkQuery.finalizeAsync();
             }
         });
+
+        const { error } = await supabase.rpc('save_routine', {
+            _id: id,
+            _name: name,
+            _workout_ids: workoutIds
+                .map((id, i) => ({ workout_id: id, position: i }))
+                .filter(({ workout_id }) => workout_id !== null)
+        });
+
+        if (error) return;
+        await db.runAsync('UPDATE routines SET dirty = 0 WHERE id = ?', id);
     }
 
     async save(db: SQLiteDatabase) {
-        await db.withExclusiveTransactionAsync(async (transaction) => {
-            await Promise.all([
-                // Save routine
-                transaction.runAsync(`
-                    INSERT INTO routines (id, name)
-                        VALUES ($id, $name)
-                    ON CONFLICT (id) DO UPDATE SET name = $name, dirty = 1;
-                `, {
-                    $id: this.id,
-                    $name: this.name
-                }),
+        const workoutIds = this.shallow ? this.workoutIds : this.workouts.map(w => w?.id ?? null);
 
-                // Save associated workouts (if this isn't a shallow Routine)
-                !this.shallow && Workout.saveMany(this.workouts.filter(x => x != null), db)
-            ]);
+        await db.withExclusiveTransactionAsync(async (transaction) => {
+            await transaction.runAsync(`
+                INSERT INTO routines (id, name)
+                    VALUES ($id, $name)
+                ON CONFLICT (id) DO UPDATE SET name = $name, dirty = 1;
+            `, {
+                $id: this.id,
+                $name: this.name
+            });
 
             // Prepare linking query
             const linkQuery = await transaction.prepareAsync(`
@@ -205,8 +213,6 @@ export class Routine {
                 DELETE FROM workout_instances
                     WHERE routine_id = $routineId AND position = $position;
             `);
-            
-            const workoutIds = this.shallow ? this.workoutIds : this.workouts.map(w => w?.id ?? null);
             
             try {
                 // Link workouts with routine
@@ -228,6 +234,17 @@ export class Routine {
                 await Promise.all([ linkQuery.finalizeAsync(), delinkQuery.finalizeAsync() ]);
             }
         });
+
+        const { error } = await supabase.rpc('save_routine', {
+            _id: this.id,
+            _name: this.name,
+            _workout_ids: workoutIds
+                .map((id, i) => ({ workout_id: id, position: i }))
+                .filter(({ workout_id }) => workout_id !== null)
+        });
+
+        if (error) return;
+        await db.runAsync('UPDATE routines SET dirty = 0 WHERE id = ?', this.id);
     }
 
     async delete(db: SQLiteDatabase) {

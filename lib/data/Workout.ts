@@ -7,7 +7,8 @@ export class Workout {
     id: string;
     name: string;
     exercises: Exercise[];
-    exerciseIds: string[];
+    private shallow: boolean;
+    private exerciseIds: string[];
 
     constructor(id: string, name: string, exercises: Exercise[]);
     constructor(id: string, name: string, exerciseIds: string[]);
@@ -15,9 +16,11 @@ export class Workout {
         this.id = id;
         this.name = name;
         if (third.length > 0 && typeof third[0] === 'string') {
+            this.shallow = true;
             this.exerciseIds = third as string[];
             this.exercises = [];
         } else {
+            this.shallow = false;
             this.exercises = third as Exercise[];
             this.exerciseIds = [];
         }
@@ -46,86 +49,41 @@ export class Workout {
         `);
     }
 
-    static async saveMany(workouts: Workout[], db: SQLiteDatabase) {
-        // Prepare statements
-        const [upsertQuery, linkQuery, deleteLinksQuery] = await Promise.all([
-            db.prepareAsync(`
-                INSERT INTO workouts (id, name) VALUES ($id, $name)
-                ON CONFLICT(id) DO UPDATE SET name = $name;
-            `),
-            db.prepareAsync(`
-                INSERT INTO exercise_instances (position, workout_id, exercise_id) VALUES
-                    ($position, $workoutId, $exerciseId)
-                ON CONFLICT(position, workout_id) DO UPDATE SET exercise_id = $exerciseId;
-            `),
-            db.prepareAsync(`
-                DELETE FROM exercise_instances WHERE workout_id = $id AND position >= $size;
-            `)
-        ]);
+    static async create(name: string, exerciseIds: string[], db: SQLiteDatabase) {
+        const id = randomUUID();
 
-        // Save all workouts and any exercises that were provided as objects
-        const exercises = workouts.flatMap(workout => workout.exercises);
-        await Promise.all(
-            workouts.map(workout =>
-                upsertQuery.executeAsync({
-                    $id: workout.id,
-                    $name: workout.name,
-                })
-            )
-            .concat(
-                Exercise.saveMany(exercises, db) as Promise<any>
-            )
-        );
+        await db.withExclusiveTransactionAsync(async (transaction) => {
+            await transaction.runAsync(`INSERT INTO workouts (id, name) VALUES (?, ?);`, id, name);
 
-        // Link workouts with exercises
-        await Promise.all(
-            workouts.map(workout => {
-                const ids = workout.exercises.length > 0 ?
-                    workout.exercises.map(e => e.id) : workout.exerciseIds;
-                return Promise.all(ids.map((exerciseId, i) =>
+            const linkQuery = await transaction.prepareAsync(`
+                INSERT INTO exercise_instances (position, workout_id, exercise_id)
+                VALUES ($position, $workoutId, $exerciseId);
+            `);
+            
+            try {
+                await Promise.all(exerciseIds.map((exerciseId, i) =>
                     linkQuery.executeAsync({
                         $position: i,
-                        $workoutId: workout.id,
+                        $workoutId: id,
                         $exerciseId: exerciseId
                     })
                 ));
-            })
-            .concat(workouts.map(workout =>
-                deleteLinksQuery.executeAsync({
-                    $id: workout.id,
-                    $size: workout.exercises.length > 0 ?
-                        workout.exercises.length : workout.exerciseIds.length
-                })
-            ) as Promise<any>[])
-        );
+            } finally {
+                await linkQuery.finalizeAsync();
+            }
+        });
 
-        await Promise.all([
-            upsertQuery.finalizeAsync(),
-            linkQuery.finalizeAsync(),
-            deleteLinksQuery.finalizeAsync()
-        ]);
-    }
+        const { error } = await supabase.rpc('save_workout', {
+            _id: id,
+            _name: name,
+            _exercise_ids: exerciseIds.map((id, i) => ({ exercise_id: id, position: i }))
+        });
 
-    static async create(name: string, exerciseIds: string[], db: SQLiteDatabase) {
-        const id = randomUUID(); // Updated to use randomUUID
-        await db.runAsync(`INSERT INTO workouts (id, name) VALUES (?, ?);`, id, name);
-
-        const linkQuery = await db.prepareAsync(`
-            INSERT INTO exercise_instances (position, workout_id, exercise_id)
-            VALUES ($position, $workoutId, $exerciseId);
-        `);
-        
-        try {
-            await Promise.all(exerciseIds.map((exerciseId, i) =>
-                linkQuery.executeAsync({
-                    $position: i,
-                    $workoutId: id,
-                    $exerciseId: exerciseId
-                })
-            ));
-        } finally {
-            await linkQuery.finalizeAsync();
+        if (error) {
+            console.log(error);
+            return;
         }
+        await db.runAsync(`UPDATE workouts SET dirty = 0 WHERE id = ?;`, id);
     }
     
     static async pullOne(id: string, db: SQLiteDatabase) {
@@ -152,7 +110,45 @@ export class Workout {
     }
 
     async save(db: SQLiteDatabase) {
-        await Workout.saveMany([ this ], db);
+        const exerciseIds = this.shallow ? this.exerciseIds : this.exercises.map(exercise => exercise.id);
+        await db.withExclusiveTransactionAsync(async (transaction) => {
+            await transaction.runAsync(`
+                INSERT INTO workouts (id, name)
+                VALUES ($id, $name)
+                ON CONFLICT (id) DO UPDATE SET name = $name, dirty = 1;
+            `, {
+                $id: this.id,
+                $name: this.name
+            });
+
+            const linkQuery = await transaction.prepareAsync(`
+                INSERT INTO exercise_instances (position, workout_id, exercise_id)
+                VALUES ($position, $workoutId, $exerciseId)
+                ON CONFLICT (position, workout_id) DO UPDATE SET
+                    exercise_id = $exerciseId;
+            `);
+
+            try {
+                await Promise.all(exerciseIds.map((exerciseId, i) =>
+                    linkQuery.executeAsync({
+                        $position: i,
+                        $workoutId: this.id,
+                        $exerciseId: exerciseId
+                    })
+                ));
+            } finally {
+                await linkQuery.finalizeAsync();
+            }
+        });
+
+        const { error } = await supabase.rpc('save_workout', {
+            _id: this.id,
+            _name: this.name,
+            _exercise_ids: exerciseIds.map((id, i) => ({ exercise_id: id, position: i }))
+        });
+
+        if (error) return;
+        await db.runAsync(`UPDATE workouts SET dirty = 0 WHERE id = ?;`, this.id);
     }
 
     async delete(db: SQLiteDatabase) {

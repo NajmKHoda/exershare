@@ -64,46 +64,6 @@ export class Exercise {
         return result ? new Exercise(result) : null;
     }
 
-    static async saveMany(exercises: Exercise[], db: SQLiteDatabase) {
-        // Save all exercises using a prepared statement
-        const upsert = await db.prepareAsync(`
-            INSERT INTO exercises (id, name, sets, notes, categories)
-                VALUES (($id), ($name), ($sets), ($notes), ($categories))
-            ON CONFLICT(id) DO UPDATE SET 
-                name = ($name),
-                sets = ($sets),
-                notes = ($notes),
-                categories = ($categories),
-                dirty = 1;
-        `);
-        
-        try {
-            const serialized = exercises.map(exercise => exercise.serialize());
-
-            await Promise.all(serialized.map(e => {
-                return upsert.executeAsync({
-                    $id: e.id,
-                    $name: e.name,
-                    $sets: e.sets,
-                    $notes: e.notes,
-                    $categories: e.categories
-                });
-            }));
-
-            const { error } = await supabase.from('exercises').upsert(serialized);
-            if (error) return;
-
-            await db.runAsync(`
-                UPDATE exercises SET dirty = 0
-                    WHERE id IN (${ exercises.map(_ => '?').join(', ') });`,
-                exercises.map(e => e.id)
-            );
-        } finally {
-            // Release the statement
-            await upsert.finalizeAsync();
-        }
-    }
-
     static async create(name: string, sets: Set[], notes: string, categories: string[], db: SQLiteDatabase) {
         const id = randomUUID();
         const exercise = new Exercise(id, name, sets, notes, categories);
@@ -127,7 +87,29 @@ export class Exercise {
     }
 
     async save(db: SQLiteDatabase) {
-        await Exercise.saveMany([ this ], db);
+        const serialized = this.serialize();
+
+        await db.runAsync(`
+            INSERT INTO exercises (id, name, sets, notes, categories)
+                VALUES (($id), ($name), ($sets), ($notes), ($categories))
+            ON CONFLICT(id) DO UPDATE SET 
+                name = ($name),
+                sets = ($sets),
+                notes = ($notes),
+                categories = ($categories),
+                dirty = 1;
+        `, {
+            $id: serialized.id,
+            $name: serialized.name,
+            $sets: serialized.sets,
+            $notes: serialized.notes,
+            $categories: serialized.categories
+        });
+
+        const { error } = await supabase.from('exercises').upsert(serialized);
+        if (error) return;
+
+        await db.runAsync(`UPDATE exercises SET dirty = 0 WHERE id = ?;`, serialized.id);
     }
 
     async delete(db: SQLiteDatabase) {        
