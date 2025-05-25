@@ -1,33 +1,32 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 import { randomUUID } from '../uuid';
-import { Workout } from './Workout';
-import { Exercise } from './Exercise';
+import { RawWorkout, Workout } from './Workout';
+import { Exercise, RawExercise } from './Exercise';
 import { supabase } from '../supabase';
 
 export class Routine {
     id: string;
     name: string;
-    workouts: (Workout | null)[];
-    private shallow: boolean;
-    private workoutIds: (string | null)[];
+    lastModified: Date | null = null;
+    readonly workouts: readonly (Workout | null)[];
+    private readonly workoutIds: readonly (string | null)[];
 
-    constructor(id: string, name: string, workouts: (Workout | null)[]);
-    constructor(id: string, name: string, workoutIds: (string | null)[]);
-    constructor(id: string, name: string, third: (Workout | null)[] | (string | null)[]) {
+    constructor(id: string, name: string, workouts: (Workout | null)[], lastModified?: Date);
+    constructor(id: string, name: string, workoutIds: (string | null)[], lastModified?: Date);
+    constructor(id: string, name: string, third: (Workout | null)[] | (string | null)[], lastModified: Date | null = null) {
         if (third.length !== 7) 
             throw new Error("Routine requires an array of length 7.");
 
         this.id = id;
         this.name = name;
+        this.lastModified = lastModified;
 
         if (third.some(x => typeof x === 'string')) {
-            this.shallow = true;
             this.workoutIds = third as (string | null)[];
             this.workouts = [];
         } else {
-            this.shallow = false;
             this.workouts = third as (Workout | null)[];
-            this.workoutIds = [];
+            this.workoutIds = this.workouts.map(workout => workout?.id ?? null);
         }
     }
 
@@ -36,7 +35,8 @@ export class Routine {
             CREATE TABLE IF NOT EXISTS routines (
                 id TEXT PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
-                dirty INTEGER NOT NULL DEFAULT 1
+                dirty INTEGER NOT NULL DEFAULT 1,
+                last_modified TEXT NOT NULL DEFAULT datetime('now')
             );
             
             CREATE TABLE IF NOT EXISTS workout_instances (
@@ -54,89 +54,94 @@ export class Routine {
         `)
     }
 
-    static async pullOne(id: string, db: SQLiteDatabase) {
-        const routineQuery = await db.getFirstAsync<{ name: string, id: string }>(`
-            SELECT routines.name, routines.id FROM routines
-            WHERE routines.id = ?;
-        `, [id]);
-        if (!routineQuery) return null;
+    static async pullMany(db: SQLiteDatabase, where: string = '1=1', deep: boolean = true) {
+        const rawRoutines = await db.getAllAsync<RawRoutine>(`
+            SELECT * FROM routines WHERE ${where}
+            ORDER BY routines.name;
+        `);
 
-        const [rawWorkouts, rawExercises] = await Promise.all([
-            db.getAllAsync<{
-                workout_id: string,
-                position: number,
-                name: string
-            }>(`
-                SELECT
-                    workout_instances.workout_id,
-                    workout_instances.position,
-                    workouts.name
-                FROM workout_instances
-                JOIN workouts
-                    ON workout_instances.workout_id = workouts.id
-                WHERE workout_instances.routine_id = ?;
-            `, [id]),
+        if (rawRoutines.length === 0) return [];
+
+        const rawWorkouts = await db.getAllAsync<RawWorkout & {
+            position: number,
+            routine_id: string
+        }>(`
+            SELECT
+                workouts.*,
+                workout_instances.position,
+                workout_instances.routine_id
+            FROM workout_instances
+            JOIN workouts ON workout_instances.workout_id = workouts.id
+            WHERE routine_id IN (SELECT id FROM routines WHERE ${where});
+        `);
         
-            db.getAllAsync<{
-                workout_position: number,
-                exercise_position: number,
-                id: string,
-                name: string,
-                sets: string,
-                notes: string,
-                categories: string
-            }>(`
-                WITH routine_workouts AS (
-                    SELECT
-                        ROW_NUMBER() OVER (ORDER BY position) - 1 AS workout_position,
-                        workout_id
-                    FROM workout_instances
-                    WHERE routine_id = ?
-                )
-                SELECT
-                    routine_workouts.workout_position,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY routine_workouts.workout_position
-                        ORDER BY exercise_instances.position
-                    ) - 1 AS exercise_position,
-                    exercises.id,
-                    exercises.name,
-                    exercises.sets,
-                    exercises.notes,
-                    exercises.categories
-                FROM exercise_instances
-                JOIN routine_workouts
-                    ON exercise_instances.workout_id = routine_workouts.workout_id
-                JOIN exercises
-                    ON exercise_instances.exercise_id = exercises.id;
-            `, [id])
-        ]);
-        
-        // Create and sort exercises
-        const exercises: Exercise[][] = new Array(7);
-        for (const rawExercise of rawExercises) {
-            const { workout_position, exercise_position } = rawExercise;
-            const exercise = new Exercise({
-                id: rawExercise.id,
-                name: rawExercise.name,
-                sets: rawExercise.sets,
-                notes: rawExercise.notes,
-                categories: rawExercise.categories
+        if (!deep) {
+            const routineToWorkoutIds: Record<string, string[]> = {};
+            rawRoutines.forEach(row => {
+                routineToWorkoutIds[row.id] = new Array(7).fill(null);
+            });
+            rawWorkouts.forEach(raw => {
+                const routineId = raw.routine_id;
+                routineToWorkoutIds[routineId][raw.position] = raw.id;
             });
 
-            exercises[workout_position] ??= [];
-            exercises[workout_position][exercise_position] = exercise;
+            return rawRoutines.map(raw => new Routine(raw.id, raw.name, routineToWorkoutIds[raw.id]));
         }
 
-        // Create workouts
-        const workouts: (Workout | null)[] = new Array(7).fill(null);
-        for (const rawWorkout of rawWorkouts) {
-            const { name, position, workout_id } = rawWorkout;
-            const workout = new Workout(workout_id, name, exercises[position] || []);
-            workouts[position] = workout;
-        }
+        // For deep loading, we need to fetch exercises as well
+        const rawExercises = await db.getAllAsync<RawExercise & {
+            workout_position: number,
+            routine_id: string,
+            workout_id: string
+        }>(`
+            SELECT
+                exercises.*,
+                workout_instances.position AS workout_position,
+                workout_instances.routine_id,
+                workout_instances.workout_id
+            FROM exercise_instances
+            JOIN workout_instances ON exercise_instances.workout_id = workout_instances.workout_id
+            JOIN exercises ON exercise_instances.exercise_id = exercises.id
+            WHERE workout_instances.routine_id IN (SELECT * FROM routines WHERE ${where})
+            ORDER BY workout_position, exercise_instances.position;
+        `);
+        
+        // Create exercises grouped by workout_id
+        const workoutToExercises: Record<string, Exercise[]> = {};
+        rawWorkouts.forEach(raw => {
+            workoutToExercises[raw.id] = [];
+        });
+        
+        const exercises: Record<string, Exercise> = {};
+        rawExercises.forEach(raw => {
+            exercises[raw.id] ??= new Exercise(raw);
+            workoutToExercises[raw.workout_id].push(exercises[raw.id]);
+        });
 
-        return new Routine(routineQuery.id, routineQuery.name, workouts);
+        // Create workouts and add them to routines
+        const routineToWorkouts: Record<string, Workout[]> = {};
+        rawRoutines.forEach(raw => {
+            routineToWorkouts[raw.id] = new Array(7).fill(null);
+        });
+        
+        const workouts: Record<string, Workout> = {};
+        rawWorkouts.forEach(raw => {
+            workouts[raw.id] ??= new Workout(raw.id, raw.name, workoutToExercises[raw.id]);
+            routineToWorkouts[raw.routine_id][raw.position] = workouts[raw.id];
+        });
+        
+        return rawRoutines.map(raw => new Routine(
+            raw.id,
+            raw.name,
+            routineToWorkouts[raw.id],
+            new Date(raw.last_modified)
+        ));
+    }
+
+    static async pullOne(id: string, db: SQLiteDatabase) {
+        const routines = await this.pullMany(db, `id = '${id}'`, true);
+        if (routines.length === 0) return null;
+        return routines[0];
     }
 
     static async pullActive(db: SQLiteDatabase) {
@@ -149,56 +154,32 @@ export class Routine {
     }
 
     static async create(name: string, workoutIds: (string | null)[], db: SQLiteDatabase) {
-        const id = randomUUID();
+        if (workoutIds.length !== 7) 
+            throw new Error("Routine requires an array of length 7.");
 
-        await db.withExclusiveTransactionAsync(async (transaction) => {
-            await transaction.runAsync('INSERT INTO routines (id, name) VALUES (?, ?)', id, name);
-
-            const linkQuery = await transaction.prepareAsync(`
-                INSERT INTO workout_instances (position, routine_id, workout_id)
-                    VALUES ($position, $routineId, $workoutId);
-            `);
-
-            try {
-                await Promise.all(workoutIds
-                    .map((workoutId, pos) => {
-                        if (workoutId === null) return null;
-                        return linkQuery.executeAsync({
-                            $position: pos,
-                            $routineId: id,
-                            $workoutId: workoutId
-                        })
-                    })
-                );
-            } finally {
-                await linkQuery.finalizeAsync();
-            }
-        });
-
-        const { error } = await supabase.rpc('save_routine', {
-            _id: id,
-            _name: name,
-            _workout_ids: workoutIds
-                .map((id, i) => ({ workout_id: id, position: i }))
-                .filter(({ workout_id }) => workout_id !== null)
-        });
-
-        if (error) return;
-        await db.runAsync('UPDATE routines SET dirty = 0 WHERE id = ?', id);
+        const routine = new Routine(randomUUID(), name, workoutIds);
+        await routine.save(db);
+        return routine;
     }
 
     async save(db: SQLiteDatabase) {
-        const workoutIds = this.shallow ? this.workoutIds : this.workouts.map(w => w?.id ?? null);
-
+        let newModified: Date | null = null;
         await db.withExclusiveTransactionAsync(async (transaction) => {
-            await transaction.runAsync(`
+            const insertResult = await transaction.getFirstAsync<{ last_modified: string; }>(`
                 INSERT INTO routines (id, name)
                     VALUES ($id, $name)
-                ON CONFLICT (id) DO UPDATE SET name = $name, dirty = 1;
+                ON CONFLICT (id) DO UPDATE SET
+                    name = $name,
+                    dirty = 1,
+                    last_modified = datetime('now')
+                RETURNING last_modified;
             `, {
                 $id: this.id,
                 $name: this.name
             });
+
+            if (!insertResult) return;
+            newModified = new Date(insertResult.last_modified);
 
             // Prepare linking query
             const linkQuery = await transaction.prepareAsync(`
@@ -216,29 +197,30 @@ export class Routine {
             
             try {
                 // Link workouts with routine
-                await Promise.all(workoutIds
-                    .map((workoutId, pos) =>
-                        workoutId === null ?
-                            delinkQuery.executeAsync({
-                                $routineId: this.id,
-                                $position: pos
-                            }) :
-                            linkQuery.executeAsync({
-                                $position: pos,
-                                $routineId: this.id,
-                                $workoutId: workoutId
-                            })
-                    )
-                );
+                await Promise.all(this.workoutIds.map((workoutId, pos) =>
+                    workoutId === null ?
+                        delinkQuery.executeAsync({
+                            $routineId: this.id,
+                            $position: pos
+                        }) :
+                        linkQuery.executeAsync({
+                            $position: pos,
+                            $routineId: this.id,
+                            $workoutId: workoutId
+                        })
+                ));
             } finally {
                 await Promise.all([ linkQuery.finalizeAsync(), delinkQuery.finalizeAsync() ]);
             }
         });
 
+        this.lastModified = newModified;
+
         const { error } = await supabase.rpc('save_routine', {
             _id: this.id,
             _name: this.name,
-            _workout_ids: workoutIds
+            _last_modified: this.lastModified,
+            _workout_ids: this.workoutIds
                 .map((id, i) => ({ workout_id: id, position: i }))
                 .filter(({ workout_id }) => workout_id !== null)
         });
@@ -251,4 +233,19 @@ export class Routine {
         await db.runAsync('DELETE FROM routines WHERE id = ?', this.id);
         await supabase.from('routines').delete().eq('id', this.id);
     }
+
+    toJSON() {
+        return {
+            id: this.id,
+            name: this.name,
+            workouts: this.workoutIds,
+            last_modified: (this.lastModified ?? new Date()).toISOString()
+        };
+    }
+}
+
+export interface RawRoutine {
+    id: string;
+    name: string;
+    last_modified: string;
 }
