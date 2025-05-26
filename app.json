@@ -13,6 +13,7 @@
       "bundleIdentifier": "com.najmkhoda.Exershare"
     },
     "android": {
+      "edgeToEdgeEnabled": true,
       "package": "com.najmkhoda.Exershare"
     },
     "web": {

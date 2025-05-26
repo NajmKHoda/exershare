@@ -8,11 +8,18 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActiveRoutineProvider } from '@/lib/hooks/useActiveRoutine';
 import { SessionProvider } from '@/lib/hooks/useSession';
+import { useNetworkState } from 'expo-network';
+import { useEffect } from 'react';
 
 const db = openDatabaseSync('app.db');
 
 export default function RootLayout() {
+    const networkState = useNetworkState();
     useDrizzleStudio(db);
+
+    useEffect(() => {
+        console.log('Network state:', networkState);
+    }, [networkState]);
 
     return (
         <SessionProvider>
