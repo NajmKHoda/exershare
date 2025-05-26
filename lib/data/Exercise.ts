@@ -62,7 +62,7 @@ export class Exercise {
                 sets TEXT NOT NULL,
                 notes TEXT NOT NULL DEFAULT '',
                 categories TEXT NOT NULL DEFAULT '',
-                last_modified TEXT NOT NULL DEFAULT datetime('now')
+                last_modified TEXT NOT NULL DEFAULT current_timestamp
             );
         `);
     }

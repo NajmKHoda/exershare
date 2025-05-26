@@ -36,7 +36,7 @@ export class Routine {
                 id TEXT PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
                 dirty INTEGER NOT NULL DEFAULT 1,
-                last_modified TEXT NOT NULL DEFAULT datetime('now')
+                last_modified TEXT NOT NULL DEFAULT current_timestamp
             );
             
             CREATE TABLE IF NOT EXISTS workout_instances (
