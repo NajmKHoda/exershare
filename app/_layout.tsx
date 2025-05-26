@@ -1,5 +1,5 @@
 import { ThemeColors, ThemeColorsProvider } from '@/lib/hooks/useThemeColors';
-import { Redirect, Slot, Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 import { openDatabaseSync, SQLiteProvider } from 'expo-sqlite';
 import { PlatformColor } from 'react-native';
 import { initDatabase } from '@/lib/data/database';
@@ -10,20 +10,18 @@ import { ActiveRoutineProvider } from '@/lib/hooks/useActiveRoutine';
 import { SessionProvider } from '@/lib/hooks/useSession';
 import { useNetworkState } from 'expo-network';
 import { useEffect } from 'react';
+import { syncData } from '@/lib/data/sync';
+import DatabaseListener from '@/lib/data/DatabaseListener';
 
 const db = openDatabaseSync('app.db');
 
 export default function RootLayout() {
-    const networkState = useNetworkState();
     useDrizzleStudio(db);
-
-    useEffect(() => {
-        console.log('Network state:', networkState);
-    }, [networkState]);
 
     return (
         <SessionProvider>
         <SQLiteProvider databaseName='app.db' onInit={ initDatabase } >
+        <DatabaseListener />
         <ThemeColorsProvider value={ themeColors }>
         <ActiveRoutineProvider>
         <GestureHandlerRootView>

@@ -16,6 +16,7 @@ export async function initDatabase(db: SQLiteDatabase) {
             id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1),
             active_routine_id TEXT,
             last_log_date TEXT NOT NULL,
+            last_sync_date TEXT,
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
                 ON DELETE SET NULL
                 ON UPDATE CASCADE
@@ -23,7 +24,8 @@ export async function initDatabase(db: SQLiteDatabase) {
     `);
 
     await db.runAsync(`
-        INSERT OR IGNORE INTO user (id, active_routine_id, last_log_date)
-            VALUES (1, NULL, ?);
+        UPDATE user SET last_sync_date = NULL;
+        INSERT OR IGNORE INTO user (id, last_log_date)
+            VALUES (1, ?);
     `, serializeDate(new Date()));
 }

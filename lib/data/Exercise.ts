@@ -64,6 +64,11 @@ export class Exercise {
                 categories TEXT NOT NULL DEFAULT '',
                 last_modified TEXT NOT NULL DEFAULT current_timestamp
             );
+
+            CREATE TABLE IF NOT EXISTS deleted_exercises (
+                id TEXT PRIMARY KEY NOT NULL,
+                deleted_at TEXT NOT NULL DEFAULT current_timestamp
+            );
         `);
     }
 
@@ -90,7 +95,7 @@ export class Exercise {
         return exercise;
     }
 
-    async save(db: SQLiteDatabase) {
+    async save(db: SQLiteDatabase, timestamp: Date | null = null) {
         const serialized = this.serialize();
 
         const insertResult = await db.getFirstAsync<{ last_modified: string }>(`
@@ -102,14 +107,15 @@ export class Exercise {
                 notes = $notes,
                 categories = $categories,
                 dirty = 1,
-                last_modified = datetime('now')
+                last_modified = coalesce($timestamp, datetime('now'))
             RETURNING last_modified;
         `, {
             $id: serialized.id,
             $name: serialized.name,
             $sets: serialized.sets,
             $notes: serialized.notes,
-            $categories: serialized.categories
+            $categories: serialized.categories,
+            $timestamp: timestamp?.toISOString() ?? null
         });
         if (!insertResult) return;
 
@@ -126,7 +132,12 @@ export class Exercise {
 
     async delete(db: SQLiteDatabase) {        
         await db.runAsync(`DELETE FROM exercises WHERE id = ?`, this.id);
-        await supabase.from('exercises').delete().eq('id', this.id);
+
+        const { error } = await supabase.from('exercises').delete().eq('id', this.id);
+        if (!error) return;
+
+        // If the delete operation fails, we insert into deleted_exercises
+        await db.runAsync(`INSERT INTO deleted_exercises (id) VALUES (?);`, this.id);
     }
 
     serialize(): RawExercise {
