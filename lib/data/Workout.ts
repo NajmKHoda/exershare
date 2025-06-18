@@ -108,24 +108,20 @@ export class Workout {
     }
 
     async save(db: SQLiteDatabase, timestamp: Date | null = null) {
-        let new_modified: Date | null = null;
+        let newModified = timestamp ?? new Date();
         await db.withExclusiveTransactionAsync(async (transaction) => {
-            const insertResult = await transaction.getFirstAsync<{ last_modified: string }>(`
+            await transaction.getFirstAsync<{ last_modified: string }>(`
                 INSERT INTO workouts (id, name, last_modified)
                     VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
                     name = $name,
                     dirty = 1,
-                    last_modified = excluded.last_modified
-                RETURNING last_modified;
+                    last_modified = excluded.last_modified;
             `, {
                 $id: this.id,
                 $name: this.name,
-                $timestamp: timestamp?.toISOString() ?? null
+                $timestamp: newModified.toISOString()
             });
-
-            if (!insertResult) return;
-            new_modified = new Date(insertResult.last_modified);
 
             const linkQuery = await transaction.prepareAsync(`
                 INSERT INTO exercise_instances (position, workout_id, exercise_id)
@@ -147,12 +143,11 @@ export class Workout {
             }
         });
 
-        this.lastModified = new_modified;
-
+        this.lastModified = newModified;
         const { error } = await supabase.rpc('save_workout', {
             _id: this.id,
             _name: this.name,
-            _last_modified: this.lastModified,
+            _last_modified: this.lastModified.toISOString(),
             _exercise_ids: this.exerciseIds.map((id, i) => ({ exercise_id: id, position: i }))
         });
 
@@ -167,7 +162,11 @@ export class Workout {
     async delete(db: SQLiteDatabase) {        
         await db.runAsync(`DELETE FROM workouts WHERE id = ?`, this.id);
 
-        const { error } = await supabase.from('workouts').delete().eq('id', this.id);
+        const { error } = await supabase.rpc('delete_workout', {
+            _id: this.id,
+            _deleted_at: new Date().toISOString()
+        });
+
         if (!error) return;
 
         // If the delete operation fails, we insert into deleted_workouts

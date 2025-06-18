@@ -24,7 +24,6 @@ export async function initDatabase(db: SQLiteDatabase) {
     `);
 
     await db.runAsync(`
-        UPDATE user SET last_sync_date = NULL;
         INSERT OR IGNORE INTO user (id, last_log_date)
             VALUES (1, ?);
     `, serializeDate(new Date()));

@@ -168,24 +168,20 @@ export class Routine {
     }
 
     async save(db: SQLiteDatabase, timestamp: Date | null = null) {
-        let newModified: Date | null = null;
+        let newModified = timestamp ?? new Date();
         await db.withExclusiveTransactionAsync(async (transaction) => {
-            const insertResult = await transaction.getFirstAsync<{ last_modified: string; }>(`
+            await transaction.getFirstAsync<{ last_modified: string; }>(`
                 INSERT INTO routines (id, name, last_modified)
                     VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
                     name = $name,
                     dirty = 1,
                     last_modified = excluded.last_modified
-                RETURNING last_modified;
             `, {
                 $id: this.id,
                 $name: this.name,
-                $timestamp: timestamp?.toISOString() ?? null
+                $timestamp: newModified.toISOString()
             });
-
-            if (!insertResult) return;
-            newModified = new Date(insertResult.last_modified);
 
             // Prepare linking query
             const linkQuery = await transaction.prepareAsync(`
@@ -221,11 +217,10 @@ export class Routine {
         });
 
         this.lastModified = newModified;
-
         const { error } = await supabase.rpc('save_routine', {
             _id: this.id,
             _name: this.name,
-            _last_modified: this.lastModified,
+            _last_modified: this.lastModified.toISOString(),
             _workout_ids: this.workoutIds
                 .map((id, i) => ({ workout_id: id, position: i }))
                 .filter(({ workout_id }) => workout_id !== null)
@@ -238,7 +233,11 @@ export class Routine {
     async delete(db: SQLiteDatabase) {        
         await db.runAsync(`DELETE FROM routines WHERE id = ?`, this.id);
 
-        const { error } = await supabase.from('routines').delete().eq('id', this.id);
+        const { error } = await supabase.rpc('delete_routine', {
+            _id: this.id,
+            _deleted_at: new Date().toISOString()
+        });
+
         if (!error) return;
 
         // If the delete operation fails, we insert into deleted_routines

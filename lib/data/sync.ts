@@ -26,7 +26,8 @@ export async function syncData(db: SQLiteDatabase) {
         db.getAllAsync<{ id: string, deleted_at: string }>('SELECT * FROM deleted_routines')
     ])
 
-    const lastSyncDate = lastSyncResult ? new Date(lastSyncResult.last_sync_date) : null;
+    const lastSyncDate = lastSyncResult ? new Date(lastSyncResult.last_sync_date).toISOString() : null;
+    console.log('Last sync date:', lastSyncDate);
 
     const { data, error } = await supabase.rpc('sync', {
         _last_sync_date: lastSyncDate,
@@ -37,6 +38,8 @@ export async function syncData(db: SQLiteDatabase) {
         _routines: dirtyRoutines.map(routine => routine.toJSON()),
         _deleted_routines: deletedRoutines
     }) as { data: SyncResult, error: any };
+
+    console.log(JSON.stringify(data, null, 2));
 
     if (error) {
         console.error('Error syncing exercises:', error);
@@ -57,8 +60,33 @@ export async function syncData(db: SQLiteDatabase) {
         await newRoutine.save(db, new Date(routine.last_modified));
     }
 
-    await db.execAsync(`
-        UPDATE user SET last_sync_date = datetime('now');
+    // Delete entities that were removed remotely
+    if (data.deletedExercises.length > 0) {
+        const deleteExerciseStmt = await db.prepareAsync('DELETE FROM exercises WHERE id = ?');
+        for (const exerciseId of data.deletedExercises) {
+            await deleteExerciseStmt.executeAsync(exerciseId);
+        }
+        await deleteExerciseStmt.finalizeAsync();
+    }
+
+    if (data.deletedWorkouts.length > 0) {
+        const deleteWorkoutStmt = await db.prepareAsync('DELETE FROM workouts WHERE id = ?');
+        for (const workoutId of data.deletedWorkouts) {
+            await deleteWorkoutStmt.executeAsync(workoutId);
+        }
+        await deleteWorkoutStmt.finalizeAsync();
+    }
+
+    if (data.deletedRoutines.length > 0) {
+        const deleteRoutineStmt = await db.prepareAsync('DELETE FROM routines WHERE id = ?');
+        for (const routineId of data.deletedRoutines) {
+            await deleteRoutineStmt.executeAsync(routineId);
+        }
+        await deleteRoutineStmt.finalizeAsync();
+    }
+
+    await db.runAsync(`
+        UPDATE user SET last_sync_date = ?;
 
         UPDATE exercises SET dirty = 0 WHERE dirty = 1;
         UPDATE workouts SET dirty = 0 WHERE dirty = 1;
@@ -67,11 +95,14 @@ export async function syncData(db: SQLiteDatabase) {
         DELETE FROM deleted_exercises;
         DELETE FROM deleted_workouts;
         DELETE FROM deleted_routines;
-    `);
+    `, new Date().toISOString());
 }
 
 type SyncResult = {
     newExercises: RawExercise[];
     newWorkouts: (RawWorkout & { exercise_ids: string[] })[];
     newRoutines: (RawRoutine & { workout_ids: string[] })[];
+    deletedExercises: string[];
+    deletedWorkouts: string[];
+    deletedRoutines: string[];
 }
