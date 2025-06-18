@@ -99,15 +99,15 @@ export class Exercise {
         const serialized = this.serialize();
 
         const insertResult = await db.getFirstAsync<{ last_modified: string }>(`
-            INSERT INTO exercises (id, name, sets, notes, categories)
-                VALUES ($id, $name, $sets, $notes, $categories)
+            INSERT INTO exercises (id, name, sets, notes, categories, last_modified)
+                VALUES ($id, $name, $sets, $notes, $categories, coalesce($timestamp, datetime('now')))
             ON CONFLICT(id) DO UPDATE SET 
                 name = $name,
                 sets = $sets,
                 notes = $notes,
                 categories = $categories,
                 dirty = 1,
-                last_modified = coalesce($timestamp, datetime('now'))
+                last_modified = excluded.last_modified
             RETURNING last_modified;
         `, {
             $id: serialized.id,

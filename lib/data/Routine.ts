@@ -51,6 +51,11 @@ export class Routine {
                     ON DELETE CASCADE
                     ON UPDATE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS deleted_routines (
+                id TEXT PRIMARY KEY NOT NULL,
+                deleted_at TEXT NOT NULL DEFAULT current_timestamp
+            );
         `)
     }
 
@@ -102,7 +107,7 @@ export class Routine {
             FROM exercise_instances
             JOIN workout_instances ON exercise_instances.workout_id = workout_instances.workout_id
             JOIN exercises ON exercise_instances.exercise_id = exercises.id
-            WHERE workout_instances.routine_id IN (SELECT * FROM routines WHERE ${where})
+            WHERE workout_instances.routine_id IN (SELECT id FROM routines WHERE ${where})
             ORDER BY workout_position, exercise_instances.position;
         `);
         
@@ -162,20 +167,21 @@ export class Routine {
         return routine;
     }
 
-    async save(db: SQLiteDatabase) {
+    async save(db: SQLiteDatabase, timestamp: Date | null = null) {
         let newModified: Date | null = null;
         await db.withExclusiveTransactionAsync(async (transaction) => {
             const insertResult = await transaction.getFirstAsync<{ last_modified: string; }>(`
-                INSERT INTO routines (id, name)
-                    VALUES ($id, $name)
+                INSERT INTO routines (id, name, last_modified)
+                    VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
                     name = $name,
                     dirty = 1,
-                    last_modified = datetime('now')
+                    last_modified = excluded.last_modified
                 RETURNING last_modified;
             `, {
                 $id: this.id,
-                $name: this.name
+                $name: this.name,
+                $timestamp: timestamp?.toISOString() ?? null
             });
 
             if (!insertResult) return;
@@ -229,16 +235,23 @@ export class Routine {
         await db.runAsync('UPDATE routines SET dirty = 0 WHERE id = ?', this.id);
     }
 
-    async delete(db: SQLiteDatabase) {
-        await db.runAsync('DELETE FROM routines WHERE id = ?', this.id);
-        await supabase.from('routines').delete().eq('id', this.id);
+    async delete(db: SQLiteDatabase) {        
+        await db.runAsync(`DELETE FROM routines WHERE id = ?`, this.id);
+
+        const { error } = await supabase.from('routines').delete().eq('id', this.id);
+        if (!error) return;
+
+        // If the delete operation fails, we insert into deleted_routines
+        await db.runAsync(`INSERT INTO deleted_routines (id) VALUES (?);`, this.id);
     }
 
     toJSON() {
         return {
             id: this.id,
             name: this.name,
-            workouts: this.workoutIds,
+            workout_ids: this.workoutIds
+                .map((id, i) => ({ workout_id: id, position: i }))
+                .filter(({ workout_id }) => workout_id !== null),
             last_modified: (this.lastModified ?? new Date()).toISOString()
         };
     }

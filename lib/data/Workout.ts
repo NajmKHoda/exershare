@@ -46,6 +46,11 @@ export class Workout {
                     ON DELETE CASCADE
                     ON UPDATE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS deleted_workouts (
+                id TEXT PRIMARY KEY NOT NULL,
+                deleted_at TEXT NOT NULL DEFAULT current_timestamp
+            );
         `);
     }
 
@@ -102,20 +107,21 @@ export class Workout {
         return workouts[0];
     }
 
-    async save(db: SQLiteDatabase) {
+    async save(db: SQLiteDatabase, timestamp: Date | null = null) {
         let new_modified: Date | null = null;
         await db.withExclusiveTransactionAsync(async (transaction) => {
             const insertResult = await transaction.getFirstAsync<{ last_modified: string }>(`
-                INSERT INTO workouts (id, name)
-                    VALUES ($id, $name)
+                INSERT INTO workouts (id, name, last_modified)
+                    VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
                     name = $name,
                     dirty = 1,
-                    last_modified = datetime('now')
+                    last_modified = excluded.last_modified
                 RETURNING last_modified;
             `, {
                 $id: this.id,
-                $name: this.name
+                $name: this.name,
+                $timestamp: timestamp?.toISOString() ?? null
             });
 
             if (!insertResult) return;
@@ -150,21 +156,29 @@ export class Workout {
             _exercise_ids: this.exerciseIds.map((id, i) => ({ exercise_id: id, position: i }))
         });
 
-        if (error) return;
+        if (error) {
+            console.error('Error saving workout:', error);
+            return;
+        }
+
         await db.runAsync(`UPDATE workouts SET dirty = 0 WHERE id = ?;`, this.id);
     }
 
-    async delete(db: SQLiteDatabase) {
-        // Delete the workout record
-        await db.runAsync('DELETE FROM workouts WHERE id = ?', this.id);
-        await supabase.from('workouts').delete().eq('id', this.id);
+    async delete(db: SQLiteDatabase) {        
+        await db.runAsync(`DELETE FROM workouts WHERE id = ?`, this.id);
+
+        const { error } = await supabase.from('workouts').delete().eq('id', this.id);
+        if (!error) return;
+
+        // If the delete operation fails, we insert into deleted_workouts
+        await db.runAsync(`INSERT INTO deleted_workouts (id) VALUES (?);`, this.id);
     }
 
     toJSON() {
         return {
             id: this.id,
             name: this.name,
-            exercises: this.exerciseIds,
+            exercise_ids: this.exerciseIds.map((id, i) => ({ exercise_id: id, position: i })),
             last_modified: (this.lastModified ?? new Date()).toISOString()
         };
     }
