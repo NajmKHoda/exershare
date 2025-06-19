@@ -5,18 +5,11 @@ import SelectList from '@/lib/components/lists/SelectList';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
+import { useDatabaseListener } from '@/lib/hooks/useDatabaseListener';
 
 export default function ExercisesScreen() {
-    const [exercises, rerunQuery] = useSQLiteQuery<ListEntry>(`
-        SELECT name, id FROM exercises ORDER BY name;
-    `, true);
-
-    // Refresh data when screen is focused
-    useFocusEffect(
-        useCallback(() => {
-            rerunQuery();
-        }, [])
-    );
+    const [exercises, rerunQuery] = useSQLiteQuery<ListEntry>(`SELECT name, id FROM exercises ORDER BY name;`, true);
+    useDatabaseListener('exercises', rerunQuery);
 
     function handleItemPress(entry: ListEntry) {
         router.push(`/exercise/${entry.id}`);

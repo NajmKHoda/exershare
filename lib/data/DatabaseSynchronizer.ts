@@ -4,7 +4,7 @@ import { syncData } from './sync';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useSession } from '../hooks/useSession';
 
-export default function DatabaseListener() {
+export default function DatabaseSynchronizer() {
     const db = useSQLiteContext();
     const { session, isSessionLoading } = useSession();
     const { isInternetReachable } = useNetworkState();

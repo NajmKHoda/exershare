@@ -4,23 +4,12 @@ import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
 import SelectList from '@/lib/components/lists/SelectList';
 import { DataItem } from '@/lib/components/lists/SearchableList';
-import { useActiveRoutine } from '@/lib/hooks/useActiveRoutine';
 import { router } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+import { useDatabaseListener } from '@/lib/hooks/useDatabaseListener';
 
 export default function RoutinesScreen() {
-    // Database and queries
-    const [routines, rerunRoutinesQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
-    const { refreshActiveRoutine } = useActiveRoutine();
-
-    // Refresh data when screen is focused
-    useFocusEffect(
-        useCallback(() => {
-            rerunRoutinesQuery();
-            refreshActiveRoutine();
-        }, [])
-    );
+    const [routines, rerunQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
+    useDatabaseListener('routines', rerunQuery);
 
     function handleItemSelect({ id }: DataItem) {
         router.push(`/routine/${id}`);

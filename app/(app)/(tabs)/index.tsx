@@ -14,7 +14,7 @@ import { Play, FileText } from 'lucide-react-native';
 
 export default function Index() {
     const resolvedStyles = useResolvedStyles(styles);
-    const { activeRoutine } = useActiveRoutine();
+    const activeRoutine = useActiveRoutine();
 
     // Date values for the current view
     const [date, setDate] = useState<Date>(new Date());

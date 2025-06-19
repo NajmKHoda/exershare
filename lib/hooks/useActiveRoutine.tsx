@@ -1,13 +1,9 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react';
 import { Routine } from '../data/Routine';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useDatabaseListener } from './useDatabaseListener';
 
-interface ActiveRoutineContext {
-    activeRoutine: Routine | null,
-    refreshActiveRoutine: () => unknown
-}
-
-const ActiveRoutineContext = createContext<ActiveRoutineContext | null>(null);
+const ActiveRoutineContext = createContext<Routine | null>(null);
 
 export function ActiveRoutineProvider({ children }: PropsWithChildren) {
     const db = useSQLiteContext();
@@ -18,20 +14,23 @@ export function ActiveRoutineProvider({ children }: PropsWithChildren) {
         setActiveRoutine(routine);
     }
 
+    // Avoids expensive re-fetching if something else changes in the user table
+    async function needToRefresh() {
+        const currentId = await db.getFirstAsync<string>('SELECT active_routine_id FROM user');
+        const activeId = activeRoutine?.id ?? null;
+        if (activeId !== currentId) {
+            await refreshActiveRoutine();
+        }
+    }
+
     useEffect(() => { refreshActiveRoutine() }, []);
+    useDatabaseListener('user', needToRefresh);
 
     return (
-        <ActiveRoutineContext.Provider value={{ activeRoutine, refreshActiveRoutine }}>
+        <ActiveRoutineContext.Provider value={activeRoutine}>
             { children }
         </ActiveRoutineContext.Provider>
     );
 }
 
-export function useActiveRoutine() {
-    const context = useContext(ActiveRoutineContext);
-    if (!context) {
-        throw new Error('useActiveRoutine must be used within an ActiveRoutineProvider');
-    }
-
-    return context;
-}
+export const useActiveRoutine = () => useContext(ActiveRoutineContext);

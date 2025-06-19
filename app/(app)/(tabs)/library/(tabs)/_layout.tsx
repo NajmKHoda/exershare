@@ -1,12 +1,14 @@
 import { Tabs } from 'expo-router';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import LibraryTabBar from '@/lib/components/navigation/LibraryTabBar';
+import { syncData } from '@/lib/data/sync';
+import { useSQLiteContext } from 'expo-sqlite';
 
 export default function Layout() {
-    const colors = useThemeColors();
+    const db = useSQLiteContext();
     const resolvedStyles = useResolvedStyles(styles);
   
     return (

@@ -10,14 +10,12 @@ import { Pencil, Share } from 'lucide-react-native';
 
 export default function ActiveRoutineView() {
     const db = useSQLiteContext();
-    const colors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
-    const { activeRoutine, refreshActiveRoutine } = useActiveRoutine();
+    const activeRoutine = useActiveRoutine();
     const [isModalVisible, setModalVisible] = useState(false);
 
     function handleRoutineSelect(routine: DataItem) {
         db.runAsync(`UPDATE user SET active_routine_id = ?;`, routine.id);
-        refreshActiveRoutine();
     }
 
     return (
