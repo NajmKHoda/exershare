@@ -107,10 +107,10 @@ export class Workout {
         return workouts[0];
     }
 
-    async save(db: SQLiteDatabase, timestamp: Date | null = null) {
+    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
         let newModified = timestamp ?? new Date();
-        await db.withExclusiveTransactionAsync(async (transaction) => {
-            await transaction.getFirstAsync<{ last_modified: string }>(`
+        await db.withTransactionAsync(async () => {
+            await db.getFirstAsync<{ last_modified: string }>(`
                 INSERT INTO workouts (id, name, last_modified)
                     VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
@@ -123,7 +123,7 @@ export class Workout {
                 $timestamp: newModified.toISOString()
             });
 
-            const linkQuery = await transaction.prepareAsync(`
+            const linkQuery = await db.prepareAsync(`
                 INSERT INTO exercise_instances (position, workout_id, exercise_id)
                 VALUES ($position, $workoutId, $exerciseId)
                 ON CONFLICT (position, workout_id) DO UPDATE SET
@@ -144,6 +144,8 @@ export class Workout {
         });
 
         this.lastModified = newModified;
+        if (localOnly) return;
+
         const { error } = await supabase.rpc('save_workout', {
             _id: this.id,
             _name: this.name,
@@ -159,8 +161,9 @@ export class Workout {
         await db.runAsync(`UPDATE workouts SET dirty = 0 WHERE id = ?;`, this.id);
     }
 
-    async delete(db: SQLiteDatabase) {        
+    async delete(db: SQLiteDatabase, localOnly: boolean = false) {        
         await db.runAsync(`DELETE FROM workouts WHERE id = ?`, this.id);
+        if (localOnly) return;
 
         const { error } = await supabase.rpc('delete_workout', {
             _id: this.id,

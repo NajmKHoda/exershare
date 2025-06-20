@@ -167,10 +167,10 @@ export class Routine {
         return routine;
     }
 
-    async save(db: SQLiteDatabase, timestamp: Date | null = null) {
+    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
         let newModified = timestamp ?? new Date();
-        await db.withExclusiveTransactionAsync(async (transaction) => {
-            await transaction.getFirstAsync<{ last_modified: string; }>(`
+        await db.withTransactionAsync(async () => {
+            await db.getFirstAsync<{ last_modified: string; }>(`
                 INSERT INTO routines (id, name, last_modified)
                     VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
@@ -184,7 +184,7 @@ export class Routine {
             });
 
             // Prepare linking query
-            const linkQuery = await transaction.prepareAsync(`
+            const linkQuery = await db.prepareAsync(`
                 INSERT INTO workout_instances (position, routine_id, workout_id)
                     VALUES ($position, $routineId, $workoutId)
                 ON CONFLICT (position, routine_id) DO UPDATE SET
@@ -192,7 +192,7 @@ export class Routine {
             `);
             
             // For workouts that were just turned null
-            const delinkQuery = await transaction.prepareAsync(`
+            const delinkQuery = await db.prepareAsync(`
                 DELETE FROM workout_instances
                     WHERE routine_id = $routineId AND position = $position;
             `);
@@ -217,6 +217,8 @@ export class Routine {
         });
 
         this.lastModified = newModified;
+        if (localOnly) return;
+
         const { error } = await supabase.rpc('save_routine', {
             _id: this.id,
             _name: this.name,
@@ -230,8 +232,9 @@ export class Routine {
         await db.runAsync('UPDATE routines SET dirty = 0 WHERE id = ?', this.id);
     }
 
-    async delete(db: SQLiteDatabase) {        
+    async delete(db: SQLiteDatabase, localOnly: boolean = false) {        
         await db.runAsync(`DELETE FROM routines WHERE id = ?`, this.id);
+        if (localOnly) return;
 
         const { error } = await supabase.rpc('delete_routine', {
             _id: this.id,

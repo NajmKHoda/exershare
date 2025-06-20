@@ -95,7 +95,7 @@ export class Exercise {
         return exercise;
     }
 
-    async save(db: SQLiteDatabase, timestamp: Date | null = null) {
+    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
         const serialized = this.serialize();
         const newModified = timestamp ?? new Date();
 
@@ -122,6 +122,8 @@ export class Exercise {
         });
 
         this.lastModified = newModified;
+        if (localOnly) return;
+
         const { error } = await supabase.from('exercises').upsert({
             ...serialized,
             last_modified: this.lastModified.toISOString()
@@ -131,8 +133,9 @@ export class Exercise {
         await db.runAsync(`UPDATE exercises SET dirty = 0 WHERE id = ?;`, this.id);
     }
 
-    async delete(db: SQLiteDatabase) {        
+    async delete(db: SQLiteDatabase, localOnly: boolean = false) {        
         await db.runAsync(`DELETE FROM exercises WHERE id = ?`, this.id);
+        if (localOnly) return;
 
         const { error } = await supabase.rpc('delete_exercise', {
             _id: this.id,
