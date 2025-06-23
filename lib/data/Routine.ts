@@ -120,7 +120,7 @@ export class Routine {
         const exercises: Record<string, Exercise> = {};
         rawExercises.forEach(raw => {
             exercises[raw.id] ??= new Exercise(raw);
-            workoutToExercises[raw.workout_id].push(exercises[raw.id]);
+            workoutToExercises[raw.workout_id]?.push(exercises[raw.id]);
         });
 
         // Create workouts and add them to routines
