@@ -3,6 +3,7 @@ import { ColorValue } from 'react-native';
 
 export interface ThemeColors {
     primary: ColorValue,
+    secondary: ColorValue,
     accent: ColorValue,
     background: ColorValue,
     backgroundSecondary: ColorValue,
@@ -18,26 +19,18 @@ export interface ThemeColors {
     gray: ColorValue
 }
 
-const defaultThemeColors: ThemeColors = {
-    primary: '',
-    accent: '',
-    background: '',
-    backgroundSecondary: '',
-    separator: '',
+const themeColorsContext = createContext<ThemeColors | null>(null);
 
-    red: '',
-    orange: '',
-    yellow: '',
-    green: '',
-    blue: '',
-    purple: '',
-    gray: ''
-}
-
-const themeColorsContext = createContext<ThemeColors>(defaultThemeColors);
 export const ThemeColorsProvider = themeColorsContext.Provider;
 export const ThemeColorsConsumer = themeColorsContext.Consumer;
-export const useThemeColors = () => useContext(themeColorsContext);
+export function useThemeColors() {
+    const context = useContext(themeColorsContext);
+    if (!context) {
+        throw new Error('useThemeColors must be used within a ThemeColorsProvider');
+    }
+    return context;
+}
+
 export function useResolvedStyles<T>(styles: (colors: ThemeColors) => T): T {
     const colors = useThemeColors();
     return styles(colors);

@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TextButton from '../controls/TextButton';
-import { ChevronLeft, Save, Trash } from 'lucide-react-native';
+import { ChevronLeft, Save, Trash, Share2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import ThemeText from '../theme/ThemeText';
@@ -13,18 +13,44 @@ interface EntityDetailScreenProps {
     title: string;
     children: ReactNode;
     isNewEntity: boolean;
+    entityId?: string;
+    entityType?: 'exercise' | 'routine' | 'workout';
+    showShareButton?: boolean;
 }
 
-export default function EntityDetailScreen({ title, onSave, onDelete, children, isNewEntity }: EntityDetailScreenProps) {
+export default function EntityDetailScreen({ 
+    title, 
+    onSave, 
+    onDelete, 
+    children, 
+    isNewEntity, 
+    entityId,
+    entityType,
+    showShareButton
+}: EntityDetailScreenProps) {
     const router = useRouter();
     const colors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
+    
+    const handleShare = () => {
+        if (entityId && entityType === 'exercise') {
+            router.push(`/exercise/share/${entityId}`);
+        }
+    };
      
     return (
         <View style={resolvedStyles.container}>
             <SafeAreaView edges={['top']} style={resolvedStyles.header}>
                 <TextButton label="Back" style={resolvedStyles.back} Icon={ChevronLeft} onPress={() => router.back()} />
                 <ThemeText style={resolvedStyles.title}>{title}</ThemeText>
+                {showShareButton && !isNewEntity && (
+                    <TextButton 
+                        label="Share" 
+                        style={resolvedStyles.shareButton} 
+                        Icon={Share2} 
+                        onPress={handleShare} 
+                    />
+                )}
             </SafeAreaView>
             <View style={resolvedStyles.childrenContainer}>
                 {children}
@@ -47,7 +73,10 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 5,
         paddingBottom: 10,
-        backgroundColor: colors.backgroundSecondary
+        backgroundColor: colors.backgroundSecondary,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
     },
     footer: {
         flexDirection: 'row',
@@ -65,7 +94,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     },
     back: {
         fontSize: 20,
-        alignSelf: 'flex-start',
         textAlign: 'left'
     },
     title: {
@@ -73,6 +101,11 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         fontWeight: 'bold',
         lineHeight: 28,
         textAlign: 'center',
+        flex: 1
+    },
+    shareButton: {
+        fontSize: 20,
+        color: colors.primary
     },
     childrenContainer: {
         flex: 1,

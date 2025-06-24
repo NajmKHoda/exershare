@@ -16,7 +16,8 @@ export default function ExercisesScreen() {
     }
 
     function handleItemAdd() {
-        router.push('/exercise/new');
+        //router.push('/exercise/new');
+        router.push('/scan');
     }
 
     return (

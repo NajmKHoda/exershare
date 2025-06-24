@@ -88,7 +88,15 @@ export default function ExerciseScreen() {
     }
 
     return (
-        <EntityDetailScreen isNewEntity={id === 'new'} title='Exercise' onSave={handleSave} onDelete={handleDelete}>
+        <EntityDetailScreen 
+            isNewEntity={id === 'new'} 
+            title='Exercise' 
+            onSave={handleSave} 
+            onDelete={handleDelete}
+            entityId={id !== 'new' ? id : undefined}
+            entityType="exercise"
+            showShareButton={true}
+        >
             <LabeledTextField
                 name='Name'
                 initialValue={currentState.name}

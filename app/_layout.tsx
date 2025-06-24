@@ -37,6 +37,7 @@ export default function RootLayout() {
 
 const themeColors: ThemeColors = {
     primary: PlatformColor('label'),
+    secondary: PlatformColor('secondaryLabel'),
     accent: PlatformColor('link'),
     background: PlatformColor('systemBackground'),
     backgroundSecondary: PlatformColor('secondarySystemBackground'),

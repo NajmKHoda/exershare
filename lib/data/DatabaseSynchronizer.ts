@@ -54,6 +54,8 @@ export default function DatabaseSynchronizer() {
             supabase.removeChannel(channel);
         }
     }, [db, session]);
+
+    return null;
 }
 
 async function handleExerciseChange(payload: any, db: SQLiteDatabase) {

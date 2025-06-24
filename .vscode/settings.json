@@ -5,6 +5,5 @@
         "markdown": false,
         "scminput": false,
         "cpp": false
-    },
-    "deno.enable": true
+    }
 }
