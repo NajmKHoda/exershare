@@ -39,3 +39,4 @@ app-example
 *.backup
 
 .vscode/
+.github/
