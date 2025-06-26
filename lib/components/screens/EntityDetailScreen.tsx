@@ -29,13 +29,10 @@ export default function EntityDetailScreen({
     showShareButton
 }: EntityDetailScreenProps) {
     const router = useRouter();
-    const colors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
     
     const handleShare = () => {
-        if (entityId && entityType === 'exercise') {
-            router.push(`/exercise/share/${entityId}`);
-        }
+        router.push('./share');
     };
      
     return (

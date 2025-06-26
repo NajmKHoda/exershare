@@ -5,7 +5,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { Exercise } from '@/lib/data/Exercise';
 import { supabase } from '@/lib/supabase';
 import QRCode from 'react-native-qrcode-svg';
-import { Stack } from 'expo-router';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 
 export default function ShareExerciseScreen() {
@@ -76,14 +75,7 @@ export default function ShareExerciseScreen() {
     }, [id, db]);
 
     return (
-        <View style={resolvedStyles.container}>
-            <Stack.Screen 
-                options={{
-                    title: 'Share Exercise',
-                    headerShown: true,
-                }} 
-            />
-            
+        <View style={resolvedStyles.container}>        
             {loading ? (
                 <ActivityIndicator size="large" color={colors.primary} />
             ) : error ? (
