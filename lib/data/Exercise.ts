@@ -37,7 +37,7 @@ export class Exercise {
             this.id = rawData.id;
             this.name = rawData.name;
             this.notes = rawData.notes;
-            this.lastModified = new Date(rawData.last_modified);
+            this.lastModified = rawData.last_modified ? new Date(rawData.last_modified) : null;
 
             // Deserialize sets ("REPS_1:WEIGHT_1;REPS_2:WEIGHT_2; ...")
             this.sets = rawData.sets!.split(';').map(setString => {
@@ -166,7 +166,7 @@ export interface RawExercise {
     sets: string,
     notes: string,
     categories: string,
-    last_modified: string
+    last_modified?: string
 }
 
 export interface Set {
