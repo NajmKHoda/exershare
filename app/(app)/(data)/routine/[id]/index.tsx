@@ -2,7 +2,6 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Save, Trash } from 'lucide-react-native';
 import { XCircle } from 'lucide-react-native';
 import { Routine } from '@/lib/data/Routine';
 import EntityDetailScreen from '@/lib/components/screens/EntityDetailScreen';
@@ -13,7 +12,6 @@ import { DataItem } from '@/lib/components/lists/SearchableList';
 import Separator from '@/lib/components/layout/Separator';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import DatabaseSelectModal from '@/lib/components/modals/DatabaseSelectModal';
-import TextButton from '@/lib/components/controls/TextButton';
 
 export default function RoutineScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
