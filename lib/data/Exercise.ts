@@ -1,4 +1,4 @@
-import { SQLiteDatabase } from 'expo-sqlite';
+import { SQLiteDatabase, SQLiteStatement } from 'expo-sqlite';
 import { randomUUID } from '../uuid';
 import { supabase } from '../supabase';
 
@@ -79,7 +79,6 @@ export class Exercise {
         `);
 
         if (rawExercises.length === 0) return [];
-        
         return rawExercises.map(raw => new Exercise(raw));
     }
 
@@ -95,42 +94,79 @@ export class Exercise {
         return exercise;
     }
 
-    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
-        const serialized = this.serialize();
-        const newModified = timestamp ?? new Date();
+    static async saveMany(
+        db: SQLiteDatabase, 
+        exercises: Exercise[],
+        overwriteTimestamp: boolean = true,
+        localOnly: boolean = false
+    ) {
+        const serializedExercises = exercises.map(exercise => exercise.serialize());
+        const newTimestamp = new Date();
 
-        await db.getFirstAsync<{ last_modified: string }>(`
-            INSERT INTO exercises (id, name, sets, notes, categories, last_modified)
-                VALUES (
-                    $id, $name, $sets,
-                    $notes, $categories, $timestamp
-                )
-            ON CONFLICT(id) DO UPDATE SET 
-                name = $name,
-                sets = $sets,
-                notes = $notes,
-                categories = $categories,
-                dirty = 1,
-                last_modified = $timestamp;
-        `, {
-            $id: serialized.id,
-            $name: serialized.name,
-            $sets: serialized.sets,
-            $notes: serialized.notes,
-            $categories: serialized.categories,
-            $timestamp: newModified.toISOString()
-        });
+        let saveStatement: SQLiteStatement | null = null;
+        try {
+            saveStatement = await db.prepareAsync(`
+                INSERT INTO exercises (id, name, sets, notes, categories, last_modified)
+                VALUES ($id, $name, $sets, $notes, $categories, $timestamp)
+                ON CONFLICT(id) DO UPDATE SET 
+                    name = excluded.name,
+                    sets = excluded.sets,
+                    notes = excluded.notes,
+                    categories = excluded.categories,
+                    last_modified = excluded.last_modified;
+            `);
 
-        this.lastModified = newModified;
+            await Promise.all(
+                exercises.map(async (exercise, i) => {
+                    const serialized = serializedExercises[i];
+                    const newModified = overwriteTimestamp ? newTimestamp : exercise.lastModified ?? newTimestamp;
+
+                    await saveStatement!.executeAsync({
+                        $id: serialized.id,
+                        $name: serialized.name,
+                        $sets: serialized.sets,
+                        $notes: serialized.notes,
+                        $categories: serialized.categories,
+                        $timestamp: newModified.toISOString()
+                    });
+
+                    // Update the last modified date in the instance
+                    exercise.lastModified = newModified;
+                })
+            );
+        } catch (error) {
+            console.error('Error saving exercise(s) locally:', error);
+            return;
+        } finally {
+            saveStatement?.finalizeAsync();
+        }
+
         if (localOnly) return;
 
-        const { error } = await supabase.from('exercises').upsert({
-            ...serialized,
-            last_modified: this.lastModified.toISOString()
-        });
+        const { error: remoteError } = await supabase.from('exercises').upsert(
+            exercises.map(exercise => ({
+                ...exercise,
+                last_modified: exercise.lastModified!.toISOString()
+            }))
+        );
+        if (remoteError) return;
 
-        if (error) return;
-        await db.runAsync(`UPDATE exercises SET dirty = 0 WHERE id = ?;`, this.id);
+        try {
+            const placeholders = new Array(exercises.length).fill('?').join(',');
+            await db.runAsync(`
+                UPDATE exercises SET dirty = 0 WHERE id IN (${placeholders});
+            `, exercises.map(exercise => exercise.id));
+        } catch (error) {
+            console.error('Error updating exercise dirty flag:', error);
+        }
+    }
+
+
+    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
+        if (timestamp !== null) {
+            this.lastModified = timestamp;
+        }
+        return Exercise.saveMany(db, [this], timestamp === null, localOnly);
     }
 
     async delete(db: SQLiteDatabase, localOnly: boolean = false) {        

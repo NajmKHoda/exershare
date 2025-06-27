@@ -39,11 +39,8 @@ export default function IncomingRoutineScreen() {
             setSaving(true);
             
             // Save all exercises first
-            for (const exerciseData of exercises) {
-                const newExercise = new Exercise(exerciseData);
-                await newExercise.save(db);
-            }
-            
+            await Exercise.saveMany(db, exercises.map(e => new Exercise(e)), false, true);
+
             // Save all workouts with updated exercise IDs
             for (const workoutData of workouts) {
                 const newWorkout = new Workout(workoutData.id, workoutData.name, workoutData.exercise_ids);

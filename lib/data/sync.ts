@@ -42,20 +42,19 @@ export async function syncData(db: SQLiteDatabase) {
         console.error('Error syncing exercises:', error);
         return;
     }
+
+    const { newExercises, newWorkouts, newRoutines } = data;
     
-    for (const exercise of data.newExercises) {
-        const newExercise = new Exercise(exercise)
-        await newExercise.save(db, new Date(exercise.last_modified), true);
-    }
+    await Exercise.saveMany(db, newExercises.map(re => new Exercise(re)), false, true);
 
     for (const workout of data.newWorkouts) {
         const newWorkout = new Workout(workout.id, workout.name, workout.exercise_ids);
-        await newWorkout.save(db, new Date(workout.last_modified), true);
+        await newWorkout.save(db, new Date(workout.last_modified!), true);
     }
 
     for (const routine of data.newRoutines) {
         const newRoutine = new Routine(routine.id, routine.name, routine.workout_ids);
-        await newRoutine.save(db, new Date(routine.last_modified), true);
+        await newRoutine.save(db, new Date(routine.last_modified!), true);
     }
 
     // Delete entities that were removed remotely

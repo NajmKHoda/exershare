@@ -36,16 +36,10 @@ export default function IncomingWorkoutScreen() {
             setSaving(true);
             
             // Save all exercises first
-            const savedExercises: Exercise[] = [];
-            for (const exerciseData of exercises) {
-                const newExercise = new Exercise(exerciseData);
-                await newExercise.save(db);
-                savedExercises.push(newExercise);
-            }
-            
+            await Exercise.saveMany(db, exercises.map(e => new Exercise(e)), false, true);
+
             // Create new Workout instance with the exercise IDs
-            const exerciseIds = savedExercises.map(ex => ex.id);
-            const newWorkout = new Workout(workout.id, workout.name, exerciseIds);
+            const newWorkout = new Workout(workout.id, workout.name, exercises.map(e => e.id));
             await newWorkout.save(db);
             
             // Clear the incoming entity and navigate back
