@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
@@ -12,8 +12,7 @@ import { ChevronLeft, Camera } from 'lucide-react-native';
 
 export default function ScanScreen() {
     const [permission, requestPermission] = useCameraPermissions();
-    const [scanned, setScanned] = useState(false);
-    const [scanning, setScanning] = useState(false);
+    const scanned = useRef(false);
     const router = useRouter();
     const resolvedStyles = useResolvedStyles(styles);
     const { setIncomingEntity } = useIncomingEntity();
@@ -25,10 +24,8 @@ export default function ScanScreen() {
     }, [permission]);
 
     const handleBarCodeScanned = async ({ data }: { data: string }) => {
-        if (scanned || scanning) return;
-        
-        setScanned(true);
-        setScanning(true);
+        if (scanned.current) return;
+        scanned.current = true;
 
         try {
             const qrData = JSON.parse(data);
@@ -61,11 +58,10 @@ export default function ScanScreen() {
             });
 
             // Navigate to the appropriate incoming screen
-            router.push(`/${type}/incoming` as any);
+            router.replace(`/${type}/incoming` as any);
         } catch (error) {
             console.error('Error processing QR code:', error);
-        } finally {
-            setScanning(false);
+            scanned.current = false;
         }
     };
 
@@ -142,32 +138,22 @@ export default function ScanScreen() {
                 <View style={resolvedStyles.headerSpacer} />
             </SafeAreaView>
             
-            <CameraView
-                style={resolvedStyles.camera}
-                facing="back"
-                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-                barcodeScannerSettings={{
-                    barcodeTypes: ['qr'],
-                }}
-            >
+            <View style={resolvedStyles.cameraContainer}>
+                <CameraView
+                    style={resolvedStyles.camera}
+                    facing="back"
+                    onBarcodeScanned={handleBarCodeScanned}
+                    barcodeScannerSettings={{
+                        barcodeTypes: ['qr'],
+                    }}
+                />
                 <View style={resolvedStyles.overlay}>
                     <View style={resolvedStyles.scanArea} />
                     <ThemeText style={resolvedStyles.instructionText}>
-                        {scanning ? 'Processing...' : 'Point camera at QR code to scan'}
+                        {scanned.current ? 'Processing...' : 'Point camera at QR code to scan'}
                     </ThemeText>
                 </View>
-            </CameraView>
-            
-            {scanned && (
-                <View style={resolvedStyles.scanAgainContainer}>
-                    <TextButton 
-                        label="Scan Again" 
-                        Icon={Camera}
-                        onPress={() => setScanned(false)}
-                        style={resolvedStyles.scanAgainButton}
-                    />
-                </View>
-            )}
+            </View>
         </View>
     );
 }
@@ -211,8 +197,11 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         fontSize: 16,
         color: colors.accent,
     },
-    camera: {
+    cameraContainer: {
         flex: 1,
+    },
+    camera: {
+        ...StyleSheet.absoluteFillObject
     },
     overlay: {
         flex: 1,

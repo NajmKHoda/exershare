@@ -158,7 +158,7 @@ export default function IncomingRoutineScreen() {
                                                 {workout.exercise_ids.map((exerciseId, exerciseIndex) => {
                                                     const exercise = exerciseMap.get(exerciseId);
                                                     return exercise ? (
-                                                        <ThemeText key={exerciseId} style={resolvedStyles.exerciseListItem}>
+                                                        <ThemeText key={exerciseId + exerciseIndex.toString()} style={resolvedStyles.exerciseListItem}>
                                                             {exerciseIndex + 1}. {exercise.name}
                                                         </ThemeText>
                                                     ) : null;
