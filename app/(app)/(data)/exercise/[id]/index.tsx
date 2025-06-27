@@ -94,8 +94,6 @@ export default function ExerciseScreen() {
             onSave={handleSave} 
             onDelete={handleDelete}
             entityId={id !== 'new' ? id : undefined}
-            entityType="exercise"
-            showShareButton={true}
         >
             <LabeledTextField
                 name='Name'

@@ -14,8 +14,6 @@ interface EntityDetailScreenProps {
     children: ReactNode;
     isNewEntity: boolean;
     entityId?: string;
-    entityType?: 'exercise' | 'routine' | 'workout';
-    showShareButton?: boolean;
 }
 
 export default function EntityDetailScreen({ 
@@ -23,16 +21,14 @@ export default function EntityDetailScreen({
     onSave, 
     onDelete, 
     children, 
-    isNewEntity, 
-    entityId,
-    entityType,
-    showShareButton
+    isNewEntity,
+    entityId
 }: EntityDetailScreenProps) {
     const router = useRouter();
     const resolvedStyles = useResolvedStyles(styles);
     
     const handleShare = () => {
-        router.push('./share');
+        router.push(`./${entityId}/share/`);
     };
      
     return (
@@ -40,7 +36,7 @@ export default function EntityDetailScreen({
             <SafeAreaView edges={['top']} style={resolvedStyles.header}>
                 <TextButton label="Back" style={resolvedStyles.back} Icon={ChevronLeft} onPress={() => router.back()} />
                 <ThemeText style={resolvedStyles.title}>{title}</ThemeText>
-                {showShareButton && !isNewEntity && (
+                {entityId && !isNewEntity && (
                     <TextButton 
                         label="Share" 
                         style={resolvedStyles.shareButton} 

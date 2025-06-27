@@ -19,7 +19,7 @@ export default function AuthenticationGuard() {
                 password: DEV_PASSWORD
             });
         }
-    });
+    }, [session]);
 
     if (DEV_EMAIL && DEV_PASSWORD && !session)
         return <ThemeText>Logging in with dev credentials...</ThemeText>;

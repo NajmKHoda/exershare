@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 
-export default function useSQLiteQuery<T>(query: string, multiple: true): [T[], QueryRefresher];
-export default function useSQLiteQuery<T>(query: string, multiple?: false): [T | null, QueryRefresher];
+export default function useSQLiteQuery<T>(query: string, multiple: true): [T[], QueryRefresher, boolean];
+export default function useSQLiteQuery<T>(query: string, multiple?: false): [T | null, QueryRefresher, boolean];
 export default function useSQLiteQuery<T>(query: string, multiple: boolean = false) {
     const db = useSQLiteContext();
     const [result, setResult] = useState<T[] | T | null>(multiple ? [] : null);
+    const [done, setDone] = useState(false);
     const [queryTrigger, setQueryTrigger] = useState(true);
 
     useEffect(() => {
         let isMounted = true;
+        setDone(false);
 
         async function fetchData() {
             try {
@@ -19,6 +21,8 @@ export default function useSQLiteQuery<T>(query: string, multiple: boolean = fal
                 if (isMounted) setResult(res as any);
             } catch (err) {
                 console.error("SQLite Query Error:", err);
+            } finally {
+                if (isMounted) setDone(true);
             }
         };
 
@@ -31,7 +35,7 @@ export default function useSQLiteQuery<T>(query: string, multiple: boolean = fal
         setQueryTrigger(prev => !prev);
     }
 
-    return [result, rerunQuery];
+    return [result, rerunQuery, done] as const;
 }
 
 type QueryRefresher = () => void;
