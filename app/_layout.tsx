@@ -9,6 +9,7 @@ import { ActiveRoutineProvider } from '@/lib/hooks/useActiveRoutine';
 import { SessionProvider } from '@/lib/hooks/useSession';
 import DatabaseSynchronizer from '@/lib/data/DatabaseSynchronizer';
 import { DatabaseListenerProvider } from '@/lib/hooks/useDatabaseListener';
+import { IncomingEntityProvider } from '@/lib/hooks/useIncomingEntity';
 
 export default function RootLayout() {
     return (
@@ -22,11 +23,13 @@ export default function RootLayout() {
         <DatabaseListenerProvider>
         <ThemeColorsProvider value={ themeColors }>
         <ActiveRoutineProvider>
+        <IncomingEntityProvider>
         <GestureHandlerRootView>
         <SafeAreaProvider>
             <Slot />
         </SafeAreaProvider>
         </GestureHandlerRootView>
+        </IncomingEntityProvider>
         </ActiveRoutineProvider>
         </ThemeColorsProvider>
         </DatabaseListenerProvider>

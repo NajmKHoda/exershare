@@ -12,13 +12,23 @@ export default function AuthenticationGuard() {
 
     /* DEBUG START */
     useEffect(() => {
-        if (DEV_EMAIL && DEV_PASSWORD && !session) {
-            // Automatically log in with dev credentials if available
-            supabase.auth.signInWithPassword({
-                email: DEV_EMAIL,
-                password: DEV_PASSWORD
-            });
+        async function autoLogin() {
+            if (DEV_EMAIL && DEV_PASSWORD && !session) {
+                // Automatically log in with dev credentials if available
+                const { error } = await supabase.auth.signInWithPassword({
+                    email: DEV_EMAIL,
+                    password: DEV_PASSWORD
+                });
+
+                if (error) {
+                    console.error('Auto-login failed:', error);
+                } else {
+                    console.log('Auto-login successful');
+                }
+            }
         }
+
+        autoLogin();
     }, [session]);
 
     if (DEV_EMAIL && DEV_PASSWORD && !session)

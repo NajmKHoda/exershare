@@ -139,7 +139,7 @@ export class Routine {
             raw.id,
             raw.name,
             routineToWorkouts[raw.id],
-            new Date(raw.last_modified)
+            new Date(raw.last_modified!)
         ));
     }
 
@@ -262,5 +262,9 @@ export class Routine {
 export interface RawRoutine {
     id: string;
     name: string;
-    last_modified: string;
+    last_modified?: string;
+}
+
+export interface FullRawRoutine extends RawRoutine {
+    workout_ids: (string | null)[];
 }

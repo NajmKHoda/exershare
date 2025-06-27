@@ -54,7 +54,7 @@ export default function ShareScreen({ id, type, entityTable }: ShareQRCodeProps)
                     .single();
                 
                 if (error) {
-                    throw new Error('Failed to create share token');
+                    throw new Error('Failed to create share token: ' + error.message);
                 }
                 
                 setShareToken(data.id);
