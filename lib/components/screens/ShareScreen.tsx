@@ -32,44 +32,42 @@ export default function ShareScreen({ id, type, entityTable }: ShareQRCodeProps)
     const name = queryResult?.name ?? null;
 
     // Create share token
-    useFocusEffect(
-        useCallback(() => {
-            async function createShareToken() {
-                try {
-                    setLoading(true);
-                    if (!queryDone) return;
-                    
-                    // Verify entity exists
-                    if (name === null) {
-                        throw new Error(`${type} not found`);
-                    }
-                    
-                    // Create a share token in Supabase
-                    const { data, error } = await supabase
-                        .from('share_tokens')
-                        .insert({
-                            entity_id: id,
-                            type: type
-                        })
-                        .select('id')
-                        .single();
-                    
-                    if (error) {
-                        throw new Error('Failed to create share token');
-                    }
-                    
-                    setShareToken(data.id);
-                } catch (err) {
-                    console.error('Error:', err);
-                    setError(err instanceof Error ? err.message : 'An unknown error occurred');
-                } finally {
-                    setLoading(false);
+    useEffect(() => {
+        async function createShareToken() {
+            try {
+                setLoading(true);
+                if (!queryDone) return;
+                
+                // Verify entity exists
+                if (name === null) {
+                    throw new Error(`${type} not found`);
                 }
+                
+                // Create a share token in Supabase
+                const { data, error } = await supabase
+                    .from('share_tokens')
+                    .insert({
+                        entity_id: id,
+                        type: type
+                    })
+                    .select('id')
+                    .single();
+                
+                if (error) {
+                    throw new Error('Failed to create share token');
+                }
+                
+                setShareToken(data.id);
+            } catch (err) {
+                console.error('Error:', err);
+                setError(err instanceof Error ? err.message : 'An unknown error occurred');
+            } finally {
+                setLoading(false);
             }
-            
-            createShareToken();
-        }, [id, type, name, queryDone])
-    );
+        }
+        
+        createShareToken();
+    }, [id, type, queryDone]);
 
     if (loading) {
         return (
