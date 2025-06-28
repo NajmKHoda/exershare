@@ -7,9 +7,11 @@ import { DataItem } from './lists/SearchableList';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useActiveRoutine } from '../hooks/useActiveRoutine';
 import { Pencil, Share } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 export default function ActiveRoutineView() {
     const db = useSQLiteContext();
+    const router = useRouter();
     const resolvedStyles = useResolvedStyles(styles);
     const activeRoutine = useActiveRoutine();
     const [isModalVisible, setModalVisible] = useState(false);
@@ -31,7 +33,11 @@ export default function ActiveRoutineView() {
                     <Pressable onPress={() => setModalVisible(true)}>
                         <Pencil size={40} />
                     </Pressable>
-                    <Share size={40} />
+                    { activeRoutine &&
+                        <Pressable onPress={() => router.push(`/routine/${activeRoutine.id}/share`)}>
+                            <Share size={40} />
+                        </Pressable>
+                    }
                 </View>
             </View>
 
