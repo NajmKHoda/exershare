@@ -15,7 +15,8 @@ interface Props {
 export default function DatabaseSelectModal({ visible, dbName, onSelect, onClose, title }: Props) {
     const [data, refreshData] = useSQLiteQuery<DataItem>(
         `SELECT id, name FROM ${ dbName } ORDER BY name;`,
-        true
+        true,
+        dbName
     );
 
     useEffect(() => {

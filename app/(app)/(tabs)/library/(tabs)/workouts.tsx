@@ -9,9 +9,12 @@ import AddOptionsModal from '@/lib/components/modals/AddOptionsModal';
 import { useState } from 'react';
 
 export default function WorkoutsScreen() {
-    const [workouts, rerunQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM workouts ORDER BY name;`, true);
+    const [workouts] = useSQLiteQuery<DataItem>(
+        `SELECT name, id FROM workouts ORDER BY name;`,
+        true,
+        'workouts'
+    );
     const [addModalVisible, setAddModalVisible] = useState(false);
-    useDatabaseListener('workouts', rerunQuery);
 
     function handleItemPress({ id }: { id: string }) {
         router.push(`/workout/${id}`);

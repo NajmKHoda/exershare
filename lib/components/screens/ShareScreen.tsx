@@ -28,6 +28,8 @@ export default function ShareScreen({ id, type, entityTable }: ShareQRCodeProps)
     
     const [queryResult,,queryDone] = useSQLiteQuery<{ name: string }>(
         `SELECT name FROM ${entityTable} WHERE id = '${id}'`,
+        false,
+        entityTable
     );
     const name = queryResult?.name ?? null;
 

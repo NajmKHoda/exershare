@@ -18,7 +18,8 @@ export default function ExerciseSelectModal({ visible, onAdd, onClose }: Props) 
     const [selectedExercises, setSelectedExercises] = useState<DataItem[]>([]);
     const [dbExercises] = useSQLiteQuery<DataItem>(
         `SELECT id, name FROM exercises ORDER BY name;`,
-        true
+        true,
+        'exercises'
     );
 
     return (

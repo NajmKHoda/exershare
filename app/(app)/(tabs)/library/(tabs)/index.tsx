@@ -10,9 +10,12 @@ import AddOptionsModal from '@/lib/components/modals/AddOptionsModal';
 import { useState } from 'react';
 
 export default function RoutinesScreen() {
-    const [routines, rerunQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
+    const [routines] = useSQLiteQuery<DataItem>(
+        `SELECT name, id FROM routines ORDER BY name`,
+        true,
+        'routines'
+    );
     const [addModalVisible, setAddModalVisible] = useState(false);
-    useDatabaseListener('routines', rerunQuery);
 
     function handleItemSelect({ id }: DataItem) {
         router.push(`/routine/${id}`);
