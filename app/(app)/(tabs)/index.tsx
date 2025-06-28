@@ -4,17 +4,26 @@ import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { Button, StyleSheet, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
-import { useActiveRoutine } from '@/lib/hooks/useActiveRoutine';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
 import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
 import { Play, FileText } from 'lucide-react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { Routine } from '@/lib/data/Routine';
 
 export default function Index() {
     const resolvedStyles = useResolvedStyles(styles);
-    const activeRoutine = useActiveRoutine();
+
+    const db = useSQLiteContext();
+    const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
+    useFocusEffect(
+        useCallback(() => {
+            Routine.pullActive(db)
+            .then(routine => setActiveRoutine(routine))
+        }, [db])
+    )
 
     // Date values for the current view
     const [date, setDate] = useState<Date>(new Date());
@@ -22,7 +31,6 @@ export default function Index() {
     const todayTimestamp = new Date().setHours(0, 0, 0, 0);
 
     // Loads the log of the view date from the database
-    const db = useSQLiteContext();
     const [log, setLog] = useState<WorkoutLog | null>(null);
     useEffect(() => {
         // If the date is in the future, don't load a log
@@ -90,7 +98,9 @@ export default function Index() {
                 :
                 <>
                     <View style={ resolvedStyles.entryOptions }>
-                        <LabelButton Icon={Play} label='Exercise Mode' />
+                        <Link href='/workout-progress' asChild>
+                            <LabelButton Icon={Play} label='Exercise Mode' />
+                        </Link>
                         <LabelButton Icon={FileText} label='Manual Entry' />
                     </View>
                     <View>

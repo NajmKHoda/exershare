@@ -5,7 +5,6 @@ import { PlatformColor } from 'react-native';
 import { initDatabase } from '@/lib/data/database';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ActiveRoutineProvider } from '@/lib/hooks/useActiveRoutine';
 import { SessionProvider } from '@/lib/hooks/useSession';
 import DatabaseSynchronizer from '@/lib/data/DatabaseSynchronizer';
 import { DatabaseListenerProvider } from '@/lib/hooks/useDatabaseListener';
@@ -22,7 +21,6 @@ export default function RootLayout() {
         <DatabaseSynchronizer />
         <DatabaseListenerProvider>
         <ThemeColorsProvider value={ themeColors }>
-        <ActiveRoutineProvider>
         <IncomingEntityProvider>
         <GestureHandlerRootView>
         <SafeAreaProvider>
@@ -30,7 +28,6 @@ export default function RootLayout() {
         </SafeAreaProvider>
         </GestureHandlerRootView>
         </IncomingEntityProvider>
-        </ActiveRoutineProvider>
         </ThemeColorsProvider>
         </DatabaseListenerProvider>
         </SQLiteProvider>

@@ -1,19 +1,23 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import ThemeText from './theme/ThemeText';
-import { ThemeColors, useResolvedStyles, useThemeColors } from '../hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles } from '../hooks/useThemeColors';
 import DatabaseSelectModal from './modals/DatabaseSelectModal';
 import { useState } from 'react';
 import { DataItem } from './lists/SearchableList';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useActiveRoutine } from '../hooks/useActiveRoutine';
 import { Pencil, Share } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import useSQLiteQuery from '../hooks/useSQLiteQuery';
 
 export default function ActiveRoutineView() {
     const db = useSQLiteContext();
     const router = useRouter();
     const resolvedStyles = useResolvedStyles(styles);
-    const activeRoutine = useActiveRoutine();
+    const [activeRoutine] = useSQLiteQuery<{ id: string, name: string }>(
+        `SELECT id, name FROM routines WHERE id = (SELECT active_routine_id FROM user)`,
+        false,
+        'user'
+    );
     const [isModalVisible, setModalVisible] = useState(false);
 
     function handleRoutineSelect(routine: DataItem) {
