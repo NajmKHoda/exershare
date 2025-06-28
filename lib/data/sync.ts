@@ -46,11 +46,12 @@ export async function syncData(db: SQLiteDatabase) {
     const { newExercises, newWorkouts, newRoutines } = data;
     
     await Exercise.saveMany(db, newExercises.map(re => new Exercise(re)), false, true);
-
-    for (const workout of data.newWorkouts) {
-        const newWorkout = new Workout(workout.id, workout.name, workout.exercise_ids);
-        await newWorkout.save(db, new Date(workout.last_modified!), true);
-    }
+    await Workout.saveMany(db, newWorkouts.map(rw => new Workout(
+        rw.id,
+        rw.name,
+        rw.exercise_ids,
+        rw.last_modified ? new Date(rw.last_modified) : null
+    )), false, true);
 
     for (const routine of data.newRoutines) {
         const newRoutine = new Routine(routine.id, routine.name, routine.workout_ids);

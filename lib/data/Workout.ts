@@ -1,4 +1,4 @@
-import { SQLiteDatabase } from 'expo-sqlite';
+import { SQLiteDatabase, SQLiteStatement } from 'expo-sqlite';
 import { Exercise } from './Exercise';
 import { randomUUID } from '../uuid';
 import { supabase } from '../supabase';
@@ -10,8 +10,8 @@ export class Workout {
     readonly exercises: readonly Exercise[];
     private readonly exerciseIds: readonly string[];
 
-    constructor(id: string, name: string, exercises: Exercise[], lastModified?: Date);
-    constructor(id: string, name: string, exerciseIds: string[], lastModified?: Date);
+    constructor(id: string, name: string, exercises: Exercise[], lastModified?: Date | null);
+    constructor(id: string, name: string, exerciseIds: string[], lastModified?: Date | null);
     constructor(id: string, name: string, third: Exercise[] | string[], lastModified: Date | null = null) {
         this.id = id;
         this.name = name;
@@ -107,58 +107,104 @@ export class Workout {
         return workouts[0];
     }
 
-    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
-        let newModified = timestamp ?? new Date();
-        await db.withTransactionAsync(async () => {
-            await db.getFirstAsync<{ last_modified: string }>(`
+    static async saveMany(
+        db: SQLiteDatabase,
+        workouts: Workout[],
+        overwriteTimestamp: boolean = false,
+        localOnly: boolean = false
+    ) {
+        const newTimestamp = new Date();
+
+        let saveStatement: SQLiteStatement | null = null;
+        let clearStatement: SQLiteStatement | null = null;
+        let linkStatement: SQLiteStatement | null = null;
+        try {
+            saveStatement = await db.prepareAsync(`
                 INSERT INTO workouts (id, name, last_modified)
-                    VALUES ($id, $name, coalesce($timestamp, datetime('now')))
+                VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
                     name = $name,
                     dirty = 1,
                     last_modified = excluded.last_modified;
-            `, {
-                $id: this.id,
-                $name: this.name,
-                $timestamp: newModified.toISOString()
-            });
-
-            const linkQuery = await db.prepareAsync(`
+            `);
+            clearStatement = await db.prepareAsync(`
+                DELETE FROM exercise_instances WHERE workout_id = $id;
+            `);
+            linkStatement = await db.prepareAsync(`
                 INSERT INTO exercise_instances (position, workout_id, exercise_id)
                 VALUES ($position, $workoutId, $exerciseId)
                 ON CONFLICT (position, workout_id) DO UPDATE SET
                     exercise_id = $exerciseId;
             `);
+            
+            await db.withTransactionAsync(async () => {
+                await Promise.all(
+                    workouts.map(async (workout) => {
+                        const timestamp = overwriteTimestamp ? newTimestamp : workout.lastModified ?? newTimestamp;
+                        
+                        // Save the workout
+                        await saveStatement!.executeAsync({
+                            $id: workout.id,
+                            $name: workout.name,
+                            $timestamp: timestamp.toISOString()
+                        });
+                        
+                        // Clear existing exercise instances
+                        await clearStatement!.executeAsync({ $id: workout.id });
 
-            try {
-                await Promise.all(this.exerciseIds.map((exerciseId, i) =>
-                    linkQuery.executeAsync({
-                        $position: i,
-                        $workoutId: this.id,
-                        $exerciseId: exerciseId
+                        // Link exercises to the workout
+                        await Promise.all(workout.exerciseIds.map((exerciseId, i) =>
+                            linkStatement!.executeAsync({
+                                $position: i,
+                                $workoutId: workout.id,
+                                $exerciseId: exerciseId
+                            })
+                        ));
+                        
+                        workout.lastModified = timestamp;
                     })
-                ));
-            } finally {
-                await linkQuery.finalizeAsync();
-            }
-        });
-
-        this.lastModified = newModified;
-        if (localOnly) return;
-
-        const { error } = await supabase.rpc('save_workout', {
-            _id: this.id,
-            _name: this.name,
-            _last_modified: this.lastModified.toISOString(),
-            _exercise_ids: this.exerciseIds.map((id, i) => ({ exercise_id: id, position: i }))
-        });
-
-        if (error) {
-            console.error('Error saving workout:', error);
+                );
+            });
+            
+        } catch (error) {
+            console.error('Error saving workout(s) locally:', error);
             return;
+        } finally {
+            saveStatement?.finalizeAsync();
+            clearStatement?.finalizeAsync();
+            linkStatement?.finalizeAsync();
         }
 
-        await db.runAsync(`UPDATE workouts SET dirty = 0 WHERE id = ?;`, this.id);
+        if (localOnly) return;
+
+        let cleanStatement: SQLiteStatement | null = null;
+        try {
+            cleanStatement = await db.prepareAsync(`UPDATE workouts SET dirty = 0 WHERE id = ?;`);
+            await Promise.all(
+                workouts.map(async (workout) => {
+                    const { error } = await supabase.rpc('save_workout', {
+                        _id: workout.id,
+                        _name: workout.name,
+                        _last_modified: workout.lastModified!.toISOString(),
+                        _exercise_ids: workout.exerciseIds.map((id, i) => ({ exercise_id: id, position: i }))
+                    });
+
+                    if (error) return;
+                    await cleanStatement!.executeAsync(workout.id);
+                })
+            );
+        } catch (error) {
+            console.error('Error saving workout(s) to Supabase:', error);
+        } finally {
+            cleanStatement?.finalizeAsync();
+        }
+    }
+
+    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
+        if (timestamp !== null) {
+            this.lastModified = timestamp;
+        }
+        await Workout.saveMany(db, [this], timestamp === null, localOnly);
     }
 
     async delete(db: SQLiteDatabase, localOnly: boolean = false) {        
