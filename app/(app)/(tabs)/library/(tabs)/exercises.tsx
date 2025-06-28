@@ -4,11 +4,13 @@ import { StyleSheet, View } from 'react-native';
 import SelectList from '@/lib/components/lists/SelectList';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useDatabaseListener } from '@/lib/hooks/useDatabaseListener';
+import AddOptionsModal from '@/lib/components/modals/AddOptionsModal';
 
 export default function ExercisesScreen() {
     const [exercises, rerunQuery] = useSQLiteQuery<ListEntry>(`SELECT name, id FROM exercises ORDER BY name;`, true);
+    const [addModalVisible, setAddModalVisible] = useState(false);
     useDatabaseListener('exercises', rerunQuery);
 
     function handleItemPress(entry: ListEntry) {
@@ -16,7 +18,14 @@ export default function ExercisesScreen() {
     }
 
     function handleItemAdd() {
-        //router.push('/exercise/new');
+        setAddModalVisible(true);
+    }
+
+    function handleManualCreate() {
+        router.push('/exercise/new');
+    }
+
+    function handleScan() {
         router.push('/scan');
     }
 
@@ -27,6 +36,13 @@ export default function ExercisesScreen() {
                 data={ exercises } 
                 onSelect={ handleItemPress }
                 onItemAdd={ handleItemAdd }
+            />
+            <AddOptionsModal
+                visible={addModalVisible}
+                onClose={() => setAddModalVisible(false)}
+                onManualCreate={handleManualCreate}
+                onScan={handleScan}
+                entityType="exercise"
             />
         </View>
     );

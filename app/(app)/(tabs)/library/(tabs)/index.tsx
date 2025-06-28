@@ -6,9 +6,12 @@ import SelectList from '@/lib/components/lists/SelectList';
 import { DataItem } from '@/lib/components/lists/SearchableList';
 import { router } from 'expo-router';
 import { useDatabaseListener } from '@/lib/hooks/useDatabaseListener';
+import AddOptionsModal from '@/lib/components/modals/AddOptionsModal';
+import { useState } from 'react';
 
 export default function RoutinesScreen() {
     const [routines, rerunQuery] = useSQLiteQuery<DataItem>(`SELECT name, id FROM routines ORDER BY name`, true);
+    const [addModalVisible, setAddModalVisible] = useState(false);
     useDatabaseListener('routines', rerunQuery);
 
     function handleItemSelect({ id }: DataItem) {
@@ -16,7 +19,15 @@ export default function RoutinesScreen() {
     }
 
     function handleItemAdd() {
+        setAddModalVisible(true);
+    }
+
+    function handleManualCreate() {
         router.push('/routine/new');
+    }
+
+    function handleScan() {
+        router.push('/scan');
     }
 
     return (
@@ -24,6 +35,13 @@ export default function RoutinesScreen() {
             <ActiveRoutineView />
             <Separator />
             <SelectList data={ routines } onSelect={ handleItemSelect } onItemAdd={ handleItemAdd }/>
+            <AddOptionsModal
+                visible={addModalVisible}
+                onClose={() => setAddModalVisible(false)}
+                onManualCreate={handleManualCreate}
+                onScan={handleScan}
+                entityType="routine"
+            />
         </View>
     )
 }
