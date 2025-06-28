@@ -1,4 +1,4 @@
-import { SQLiteDatabase } from 'expo-sqlite';
+import { SQLiteDatabase, SQLiteStatement } from 'expo-sqlite';
 import { randomUUID } from '../uuid';
 import { RawWorkout, Workout } from './Workout';
 import { Exercise, RawExercise } from './Exercise';
@@ -11,8 +11,8 @@ export class Routine {
     readonly workouts: readonly (Workout | null)[];
     private readonly workoutIds: readonly (string | null)[];
 
-    constructor(id: string, name: string, workouts: (Workout | null)[], lastModified?: Date);
-    constructor(id: string, name: string, workoutIds: (string | null)[], lastModified?: Date);
+    constructor(id: string, name: string, workouts: (Workout | null)[], lastModified?: Date | null);
+    constructor(id: string, name: string, workoutIds: (string | null)[], lastModified?: Date | null);
     constructor(id: string, name: string, third: (Workout | null)[] | (string | null)[], lastModified: Date | null = null) {
         if (third.length !== 7) 
             throw new Error("Routine requires an array of length 7.");
@@ -167,69 +167,109 @@ export class Routine {
         return routine;
     }
 
-    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
-        let newModified = timestamp ?? new Date();
-        await db.withTransactionAsync(async () => {
-            await db.getFirstAsync<{ last_modified: string; }>(`
+    static async saveMany(
+        db: SQLiteDatabase,
+        routines: Routine[],
+        overwriteTimestamp: boolean = false,
+        localOnly: boolean = false
+    ) {
+        const newTimestamp = new Date();
+
+        let saveStatement: SQLiteStatement | null = null;
+        let clearStatement: SQLiteStatement | null = null;
+        let linkStatement: SQLiteStatement | null = null;
+        try {
+            saveStatement = await db.prepareAsync(`
                 INSERT INTO routines (id, name, last_modified)
-                    VALUES ($id, $name, coalesce($timestamp, datetime('now')))
+                VALUES ($id, $name, coalesce($timestamp, datetime('now')))
                 ON CONFLICT (id) DO UPDATE SET
                     name = $name,
                     dirty = 1,
-                    last_modified = excluded.last_modified
-            `, {
-                $id: this.id,
-                $name: this.name,
-                $timestamp: newModified.toISOString()
-            });
-
-            // Prepare linking query
-            const linkQuery = await db.prepareAsync(`
+                    last_modified = excluded.last_modified;
+            `);
+            clearStatement = await db.prepareAsync(`
+                DELETE FROM workout_instances WHERE routine_id = $id;
+            `);
+            linkStatement = await db.prepareAsync(`
                 INSERT INTO workout_instances (position, routine_id, workout_id)
-                    VALUES ($position, $routineId, $workoutId)
+                VALUES ($position, $routineId, $workoutId)
                 ON CONFLICT (position, routine_id) DO UPDATE SET
                     workout_id = $workoutId;
             `);
             
-            // For workouts that were just turned null
-            const delinkQuery = await db.prepareAsync(`
-                DELETE FROM workout_instances
-                    WHERE routine_id = $routineId AND position = $position;
-            `);
-            
-            try {
-                // Link workouts with routine
-                await Promise.all(this.workoutIds.map((workoutId, pos) =>
-                    workoutId === null ?
-                        delinkQuery.executeAsync({
-                            $routineId: this.id,
-                            $position: pos
-                        }) :
-                        linkQuery.executeAsync({
-                            $position: pos,
-                            $routineId: this.id,
-                            $workoutId: workoutId
-                        })
-                ));
-            } finally {
-                await Promise.all([ linkQuery.finalizeAsync(), delinkQuery.finalizeAsync() ]);
-            }
-        });
+            await db.withTransactionAsync(async () => {
+                await Promise.all(
+                    routines.map(async (routine) => {
+                        const timestamp = overwriteTimestamp ? newTimestamp : routine.lastModified ?? newTimestamp;
+                        
+                        // Save the routine
+                        await saveStatement!.executeAsync({
+                            $id: routine.id,
+                            $name: routine.name,
+                            $timestamp: timestamp.toISOString()
+                        });
+                        
+                        // Clear existing workout instances
+                        await clearStatement!.executeAsync({ $id: routine.id });
 
-        this.lastModified = newModified;
+                        // Link workouts to the routine
+                        await Promise.all(
+                            routine.workoutIds.map(async (workoutId, i) => {
+                                if (workoutId === null) return;
+                                await linkStatement!.executeAsync({
+                                    $position: i,
+                                    $routineId: routine.id,
+                                    $workoutId: workoutId
+                                })
+                            }
+                        ));
+
+                        routine.lastModified = timestamp;
+                    })
+                );
+            });
+            
+        } catch (error) {
+            console.error('Error saving routine(s) locally:', error);
+            return;
+        } finally {
+            saveStatement?.finalizeAsync();
+            clearStatement?.finalizeAsync();
+            linkStatement?.finalizeAsync();
+        }
+
         if (localOnly) return;
 
-        const { error } = await supabase.rpc('save_routine', {
-            _id: this.id,
-            _name: this.name,
-            _last_modified: this.lastModified.toISOString(),
-            _workout_ids: this.workoutIds
-                .map((id, i) => ({ workout_id: id, position: i }))
-                .filter(({ workout_id }) => workout_id !== null)
-        });
+        let cleanStatement: SQLiteStatement | null = null;
+        try {
+            cleanStatement = await db.prepareAsync(`UPDATE routines SET dirty = 0 WHERE id = ?;`);
+            await Promise.all(
+                routines.map(async (routine) => {
+                    const { error } = await supabase.rpc('save_routine', {
+                        _id: routine.id,
+                        _name: routine.name,
+                        _last_modified: routine.lastModified!.toISOString(),
+                        _workout_ids: routine.workoutIds
+                            .map((id, i) => ({ workout_id: id, position: i }))
+                            .filter(({ workout_id }) => workout_id !== null)
+                    });
 
-        if (error) return;
-        await db.runAsync('UPDATE routines SET dirty = 0 WHERE id = ?', this.id);
+                    if (error) return;
+                    await cleanStatement!.executeAsync(routine.id);
+                })
+            );
+        } catch (error) {
+            console.error('Error saving routine(s) to Supabase:', error);
+        } finally {
+            cleanStatement?.finalizeAsync();
+        }
+    }
+
+    async save(db: SQLiteDatabase, timestamp: Date | null = null, localOnly: boolean = false) {
+        if (timestamp !== null) {
+            this.lastModified = timestamp;
+        }
+        await Routine.saveMany(db, [this], timestamp === null, localOnly);
     }
 
     async delete(db: SQLiteDatabase, localOnly: boolean = false) {        

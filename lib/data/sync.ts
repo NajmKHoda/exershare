@@ -1,4 +1,4 @@
-import { SQLiteDatabase } from 'expo-sqlite';
+import { SQLiteDatabase, SQLiteStatement } from 'expo-sqlite';
 import { Exercise, RawExercise } from './Exercise';
 import { RawWorkout, Workout } from './Workout';
 import { RawRoutine, Routine } from './Routine';
@@ -8,11 +8,11 @@ export async function syncData(db: SQLiteDatabase) {
     const [
         lastSyncResult,
         dirtyExercises,
-        deletedExercises,
+        removedExercises,
         dirtyWorkouts,
-        deletedWorkouts,
+        removedWorkouts,
         dirtyRoutines,
-        deletedRoutines
+        removedRoutines
     ] = await Promise.all([
         db.getFirstAsync<{ last_sync_date: string }>('SELECT last_sync_date FROM user'),
 
@@ -31,11 +31,11 @@ export async function syncData(db: SQLiteDatabase) {
     const { data, error } = await supabase.rpc('sync', {
         _last_sync_date: lastSyncDate,
         _exercises: dirtyExercises.map(exercise => exercise.serialize()),
-        _deleted_exercises: deletedExercises,
+        _deleted_exercises: removedExercises,
         _workouts: dirtyWorkouts.map(workout => workout.toJSON()),
-        _deleted_workouts: deletedWorkouts,
+        _deleted_workouts: removedWorkouts,
         _routines: dirtyRoutines.map(routine => routine.toJSON()),
-        _deleted_routines: deletedRoutines
+        _deleted_routines: removedRoutines
     }) as { data: SyncResult, error: any };
 
     if (error) {
@@ -43,57 +43,66 @@ export async function syncData(db: SQLiteDatabase) {
         return;
     }
 
-    const { newExercises, newWorkouts, newRoutines } = data;
-    
+    const {
+        newExercises,
+        newWorkouts,
+        newRoutines,
+        deletedExercises,
+        deletedRoutines,
+        deletedWorkouts
+    } = data;
+
     await Exercise.saveMany(db, newExercises.map(re => new Exercise(re)), false, true);
     await Workout.saveMany(db, newWorkouts.map(rw => new Workout(
         rw.id,
         rw.name,
         rw.exercise_ids,
-        rw.last_modified ? new Date(rw.last_modified) : null
+        new Date(rw.last_modified!)
+    )), false, true);
+    await Routine.saveMany(db, newRoutines.map(rr => new Routine(
+        rr.id,
+        rr.name,
+        rr.workout_ids,
+        new Date(rr.last_modified!)
     )), false, true);
 
-    for (const routine of data.newRoutines) {
-        const newRoutine = new Routine(routine.id, routine.name, routine.workout_ids);
-        await newRoutine.save(db, new Date(routine.last_modified!), true);
-    }
-
     // Delete entities that were removed remotely
-    if (data.deletedExercises.length > 0) {
-        const deleteExerciseStmt = await db.prepareAsync('DELETE FROM exercises WHERE id = ?');
-        for (const exerciseId of data.deletedExercises) {
-            await deleteExerciseStmt.executeAsync(exerciseId);
-        }
-        await deleteExerciseStmt.finalizeAsync();
+    let deleteExerciseStatement: SQLiteStatement | null = null;
+    let deleteWorkoutStatement: SQLiteStatement | null = null;
+    let deleteRoutineStatement: SQLiteStatement | null = null;
+    try {
+        deleteExerciseStatement = await db.prepareAsync('DELETE FROM exercises WHERE id = ?');
+        deleteWorkoutStatement = await db.prepareAsync('DELETE FROM workouts WHERE id = ?');
+        deleteRoutineStatement = await db.prepareAsync('DELETE FROM routines WHERE id = ?');
+
+        await Promise.all(
+            deletedExercises.map(exerciseId => deleteExerciseStatement!.executeAsync(exerciseId))
+            .concat(deletedWorkouts.map(workoutId => deleteWorkoutStatement!.executeAsync(workoutId)))
+            .concat(deletedRoutines.map(routineId => deleteRoutineStatement!.executeAsync(routineId)))
+        );
+    } catch (error) {
+        console.error('Error deleting entities:', error);
+    } finally {
+        deleteExerciseStatement?.finalizeAsync();
+        deleteWorkoutStatement?.finalizeAsync();
+        deleteRoutineStatement?.finalizeAsync();
     }
 
-    if (data.deletedWorkouts.length > 0) {
-        const deleteWorkoutStmt = await db.prepareAsync('DELETE FROM workouts WHERE id = ?');
-        for (const workoutId of data.deletedWorkouts) {
-            await deleteWorkoutStmt.executeAsync(workoutId);
-        }
-        await deleteWorkoutStmt.finalizeAsync();
+    try {
+        await db.runAsync(`
+            UPDATE user SET last_sync_date = ?;
+
+            UPDATE exercises SET dirty = 0 WHERE dirty = 1;
+            UPDATE workouts SET dirty = 0 WHERE dirty = 1;
+            UPDATE routines SET dirty = 0 WHERE dirty = 1;
+
+            DELETE FROM deleted_exercises;
+            DELETE FROM deleted_workouts;
+            DELETE FROM deleted_routines;
+        `, new Date().toISOString());
+    } catch (error) {
+        console.error('Error finalizing sync:', error);
     }
-
-    if (data.deletedRoutines.length > 0) {
-        const deleteRoutineStmt = await db.prepareAsync('DELETE FROM routines WHERE id = ?');
-        for (const routineId of data.deletedRoutines) {
-            await deleteRoutineStmt.executeAsync(routineId);
-        }
-        await deleteRoutineStmt.finalizeAsync();
-    }
-
-    await db.runAsync(`
-        UPDATE user SET last_sync_date = ?;
-
-        UPDATE exercises SET dirty = 0 WHERE dirty = 1;
-        UPDATE workouts SET dirty = 0 WHERE dirty = 1;
-        UPDATE routines SET dirty = 0 WHERE dirty = 1;
-
-        DELETE FROM deleted_exercises;
-        DELETE FROM deleted_workouts;
-        DELETE FROM deleted_routines;
-    `, new Date().toISOString());
 }
 
 type SyncResult = {
