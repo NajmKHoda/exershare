@@ -2,28 +2,54 @@ import { SQLiteDatabase } from 'expo-sqlite';
 import { Workout } from './Workout';
 import { serializeDate, deserializeDate } from './dates';
 import { Routine } from './Routine'; // newly imported
+import { Exercise } from './Exercise';
 
 export class WorkoutLog {
     date: Date;
     routineName: string;
     workoutName: string;
-    exercises: Map<string, boolean>;
+    exercises: ExerciseMap;
+    completion: CompletionLog[];
 
+    constructor(rawLog: RawLog);
     constructor(date: Date, workout: Workout, routineName: string);
-    constructor(date: Date, exercises: Map<string, boolean>, routineName: string, workoutName: string);
-    constructor(date: Date, second: Map<string, boolean> | Workout, routineName?: string, workoutName?: string) {
-        this.date = date;
-        if (second instanceof Workout) {
-            this.workoutName = second.name;
-            this.routineName = routineName!;
-            this.exercises = new Map<string, boolean>();
-            for (const exercise of second.exercises) {
-                this.exercises.set(exercise.name, false);
+    constructor(
+        date: Date,
+        routineName: string,
+        workoutName: string,
+        exercises: ExerciseMap,
+        completion: CompletionLog[],
+    );
+    constructor(
+        first: Date | RawLog,
+        second?: string | Workout,
+        third?: string,
+        exercises?: ExerciseMap,
+        completion?: CompletionLog[]
+    ) {
+        if (first instanceof Date) {
+            this.date = first;
+            if (second instanceof Workout) {
+                this.routineName = third!;
+                this.workoutName = second.name;
+                this.exercises = copyExercises(second.exercises);
+                this.completion = second.exercises.map(exercise => ({
+                    id: exercise.id,
+                    setsCompleted: 0
+                }));
+            } else {
+                this.date = first;
+                this.routineName = second as string;
+                this.workoutName = third as string;
+                this.exercises = exercises!;
+                this.completion = completion!;
             }
         } else {
-            this.exercises = second;
-            this.routineName = routineName!;
-            this.workoutName = workoutName!;
+            this.date = deserializeDate(first.date);
+            this.routineName = first.routine_name;
+            this.workoutName = first.workout_name;
+            this.exercises = new Map(Object.entries(JSON.parse(first.exercises)));
+            this.completion = JSON.parse(first.completion);
         }
     }
 
@@ -31,25 +57,20 @@ export class WorkoutLog {
         await db.execAsync(`
             CREATE TABLE IF NOT EXISTS workout_logs (
                 date TEXT PRIMARY KEY NOT NULL,
-                exercises TEXT,
-                routine_name TEXT,
-                workout_name TEXT
+                routine_name TEXT NOT NULL,
+                workout_name TEXT NOT NULL,
+                exercises TEXT NOT NULL,
+                completion TEXT NOT NULL
             );
         `);
     }
 
     static async getLog(date: Date, db: SQLiteDatabase) {
-        const result = await db.getFirstAsync<{ exercises: string, routine_name: string, workout_name: string }>(`
-            SELECT exercises, routine_name, workout_name FROM workout_logs WHERE date = ?
+        const result = await db.getFirstAsync<RawLog>(`
+            SELECT * FROM workout_logs WHERE date = ?
         `, serializeDate(date));
-        if (!result) return null;
 
-        const deserialized: [string, boolean][] = result.exercises
-            .split(';')
-            .map(pair => pair.split(':', 2))
-            .map(([ name, done ]) => [name, done === 'true']);
-        
-        return new WorkoutLog(date, new Map(deserialized), result.routine_name, result.workout_name);
+        return result ? new WorkoutLog(result) : null;
     }
 
     static async updateLogs(activeRoutine: Routine | null, db: SQLiteDatabase) {
@@ -85,19 +106,57 @@ export class WorkoutLog {
     }
 
     async save(db: SQLiteDatabase, overwrite: boolean = true) {
-        const serialized = Array.from(this.exercises)
-            .map(([ name, done ]) => `${name}:${done}`)
-            .join(';');
+        const serializedExercises = JSON.stringify(Object.fromEntries(this.exercises.entries()));
+        const serializedCompletion = JSON.stringify(this.completion);
         const resolver = overwrite ? 'REPLACE' : 'IGNORE';
         
         await db.runAsync(`
-            INSERT OR ${resolver} INTO workout_logs (date, exercises, routine_name, workout_name)
-                VALUES ($date, $exercises, $routineName, $workoutName);
+            INSERT OR ${resolver} INTO workout_logs (date, routine_name, workout_name, exercises, completion)
+            VALUES ($date, $routineName, $workoutName, $exercises, $completion);
         `, {
-            $date: serializeDate(this.date), 
-            $exercises: serialized,
+            $date: serializeDate(this.date),
             $routineName: this.routineName,
-            $workoutName: this.workoutName
+            $workoutName: this.workoutName,
+            $exercises: serializedExercises,
+            $completion: serializedCompletion
         });
     }
+}
+
+function copyExercises(exercises: readonly Exercise[]) {
+    return new Map(exercises.map(exercise => [
+        exercise.id,
+        {
+            name: exercise.name,
+            sets: exercise.sets.map(set => ({
+                reps: set.reps,
+                weight: set.weight
+            }))
+        }
+    ]))
+}
+
+interface RawLog {
+    date: string;
+    routine_name: string;
+    workout_name: string;
+    exercises: string;
+    completion: string;
+}
+
+// Maps ID to exercise information
+type ExerciseMap = Map<
+    string,
+    {
+        name: string;
+        sets: {
+            reps: number;
+            weight: number;
+        }[];
+    }
+>;
+
+interface CompletionLog {
+    id: string;
+    setsCompleted: number;
 }

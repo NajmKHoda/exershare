@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from "react-native"
 import { useRouter } from "expo-router"
@@ -5,8 +7,6 @@ import { ArrowLeft, ChevronDown, ChevronUp, Check } from "lucide-react-native"
 import { useSQLiteContext } from "expo-sqlite"
 import { Routine } from "@/lib/data/Routine"
 import { WorkoutLog } from "@/lib/data/WorkoutLog"
-import { Exercise } from "@/lib/data/Exercise"
-import type { Workout } from "@/lib/data/Workout"
 import { useResolvedStyles, type ThemeColors } from "@/lib/hooks/useThemeColors"
 
 export default function WorkoutProgressScreen() {
@@ -14,10 +14,6 @@ export default function WorkoutProgressScreen() {
   const db = useSQLiteContext()
   const styles = useResolvedStyles(createStyles)
 
-  const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null)
-  const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null)
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
-  const [currentSetIndex, setCurrentSetIndex] = useState(0)
   const [workoutLog, setWorkoutLog] = useState<WorkoutLog | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -31,45 +27,44 @@ export default function WorkoutProgressScreen() {
 
   useEffect(() => {
     // Update modified values when exercise/set changes
-    if (currentWorkout) {
-      const currentExercise = currentWorkout.exercises[currentExerciseIndex]
-      const currentSet = currentExercise.sets[currentSetIndex]
-      setModifiedReps(currentSet.reps)
-      setModifiedWeight(currentSet.weight)
+    if (workoutLog) {
+      const currentSet = getCurrentSet()
+      if (currentSet) {
+        setModifiedReps(currentSet.reps)
+        setModifiedWeight(currentSet.weight)
+      }
     }
-  }, [currentWorkout, currentExerciseIndex, currentSetIndex])
+  }, [workoutLog])
 
   const loadWorkoutData = async () => {
     try {
-      // Get active routine
-      const routine = await Routine.pullActive(db)
-      if (!routine) {
-        Alert.alert("No Active Routine", "Please set an active routine first.")
-        router.back()
-        return
-      }
-
-      // Get today's workout
-      const today = new Date().getDay()
-      const todaysWorkout = routine.workouts[today]
-
-      if (!todaysWorkout) {
-        Alert.alert("Rest Day", "No workout scheduled for today!")
-        router.back()
-        return
-      }
-
       // Get or create today's workout log
       const today_date = new Date()
       let log = await WorkoutLog.getLog(today_date, db)
 
       if (!log) {
+        // Get active routine
+        const routine = await Routine.pullActive(db)
+        if (!routine) {
+          Alert.alert("No Active Routine", "Please set an active routine first.")
+          router.back()
+          return
+        }
+
+        // Get today's workout
+        const today = new Date().getDay()
+        const todaysWorkout = routine.workouts[today]
+
+        if (!todaysWorkout) {
+          Alert.alert("Rest Day", "No workout scheduled for today!")
+          router.back()
+          return
+        }
+        
         log = new WorkoutLog(today_date, todaysWorkout, routine.name)
         await log.save(db)
       }
 
-      setActiveRoutine(routine)
-      setCurrentWorkout(todaysWorkout)
       setWorkoutLog(log)
       setLoading(false)
     } catch (error) {
@@ -79,78 +74,171 @@ export default function WorkoutProgressScreen() {
     }
   }
 
+  const getExerciseList = () => {
+    if (!workoutLog) return []
+    return Array.from(workoutLog.exercises.entries()).map(([id, exercise]) => ({
+      id,
+      ...exercise,
+    }))
+  }
+
+  const getCurrentExerciseIndex = () => {
+    if (!workoutLog) return 0
+
+    const exercises = getExerciseList()
+    for (let i = 0; i < exercises.length; i++) {
+      const completion = workoutLog.completion.find((c) => c.id === exercises[i].id)
+      const setsCompleted = completion?.setsCompleted || 0
+      if (setsCompleted < exercises[i].sets.length) {
+        return i
+      }
+    }
+    return exercises.length - 1 // All exercises completed
+  }
+
+  const getCurrentSetIndex = () => {
+    if (!workoutLog) return 0
+
+    const currentExercise = getCurrentExercise()
+    if (!currentExercise) return 0
+
+    const completion = workoutLog.completion.find((c) => c.id === currentExercise.id)
+    return completion?.setsCompleted || 0
+  }
+
+  const getCurrentExercise = () => {
+    const exercises = getExerciseList()
+    const currentIndex = getCurrentExerciseIndex()
+    return exercises[currentIndex] || null
+  }
+
+  const getCurrentSet = () => {
+    const currentExercise = getCurrentExercise()
+    if (!currentExercise) return null
+
+    const setIndex = getCurrentSetIndex()
+    return currentExercise.sets[setIndex] || null
+  }
+
+  const getTotalSets = () => {
+    return getExerciseList().reduce((total, exercise) => total + exercise.sets.length, 0)
+  }
+
+  const getCompletedSets = () => {
+    if (!workoutLog) return 0
+    return workoutLog.completion.reduce((total, completion) => total + completion.setsCompleted, 0)
+  }
+
   const handleSetComplete = async () => {
-    if (!currentWorkout || !workoutLog) return
+    if (!workoutLog) return
 
-    const currentExercise = currentWorkout.exercises[currentExerciseIndex]
+    const currentExercise = getCurrentExercise()
+    if (!currentExercise) return
 
-    // Update the exercise with modified values
-    const updatedSets = [...currentExercise.sets]
+    const currentSetIndex = getCurrentSetIndex()
+
+    // Update the exercise with modified values in the workout log
+    const updatedExercises = new Map(workoutLog.exercises)
+    const exerciseData = updatedExercises.get(currentExercise.id)!
+    const updatedSets = [...exerciseData.sets]
     updatedSets[currentSetIndex] = {
       reps: modifiedReps,
       weight: modifiedWeight,
     }
 
-    // Create updated exercise and save to database
-    const updatedExercise = new Exercise({
-      id: currentExercise.id,
-      name: currentExercise.name,
-      sets: updatedSets.map(({ reps, weight }) => `${reps}:${weight}`).join(";"),
-      notes: currentExercise.notes,
-      categories: currentExercise.categories.join(","),
-      last_modified: new Date().toISOString(),
+    updatedExercises.set(currentExercise.id, {
+      ...exerciseData,
+      sets: updatedSets,
     })
 
-    try {
-      await updatedExercise.save(db)
-    } catch (error) {
-      console.error("Error saving exercise:", error)
-      Alert.alert("Error", "Failed to save exercise changes")
-      return
+    // Update completion tracking
+    const updatedCompletion = [...workoutLog.completion]
+    const completionIndex = updatedCompletion.findIndex((c) => c.id === currentExercise.id)
+    if (completionIndex >= 0) {
+      updatedCompletion[completionIndex] = {
+        ...updatedCompletion[completionIndex],
+        setsCompleted: updatedCompletion[completionIndex].setsCompleted + 1,
+      }
     }
 
-    const isLastSetOfExercise = currentSetIndex === currentExercise.sets.length - 1
-    const isLastExercise = currentExerciseIndex === currentWorkout.exercises.length - 1
+    // Create updated workout log
+    const updatedLog = new WorkoutLog(
+      workoutLog.date,
+      workoutLog.routineName,
+      workoutLog.workoutName,
+      updatedExercises,
+      updatedCompletion,
+    )
 
-    if (isLastSetOfExercise) {
-      // Mark exercise as completed in workout log
-      const updatedExercises = new Map(workoutLog.exercises)
-      updatedExercises.set(currentExercise.name, true)
-
-      const updatedLog = new WorkoutLog(
-        workoutLog.date,
-        updatedExercises,
-        workoutLog.routineName,
-        workoutLog.workoutName,
-      )
-
+    try {
       await updatedLog.save(db)
       setWorkoutLog(updatedLog)
 
-      if (isLastExercise) {
-        // Workout complete
+      // Check if workout is complete
+      const totalSets = getTotalSets()
+      const completedSets = updatedCompletion.reduce((total, completion) => total + completion.setsCompleted, 0)
+
+      if (completedSets >= totalSets) {
         Alert.alert("Workout Complete!", "Great job finishing your workout!", [
           { text: "OK", onPress: () => router.push("/") },
         ])
-        return
-      } else {
-        // Move to next exercise
-        setCurrentExerciseIndex((prev) => prev + 1)
-        setCurrentSetIndex(0)
       }
-    } else {
-      // Move to next set
-      setCurrentSetIndex((prev) => prev + 1)
+    } catch (error) {
+      console.error("Error saving workout log:", error)
+      Alert.alert("Error", "Failed to save workout progress")
     }
   }
 
   const handlePreviousSet = () => {
+    if (!workoutLog) return
+
+    const exercises = getExerciseList()
+    const currentExerciseIndex = getCurrentExerciseIndex()
+    const currentSetIndex = getCurrentSetIndex()
+
     if (currentSetIndex > 0) {
-      setCurrentSetIndex((prev) => prev - 1)
+      // Go to previous set in current exercise
+      const updatedCompletion = [...workoutLog.completion]
+      const completionIndex = updatedCompletion.findIndex((c) => c.id === exercises[currentExerciseIndex].id)
+      if (completionIndex >= 0) {
+        updatedCompletion[completionIndex] = {
+          ...updatedCompletion[completionIndex],
+          setsCompleted: Math.max(0, updatedCompletion[completionIndex].setsCompleted - 1),
+        }
+      }
+
+      const updatedLog = new WorkoutLog(
+        workoutLog.date,
+        workoutLog.routineName,
+        workoutLog.workoutName,
+        workoutLog.exercises,
+        updatedCompletion,
+      )
+
+      updatedLog.save(db)
+      setWorkoutLog(updatedLog)
     } else if (currentExerciseIndex > 0) {
-      const previousExercise = currentWorkout!.exercises[currentExerciseIndex - 1]
-      setCurrentExerciseIndex((prev) => prev - 1)
-      setCurrentSetIndex(previousExercise.sets.length - 1)
+      // Go to last set of previous exercise
+      const previousExercise = exercises[currentExerciseIndex - 1]
+      const updatedCompletion = [...workoutLog.completion]
+      const completionIndex = updatedCompletion.findIndex((c) => c.id === previousExercise.id)
+      if (completionIndex >= 0) {
+        updatedCompletion[completionIndex] = {
+          ...updatedCompletion[completionIndex],
+          setsCompleted: Math.max(0, previousExercise.sets.length - 1),
+        }
+      }
+
+      const updatedLog = new WorkoutLog(
+        workoutLog.date,
+        workoutLog.routineName,
+        workoutLog.workoutName,
+        workoutLog.exercises,
+        updatedCompletion,
+      )
+
+      updatedLog.save(db)
+      setWorkoutLog(updatedLog)
     }
   }
 
@@ -162,7 +250,7 @@ export default function WorkoutProgressScreen() {
     setModifiedWeight((prev) => Math.max(0, prev + (increment ? 5 : -5)))
   }
 
-  if (loading || !currentWorkout || !activeRoutine) {
+  if (loading || !workoutLog) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -172,16 +260,29 @@ export default function WorkoutProgressScreen() {
     )
   }
 
-  const currentExercise = currentWorkout.exercises[currentExerciseIndex]
-  const totalSets = currentWorkout.exercises.reduce((total, exercise) => total + exercise.sets.length, 0)
-  const completedSets =
-    currentWorkout.exercises
-      .slice(0, currentExerciseIndex)
-      .reduce((total, exercise) => total + exercise.sets.length, 0) + currentSetIndex
+  const currentExercise = getCurrentExercise()
+  const currentSet = getCurrentSet()
+  const currentExerciseIndex = getCurrentExerciseIndex()
+  const currentSetIndex = getCurrentSetIndex()
+  const totalSets = getTotalSets()
+  const completedSets = getCompletedSets()
+  const progressPercentage = totalSets > 0 ? ((completedSets + 1) / totalSets) * 100 : 0
 
-  const progressPercentage = ((completedSets + 1) / totalSets) * 100
+  const canGoPrevious = completedSets > 0
 
-  const canGoPrevious = currentSetIndex > 0 || currentExerciseIndex > 0
+  if (!currentExercise || !currentSet) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Workout Complete!</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  const exercises = getExerciseList()
+  const currentExerciseCompletion = workoutLog.completion.find((c) => c.id === currentExercise.id)
+  const setsCompletedInExercise = currentExerciseCompletion?.setsCompleted || 0
 
   return (
     <SafeAreaView style={styles.container}>
@@ -191,8 +292,8 @@ export default function WorkoutProgressScreen() {
           <ArrowLeft size={24} color={styles.headerIcon.color} />
         </TouchableOpacity>
         <View style={styles.headerTextContainer}>
-          <Text style={styles.workoutName}>{currentWorkout.name}</Text>
-          <Text style={styles.routineName}>{activeRoutine.name}</Text>
+          <Text style={styles.workoutName}>{workoutLog.workoutName}</Text>
+          <Text style={styles.routineName}>{workoutLog.routineName}</Text>
         </View>
       </View>
 
@@ -200,7 +301,7 @@ export default function WorkoutProgressScreen() {
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressText}>
-            Set {currentSetIndex + 1} of {currentExercise.sets.length}
+            Set {setsCompletedInExercise + 1} of {currentExercise.sets.length}
           </Text>
           <Text style={styles.progressSubtext}>
             {completedSets + 1} / {totalSets} total sets
@@ -273,10 +374,9 @@ export default function WorkoutProgressScreen() {
         )}
 
         <Text style={styles.remainingText}>
-          {currentExerciseIndex === currentWorkout.exercises.length - 1 &&
-          currentSetIndex === currentExercise.sets.length - 1
+          {completedSets + 1 >= totalSets
             ? "Last set! You're almost done!"
-            : `${currentWorkout.exercises.length - currentExerciseIndex - 1} exercises remaining`}
+            : `${exercises.length - currentExerciseIndex - (setsCompletedInExercise >= currentExercise.sets.length ? 1 : 0)} exercises remaining`}
         </Text>
       </View>
     </SafeAreaView>

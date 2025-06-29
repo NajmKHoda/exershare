@@ -70,10 +70,21 @@ export default function Index() {
         showPlaceholder = !workout;
     } else {
         // Retrieve information from the log
-        exerciseList = Array.from(log?.exercises ?? []).map(([name, completed]) => ({
-            name,
-            completion: completed ? 'complete' : 'incomplete'
-        }));
+        exerciseList = log?.completion.map(({ id, setsCompleted }) => {
+            const exercise = log.exercises.get(id)!;
+            const listEntry: ExerciseInfo = {
+                name: exercise.name,
+                completion: 'in-progress'
+            };
+
+            if (setsCompleted >= exercise.sets.length) {
+                listEntry.completion = 'complete';
+            } else if (setsCompleted === 0) {
+                listEntry.completion = 'incomplete';
+            }
+
+            return listEntry;
+        }) ?? [];
         routineName = log?.routineName ?? 'No Routine';
         workoutName = log?.workoutName ?? 'Rest Day';
         showPlaceholder = !log;
