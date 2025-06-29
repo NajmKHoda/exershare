@@ -4,15 +4,15 @@ import { LucideIcon } from 'lucide-react-native';
 
 interface Props {
     Icon: LucideIcon,
-    label: string
+    label: string,
+    onPress?: () => void
 }
 
-export default function LabelButton({ Icon, label }: Props) {
-    const themeColors = useThemeColors();
+export default function LabelButton({ Icon, label, onPress }: Props) {
     const resolvedStyles = useResolvedStyles(styles);
 
     return (
-        <Pressable style={resolvedStyles.container}>
+        <Pressable style={resolvedStyles.container} onPress={onPress}>
             <Icon color='#ffffff' size={24} />
             <Text style={resolvedStyles.label}>{ label }</Text>
         </Pressable>
