@@ -2,9 +2,9 @@ import LabelButton from '@/lib/components/controls/LabelButton';
 import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
-import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
-import { Button, StyleSheet, View } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ActivityIndicator, Button, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -12,16 +12,22 @@ import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
 import { Play, FileText } from 'lucide-react-native';
 import { Link, useFocusEffect } from 'expo-router';
 import { Routine } from '@/lib/data/Routine';
+import { Workout } from '@/lib/data/Workout';
 
 export default function Index() {
+    const colors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
 
     const db = useSQLiteContext();
-    const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
+    const [activeRoutine, setActiveRoutine] = useState<LoadState<Routine>>({
+        current: null,
+        loading: true
+    });
     useFocusEffect(
         useCallback(() => {
             Routine.pullActive(db)
-            .then(routine => setActiveRoutine(routine))
+                .then(routine => setActiveRoutine({ current: routine, loading: false }))
+                .catch(() => setActiveRoutine({ current: null, loading: false }));
         }, [db])
     )
 
@@ -29,49 +35,54 @@ export default function Index() {
     const [date, setDate] = useState<Date>(new Date());
     const dateTimestamp = new Date(date).setHours(0, 0, 0, 0);
     const todayTimestamp = new Date().setHours(0, 0, 0, 0);
-
+    
     // Loads the log of the view date from the database
-    const [log, setLog] = useState<WorkoutLog | null>(null);
+    const [log, setLog] = useState<LoadState<WorkoutLog>>({
+        current: null,
+        loading: true
+    });
+    const useLog = dateTimestamp <= todayTimestamp;
     useEffect(() => {
         // If the date is in the future, don't load a log
-        if (dateTimestamp > todayTimestamp) {
-            setLog(null);
+        if (!useLog) {
+            setLog({ current: null, loading: false });
             return;
         }
 
         async function loadLog() {
             const loadedLog = await WorkoutLog.getLog(date, db);
-            setLog(loadedLog);
+            setLog({ current: loadedLog, loading: false });
         }
+
         loadLog();
-    }, [date.getTime()]);
+    }, [dateTimestamp]);
 
     // Update logs when the today-date changes
     useEffect(() => {
-        WorkoutLog.updateLogs(activeRoutine, db);
-    }, [todayTimestamp, activeRoutine?.id]);
+        if (activeRoutine.loading) return;
+        WorkoutLog.updateLogs(activeRoutine.current, db);
+    }, [todayTimestamp, activeRoutine]);
 
     // Populate information for the view date
     let exerciseList: ExerciseInfo[];
     let routineName: string;
     let workoutName: string;
-    let showPlaceholder: boolean;
-    if (dateTimestamp > todayTimestamp) {
+    let workout: Workout | null = null;
+    if (!useLog) {
         const weekDay = date.getDay();
-        const workout = activeRoutine?.workouts[weekDay];
+        workout = activeRoutine.current?.workouts[weekDay] ?? null;
 
         // Get projected workout for this future date
         exerciseList = workout?.exercises.map(x => ({
             name: x.name,
             completion: 'incomplete'
         })) ?? [];
-        routineName = activeRoutine?.name ?? 'No Routine';
+        routineName = activeRoutine.current?.name ?? 'No Routine';
         workoutName = workout?.name ?? 'Rest Day';
-        showPlaceholder = !workout;
     } else {
         // Retrieve information from the log
-        exerciseList = log?.completion.map(({ id, setsCompleted }) => {
-            const exercise = log.exercises.get(id)!;
+        exerciseList = log.current?.completion.map(({ id, setsCompleted }) => {
+            const exercise = log.current?.exercises.get(id)!;
             const listEntry: ExerciseInfo = {
                 name: exercise.name,
                 completion: 'in-progress'
@@ -85,15 +96,42 @@ export default function Index() {
 
             return listEntry;
         }) ?? [];
-        routineName = log?.routineName ?? 'No Routine';
-        workoutName = log?.workoutName ?? 'Rest Day';
-        showPlaceholder = !log;
+        routineName = log.current?.routineName ?? 'No Routine';
+        workoutName = log.current?.workoutName ?? 'Rest Day';
     }
 
     function onDayChange(amount: number) {
         const newDate = new Date(date);
         newDate.setDate(newDate.getDate() + amount);
         setDate(newDate);
+        setLog({ current: null, loading: true });
+    }
+
+    let body: React.ReactNode;
+    let loading = (useLog && log.loading) || (!useLog && activeRoutine.loading);
+    let showPlaceholder = (useLog && !log.current) || (!useLog && !workout);
+    if (loading) {
+        body = <ActivityIndicator size='large' color={colors.primary} />;
+    } else if (showPlaceholder) {
+        body = <RestDayPlaceholder />;
+    } else {
+        body = (
+            <>
+                <View style={ resolvedStyles.entryOptions }>
+                    <Link href='/workout-progress' asChild>
+                        <LabelButton Icon={Play} label='Exercise Mode' />
+                    </Link>
+                    <LabelButton Icon={FileText} label='Manual Entry' />
+                </View>
+                <View>
+                    <ThemeText style={ resolvedStyles.exerciseCaption }>EXERCISES</ThemeText>
+                    <View>
+                        <ExerciseList exercises={ exerciseList } />
+                    </View>
+                </View>
+                <Button title='Routine Options' />
+            </>
+        )
     }
 
     return (
@@ -103,26 +141,8 @@ export default function Index() {
                 workoutName={ workoutName }
                 date = { date }
                 onDayChange={ onDayChange }/>
-            <View style={ resolvedStyles.body }>
-            { showPlaceholder ?
-                <RestDayPlaceholder />
-                :
-                <>
-                    <View style={ resolvedStyles.entryOptions }>
-                        <Link href='/workout-progress' asChild>
-                            <LabelButton Icon={Play} label='Exercise Mode' />
-                        </Link>
-                        <LabelButton Icon={FileText} label='Manual Entry' />
-                    </View>
-                    <View>
-                        <ThemeText style={ resolvedStyles.exerciseCaption }>EXERCISES</ThemeText>
-                        <View>
-                            <ExerciseList exercises={ exerciseList } />
-                        </View>
-                    </View>
-                </>
-            }
-                <Button title='Routine Options' />
+            <View style={ loading ? resolvedStyles.loadingBody : resolvedStyles.body }>
+                { body }
             </View>
         </View>
     );
@@ -142,6 +162,14 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         paddingHorizontal: 30,
     },
 
+    loadingBody: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 20,
+        paddingHorizontal: 30,
+    },
+
     entryOptions: {
         flexDirection: 'row',
         gap: 5
@@ -157,3 +185,11 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         paddingBottom: 10
     }
 });
+
+type LoadState<T> = {
+    current: T | null;
+    loading: false;
+} | {
+    current: null;
+    loading: true;
+}
