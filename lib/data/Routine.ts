@@ -95,20 +95,18 @@ export class Routine {
 
         // For deep loading, we need to fetch exercises as well
         const rawExercises = await db.getAllAsync<RawExercise & {
-            workout_position: number,
-            routine_id: string,
-            workout_id: string
+            workout_id: string,
+            exercise_position: number
         }>(`
-            SELECT
+            SELECT DISTINCT
                 exercises.*,
-                workout_instances.position AS workout_position,
-                workout_instances.routine_id,
-                workout_instances.workout_id
+                workout_instances.workout_id,
+                exercise_instances.position AS exercise_position
             FROM exercise_instances
             JOIN workout_instances ON exercise_instances.workout_id = workout_instances.workout_id
             JOIN exercises ON exercise_instances.exercise_id = exercises.id
             WHERE workout_instances.routine_id IN (SELECT id FROM routines WHERE ${where})
-            ORDER BY workout_position, exercise_instances.position;
+            ORDER BY exercise_position;
         `);
         
         // Create exercises grouped by workout_id
