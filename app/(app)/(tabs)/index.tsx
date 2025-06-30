@@ -25,6 +25,7 @@ export default function Index() {
     });
     useFocusEffect(
         useCallback(() => {
+            getTodayLog();
             Routine.pullActive(db)
                 .then(routine => setActiveRoutine({ current: routine, loading: false }))
                 .catch(() => setActiveRoutine({ current: null, loading: false }));
@@ -48,19 +49,14 @@ export default function Index() {
             setLog({ current: null, loading: false });
             return;
         }
-
-        async function loadLog() {
-            const loadedLog = await WorkoutLog.getLog(date, db);
-            setLog({ current: loadedLog, loading: false });
-        }
-
-        loadLog();
+        getTodayLog();
     }, [dateTimestamp]);
 
     // Update logs when the today-date changes
     useEffect(() => {
         if (activeRoutine.loading) return;
-        WorkoutLog.updateLogs(activeRoutine.current, db);
+        WorkoutLog.updateLogs(activeRoutine.current, db)
+            .finally(() => getTodayLog());
     }, [todayTimestamp, activeRoutine]);
 
     // Populate information for the view date
@@ -105,6 +101,12 @@ export default function Index() {
         newDate.setDate(newDate.getDate() + amount);
         setDate(newDate);
         setLog({ current: null, loading: true });
+    }
+
+    function getTodayLog() {
+        WorkoutLog.getLog(new Date(), db)
+            .then(loadedLog => setLog({ current: loadedLog, loading: false }))
+            .catch(() => setLog({ current: null, loading: false }));
     }
 
     let body: React.ReactNode;
