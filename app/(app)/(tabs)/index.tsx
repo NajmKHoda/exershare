@@ -1,15 +1,14 @@
-import LabelButton from '@/lib/components/controls/LabelButton';
 import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
 import ThemeText from '@/lib/components/theme/ThemeText';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import { ActivityIndicator, Button, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, View, Pressable, Text } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
 import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
-import { Play, FileText } from 'lucide-react-native';
+import { Play } from 'lucide-react-native';
 import { Link, useFocusEffect } from 'expo-router';
 import { Routine } from '@/lib/data/Routine';
 import { Workout } from '@/lib/data/Workout';
@@ -43,6 +42,8 @@ export default function Index() {
         loading: true
     });
     const useLog = dateTimestamp <= todayTimestamp;
+    const isToday = dateTimestamp === todayTimestamp;
+
     useEffect(() => {
         // If the date is in the future, don't load a log
         if (!useLog) {
@@ -121,9 +122,17 @@ export default function Index() {
             <>
                 <View style={ resolvedStyles.entryOptions }>
                     <Link href='/workout-progress' asChild>
-                        <LabelButton Icon={Play} label='Exercise Mode' />
+                        <Pressable
+                            style={isToday ? resolvedStyles.startButton : {
+                                ...resolvedStyles.startButton,
+                                ...resolvedStyles.startButtonDisabled
+                            }}
+                            disabled={!isToday}
+                        >
+                            <Play color={colors.primary} size={24} />
+                            <Text style={resolvedStyles.startButtonText}>Exercise Mode</Text>
+                        </Pressable>
                     </Link>
-                    <LabelButton Icon={FileText} label='Manual Entry' />
                 </View>
                 <View>
                     <ThemeText style={ resolvedStyles.exerciseCaption }>EXERCISES</ThemeText>
@@ -185,6 +194,26 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     exerciseCaption: {
         textAlign: 'center',
         paddingBottom: 10
+    },
+
+    startButton: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 15,
+        borderRadius: 10,
+        gap: 5,
+        backgroundColor: colors.accent
+    },
+
+    startButtonDisabled: {
+        backgroundColor: colors.gray
+    },
+
+    startButtonText: {
+        fontSize: 16,
+        color: colors.primary
     }
 });
 
