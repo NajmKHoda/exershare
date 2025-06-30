@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import ThemeText from './theme/ThemeText';
-import { ThemeColors, useResolvedStyles } from '../hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '../hooks/useThemeColors';
 import DatabaseSelectModal from './modals/DatabaseSelectModal';
 import { useState } from 'react';
 import { DataItem } from './lists/SearchableList';
@@ -10,9 +10,11 @@ import { useRouter } from 'expo-router';
 import useSQLiteQuery from '../hooks/useSQLiteQuery';
 
 export default function ActiveRoutineView() {
+    const colors = useThemeColors();
+    const resolvedStyles = useResolvedStyles(styles);
+
     const db = useSQLiteContext();
     const router = useRouter();
-    const resolvedStyles = useResolvedStyles(styles);
     const [activeRoutine] = useSQLiteQuery<{ id: string, name: string }>(
         `SELECT id, name FROM routines WHERE id = (SELECT active_routine_id FROM user)`,
         false,
@@ -35,11 +37,11 @@ export default function ActiveRoutineView() {
                 </View>
                 <View style={resolvedStyles.options}>
                     <Pressable onPress={() => setModalVisible(true)}>
-                        <Pencil size={40} />
+                        <Pencil size={40} color={colors.primary} />
                     </Pressable>
                     { activeRoutine &&
                         <Pressable onPress={() => router.push(`/routine/${activeRoutine.id}/share`)}>
-                            <Share size={40} />
+                            <Share size={40} color={colors.primary} />
                         </Pressable>
                     }
                 </View>
