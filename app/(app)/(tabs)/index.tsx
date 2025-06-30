@@ -104,7 +104,7 @@ export default function Index() {
     }
 
     function getTodayLog() {
-        WorkoutLog.getLog(new Date(), db)
+        WorkoutLog.getLog(date, db)
             .then(loadedLog => setLog({ current: loadedLog, loading: false }))
             .catch(() => setLog({ current: null, loading: false }));
     }
