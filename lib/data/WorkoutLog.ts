@@ -121,6 +121,26 @@ export class WorkoutLog {
             $completion: serializedCompletion
         });
     }
+
+    async applySetChanges(db: SQLiteDatabase) {
+        try {
+            const exercises = (await Promise.all(
+                Array.from(this.exercises.entries()).map(
+                    async ([id, { sets }]) => {
+                        const exercise = await Exercise.pullOne(id, db);
+                        if (!exercise) return;
+
+                        exercise.sets = sets;
+                        return exercise;
+                    }
+                )
+            )).filter(x => x !== undefined);
+
+            await Exercise.saveMany(db, exercises);
+        } catch (error) {
+            console.error("Error applying set changes:", error);
+        }
+    }
 }
 
 function copyExercises(exercises: readonly Exercise[]) {

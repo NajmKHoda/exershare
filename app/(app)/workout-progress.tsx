@@ -103,7 +103,8 @@ export default function WorkoutProgressScreen() {
     if (!currentExercise) return 0
 
     const completion = workoutLog.completion.find((c) => c.id === currentExercise.id)
-    return completion?.setsCompleted || 0
+    const maxIndex = currentExercise.sets.length - 1
+    return Math.min(completion?.setsCompleted || 0, maxIndex)
   }
 
   const getCurrentExercise = () => {
@@ -179,8 +180,18 @@ export default function WorkoutProgressScreen() {
       const completedSets = updatedCompletion.reduce((total, completion) => total + completion.setsCompleted, 0)
 
       if (completedSets >= totalSets) {
-        Alert.alert("Workout Complete!", "Great job finishing your workout!", [
-          { text: "OK", onPress: () => router.push("/") },
+        Alert.alert(
+          "Workout Complete!",
+          "Great job finishing your workout!\nWould you like to sync rep/weight changes?", [
+          {
+            text: "Yes",
+            style: "default",
+            onPress: async () => {
+              await updatedLog.applySetChanges(db);
+              router.back();
+            }
+          },
+          { text: "No", onPress: () => router.back() }
         ])
       }
     } catch (error) {
@@ -261,27 +272,16 @@ export default function WorkoutProgressScreen() {
   }
 
   const currentExercise = getCurrentExercise()
-  const currentSet = getCurrentSet()
   const currentExerciseIndex = getCurrentExerciseIndex()
-  const currentSetIndex = getCurrentSetIndex()
   const totalSets = getTotalSets()
   const completedSets = getCompletedSets()
-  const progressPercentage = totalSets > 0 ? ((completedSets + 1) / totalSets) * 100 : 0
+  const progressPercentage = totalSets > 0 ? ((completedSets) / totalSets) * 100 : 0
 
   const canGoPrevious = completedSets > 0
 
-  if (!currentExercise || !currentSet) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Workout Complete!</Text>
-        </View>
-      </SafeAreaView>
-    )
-  }
-
   const exercises = getExerciseList()
   const currentExerciseCompletion = workoutLog.completion.find((c) => c.id === currentExercise.id)
+  const setsInExercise = currentExercise ? currentExercise.sets.length : 0
   const setsCompletedInExercise = currentExerciseCompletion?.setsCompleted || 0
 
   return (
@@ -301,10 +301,10 @@ export default function WorkoutProgressScreen() {
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressText}>
-            Set {setsCompletedInExercise + 1} of {currentExercise.sets.length}
+            Set {Math.min(setsCompletedInExercise + 1, setsInExercise)} of {setsInExercise}
           </Text>
           <Text style={styles.progressSubtext}>
-            {completedSets + 1} / {totalSets} total sets
+            {completedSets} / {totalSets} total sets
           </Text>
         </View>
         <View style={styles.progressBar}>
