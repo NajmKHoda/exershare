@@ -1,23 +1,33 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
-import { Exercise } from '@/lib/data/Exercise';
+import { Exercise, IntensityType, Set, TYPE_DEFAULTS, VolumeType } from '@/lib/data/Exercise';
 import EntityDetailScreen from '@/lib/components/screens/EntityDetailScreen';
 import LabeledTextField from '@/lib/components/controls/LabeledTextField';
 import SetList from '@/lib/components/lists/SetList';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import ThemeText from '@/lib/components/theme/ThemeText';
+import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
+import VolumeTypeModal from '@/lib/components/modals/VolumeTypeModal';
+import IntensityTypeModal from '@/lib/components/modals/IntensityTypeModal';
 
 export default function ExerciseScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const db = useSQLiteContext();
     const router = useRouter();
+    const resolvedStyles = useResolvedStyles(styles);
     const [exercise, setExercise] = useState<Exercise | null>(null);
+    const [volumeTypeModalVisible, setVolumeTypeModalVisible] = useState(false);
+    const [intensityTypeModalVisible, setIntensityTypeModalVisible] = useState(false);
     const [currentState, setCurrentState] = useState({
         name: '',
+        volumeType: 'reps' as VolumeType,
+        intensityTypes: ['weight'] as IntensityType[],
         sets: [
-            { reps: 12, weight: 25 },
-            { reps: 12, weight: 25 },
-            { reps: 12, weight: 25 }
-        ],
+            { volume: 12, weight: 25 },
+            { volume: 12, weight: 25 },
+            { volume: 12, weight: 25 }
+        ] as Set[],
         notes: '',
         categories: [] as string[]
     });
@@ -33,6 +43,8 @@ export default function ExerciseScreen() {
                     setExercise(loadedExercise);
                     setCurrentState({
                         name: loadedExercise.name,
+                        volumeType: loadedExercise.volumeType || 'reps',
+                        intensityTypes: loadedExercise.intensityTypes || ['weight'],
                         sets: loadedExercise.sets,
                         notes: loadedExercise.notes,
                         categories: loadedExercise.categories
@@ -47,6 +59,39 @@ export default function ExerciseScreen() {
         loadExercise();
     }, [id, db]);
 
+    function handleVolumeTypeChange(newVolumeType: VolumeType) {
+        const refreshedSets = currentState.sets.map(set => ({
+            ...set,
+            volume: TYPE_DEFAULTS[newVolumeType]
+        }));
+
+        setCurrentState({
+            ...currentState,
+            volumeType: newVolumeType,
+            sets: refreshedSets
+        });
+    }
+
+    function handleIntensityTypeChange(newIntensityTypes: IntensityType[]) {
+        const refreshedSets = currentState.sets.map(set => {
+            const newSet: Set = { volume: set.volume };
+            newIntensityTypes.forEach((type) => {
+                if (type in set) {
+                    newSet[type] = set[type]
+                } else {
+                    newSet[type] = TYPE_DEFAULTS[type];
+                }
+            });
+            return newSet;
+        });
+
+        setCurrentState({
+            ...currentState,
+            intensityTypes: newIntensityTypes,
+            sets: refreshedSets
+        });
+    }
+
     async function handleSave() {
         try {
             if (exercise) {
@@ -54,24 +99,27 @@ export default function ExerciseScreen() {
                 const updatedExercise = new Exercise(
                     exercise.id,
                     currentState.name,
+                    currentState.volumeType,
+                    currentState.intensityTypes,
                     currentState.sets,
                     currentState.notes,
-                    currentState.categories
+                    currentState.categories,
                 );
                 await updatedExercise.save(db);
             } else {
                 // Create new exercise
                 await Exercise.create(
+                    db,
                     currentState.name,
+                    currentState.volumeType,
+                    currentState.intensityTypes,
                     currentState.sets,
                     currentState.notes,
-                    currentState.categories,
-                    db
+                    currentState.categories
                 );
             }
             router.back();
         } catch (error) {
-
             console.error('Failed to save exercise:', error);
         }
     }
@@ -100,10 +148,62 @@ export default function ExerciseScreen() {
                 initialValue={currentState.name}
                 onValueChange={name => setCurrentState({ ...currentState, name })} 
             />
+
+            <View style={resolvedStyles.typeRow}>
+                <ThemeText style={resolvedStyles.typeText}>
+                    Volume Type: {currentState.volumeType}
+                </ThemeText>
+                <Pressable onPress={() => setVolumeTypeModalVisible(true)}>
+                    <Text style={resolvedStyles.changeText}>(Change)</Text>
+                </Pressable>
+            </View>
+
+            <View style={resolvedStyles.typeRow}>
+                <ThemeText style={resolvedStyles.typeText}>
+                    Intensity Types: {currentState.intensityTypes.join(', ')}
+                </ThemeText>
+                <Pressable onPress={() => setIntensityTypeModalVisible(true)}>
+                    <Text style={resolvedStyles.changeText}>(Change)</Text>
+                </Pressable>
+            </View>
+
             <SetList
                 sets={currentState.sets}
-                onSetsChange={sets => setCurrentState({ ...currentState, sets })} 
+                onSetsChange={sets => setCurrentState({ ...currentState, sets })}
+                volumeType={currentState.volumeType}
+                intensityTypes={currentState.intensityTypes}
+            />
+
+            <VolumeTypeModal
+                visible={volumeTypeModalVisible}
+                currentType={currentState.volumeType}
+                onClose={() => setVolumeTypeModalVisible(false)}
+                onSelect={handleVolumeTypeChange}
+            />
+
+            <IntensityTypeModal
+                visible={intensityTypeModalVisible}
+                currentTypes={currentState.intensityTypes}
+                onClose={() => setIntensityTypeModalVisible(false)}
+                onSelect={handleIntensityTypeChange}
             />
         </EntityDetailScreen>
     );
 }
+
+const styles = (colors: ThemeColors) => StyleSheet.create({
+    typeRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 5,
+        marginTop: 10
+    },
+    typeText: {
+        fontWeight: 'bold'
+    },
+    changeText: {
+        color: colors.accent,
+        marginLeft: 5
+    }
+});

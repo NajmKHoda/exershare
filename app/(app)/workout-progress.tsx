@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from "react-native"
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { ArrowLeft, ChevronDown, ChevronUp, Check } from "lucide-react-native"
 import { useSQLiteContext } from "expo-sqlite"
 import { Routine } from "@/lib/data/Routine"
 import { WorkoutLog } from "@/lib/data/WorkoutLog"
 import { useResolvedStyles, type ThemeColors } from "@/lib/hooks/useThemeColors"
+import { VolumeType, IntensityType, TYPE_DEFAULTS } from "@/lib/data/Exercise"
 
 export default function WorkoutProgressScreen() {
   const router = useRouter()
@@ -17,9 +18,9 @@ export default function WorkoutProgressScreen() {
   const [workoutLog, setWorkoutLog] = useState<WorkoutLog | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // State for modified reps and weight
-  const [modifiedReps, setModifiedReps] = useState<number>(0)
-  const [modifiedWeight, setModifiedWeight] = useState<number>(0)
+  // State for modified volume and intensity values
+  const [modifiedVolume, setModifiedVolume] = useState<number>(0)
+  const [modifiedIntensities, setModifiedIntensities] = useState<Partial<Record<IntensityType, number>>>({})
 
   useEffect(() => {
     loadWorkoutData()
@@ -28,10 +29,17 @@ export default function WorkoutProgressScreen() {
   useEffect(() => {
     // Update modified values when exercise/set changes
     if (workoutLog) {
+      const currentExercise = getCurrentExercise()
       const currentSet = getCurrentSet()
-      if (currentSet) {
-        setModifiedReps(currentSet.reps)
-        setModifiedWeight(currentSet.weight)
+      if (currentExercise && currentSet) {
+        setModifiedVolume(currentSet.volume)
+        
+        // Extract intensity values from current set
+        const intensities: Partial<Record<IntensityType, number>> = {}
+        currentExercise.intensityTypes.forEach(type => {
+          intensities[type] = currentSet[type] || 0
+        })
+        setModifiedIntensities(intensities)
       }
     }
   }, [workoutLog])
@@ -142,10 +150,10 @@ export default function WorkoutProgressScreen() {
     const updatedExercises = new Map(workoutLog.exercises)
     const exerciseData = updatedExercises.get(currentExercise.id)!
     const updatedSets = [...exerciseData.sets]
-    updatedSets[currentSetIndex] = {
-      reps: modifiedReps,
-      weight: modifiedWeight,
-    }
+    
+    // Create a new set with the modified values
+    const newSet = { volume: modifiedVolume, ...modifiedIntensities }
+    updatedSets[currentSetIndex] = newSet
 
     updatedExercises.set(currentExercise.id, {
       ...exerciseData,
@@ -182,7 +190,7 @@ export default function WorkoutProgressScreen() {
       if (completedSets >= totalSets) {
         Alert.alert(
           "Workout Complete!",
-          "Great job finishing your workout!\nWould you like to sync rep/weight changes?", [
+          "Great job finishing your workout!\nWould you like to sync volume/intensity changes?", [
           {
             text: "Yes",
             style: "default",
@@ -253,12 +261,39 @@ export default function WorkoutProgressScreen() {
     }
   }
 
-  const adjustReps = (increment: boolean) => {
-    setModifiedReps((prev) => Math.max(1, prev + (increment ? 1 : -1)))
+  const adjustVolume = (increment: boolean) => {
+    setModifiedVolume((prev) => Math.max(1, prev + (increment ? 1 : -1)))
   }
 
-  const adjustWeight = (increment: boolean) => {
-    setModifiedWeight((prev) => Math.max(0, prev + (increment ? 5 : -5)))
+  const adjustIntensity = (type: IntensityType, increment: boolean) => {
+    const stepSize = type === 'weight' ? 5 : 1
+    setModifiedIntensities((prev) => ({
+      ...prev,
+      [type]: Math.max(0, (prev[type] || 0) + (increment ? stepSize : -stepSize)),
+    }))
+  }
+
+  // Format the volume type name for display
+  const getVolumeTypeLabel = (volumeType: VolumeType) => {
+    switch(volumeType) {
+      case 'reps': return 'reps';
+      case 'distance': return 'miles';
+      case 'time': return 'seconds';
+      case 'calories': return 'calories';
+      default: return volumeType;
+    }
+  }
+
+  // Format the intensity type name for display
+  const getIntensityTypeLabel = (intensityType: IntensityType) => {
+    switch(intensityType) {
+      case 'weight': return 'lbs';
+      case 'speed': return 'mph';
+      case 'incline': return '%';
+      case 'resistance': return 'level';
+      case 'level': return 'level';
+      default: return intensityType;
+    }
   }
 
   if (loading || !workoutLog) {
@@ -317,47 +352,52 @@ export default function WorkoutProgressScreen() {
       <View style={styles.setDisplay}>
         <Text style={styles.exerciseName}>{currentExercise.name}</Text>
 
-        <View style={styles.setInfo}>
-          {/* Reps Section */}
-          <View style={styles.valueSection}>
-            <View style={styles.valueRow}>
-              <TouchableOpacity onPress={() => adjustReps(false)} style={styles.adjustButton}>
-                <ChevronDown size={24} color={styles.adjustButtonIcon.color} />
-              </TouchableOpacity>
-
-              <View style={styles.valueDisplay}>
-                <Text style={styles.valueNumber}>{modifiedReps}</Text>
-                <Text style={styles.valueLabel}>reps</Text>
-              </View>
-
-              <TouchableOpacity onPress={() => adjustReps(true)} style={styles.adjustButton}>
-                <ChevronUp size={24} color={styles.adjustButtonIcon.color} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Weight Section */}
-          <View style={styles.valueSection}>
-            {modifiedWeight > 0 ? (
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+        >
+          <View style={styles.setInfo}>
+            {/* Volume Section */}
+            <View style={styles.valueSection}>
               <View style={styles.valueRow}>
-                <TouchableOpacity onPress={() => adjustWeight(false)} style={styles.adjustButton}>
+                <TouchableOpacity onPress={() => adjustVolume(false)} style={styles.adjustButton}>
                   <ChevronDown size={24} color={styles.adjustButtonIcon.color} />
                 </TouchableOpacity>
 
                 <View style={styles.valueDisplay}>
-                  <Text style={styles.weightNumber}>{modifiedWeight} lbs</Text>
-                  <Text style={styles.valueLabel}>weight</Text>
+                  <Text style={styles.valueNumber}>{modifiedVolume}</Text>
+                  <Text style={styles.valueLabel}>{getVolumeTypeLabel(currentExercise.volumeType)}</Text>
                 </View>
 
-                <TouchableOpacity onPress={() => adjustWeight(true)} style={styles.adjustButton}>
+                <TouchableOpacity onPress={() => adjustVolume(true)} style={styles.adjustButton}>
                   <ChevronUp size={24} color={styles.adjustButtonIcon.color} />
                 </TouchableOpacity>
               </View>
-            ) : (
-              <Text style={styles.bodyweightText}>Bodyweight</Text>
-            )}
+            </View>
+
+            {/* Intensity Sections */}
+            {currentExercise.intensityTypes.map(type => (
+              <View key={type} style={styles.valueSection}>
+                <View style={styles.valueRow}>
+                  <TouchableOpacity onPress={() => adjustIntensity(type, false)} style={styles.adjustButton}>
+                    <ChevronDown size={24} color={styles.adjustButtonIcon.color} />
+                  </TouchableOpacity>
+
+                  <View style={styles.valueDisplay}>
+                    <Text style={styles.intensityNumber}>
+                      {modifiedIntensities[type] || 0} {getIntensityTypeLabel(type)}
+                    </Text>
+                    <Text style={styles.valueLabel}>{type}</Text>
+                  </View>
+
+                  <TouchableOpacity onPress={() => adjustIntensity(type, true)} style={styles.adjustButton}>
+                    <ChevronUp size={24} color={styles.adjustButtonIcon.color} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
           </View>
-        </View>
+        </ScrollView>
       </View>
 
       {/* Complete Button */}
@@ -464,6 +504,11 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
       padding: 32,
     },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: "center",
+      paddingVertical: 16,
+    },
     exerciseName: {
       fontSize: 24,
       fontWeight: "bold",
@@ -505,7 +550,7 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: "bold",
       color: colors.accent,
     },
-    weightNumber: {
+    intensityNumber: {
       fontSize: 36,
       fontWeight: "600",
       color: colors.primary,

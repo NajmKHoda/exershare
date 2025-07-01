@@ -2,53 +2,73 @@ import { SQLiteDatabase, SQLiteStatement } from 'expo-sqlite';
 import { randomUUID } from '../uuid';
 import { supabase } from '../supabase';
 
+export const VOLUME_TYPES = ['reps', 'distance', 'time', 'calories'] as const;
+export const INTENSITY_TYPES = ['weight', 'speed', 'incline', 'resistance', 'level'] as const;
+export const TYPE_DEFAULTS: Record<VolumeType | IntensityType, number> = {
+    reps: 12,
+    distance: 1.0,
+    time: 60,
+    calories: 200,
+    weight: 25,
+    speed: 5.0,
+    incline: 0.0,
+    resistance: 1.0,
+    level: 1.0
+}
+
 export class Exercise {
     id: string;
     name: string;
+    volumeType: VolumeType;
+    intensityTypes: IntensityType[];
     sets: Set[];
     notes: string;
     categories: string[];
     lastModified: Date | null;
 
     constructor(rawData: RawExercise);
-    constructor(id: string, name: string, sets?: Set[], notes?: string, categories?: string[], lastModified?: Date);
+    constructor(
+        id: string,
+        name: string,
+        volumeType: VolumeType,
+        intensityTypes: IntensityType[],
+        sets: Set[],
+        notes?: string,
+        categories?: string[],
+        lastModified?: Date
+    );
     constructor(
         arg1: RawExercise | string,
         name?: string,
-        sets: Set[] = [],
+        volumeType?: VolumeType,
+        intensityTypes?: IntensityType[],
+        sets?: Set[],
         notes: string = '',
         categories: string[] = [],
         lastModified: Date | null = null
     ) {
         if (typeof arg1 === 'string') {
-            // Second definition
+            // Data passed directly
             let id = arg1; 
-
             this.id = id;
             this.name = name!;
-            this.sets = sets;
+            this.volumeType = volumeType!;
+            this.intensityTypes = intensityTypes!;
+            this.sets = sets!;
             this.notes = notes;
             this.categories = categories;
             this.lastModified = lastModified;
         } else {
-            // First definition
+            // Deserialize raw data from SQLite
             const rawData = arg1;
 
             this.id = rawData.id;
             this.name = rawData.name;
+            this.volumeType = rawData.volume_type;
+            this.intensityTypes = rawData.intensity_types.split(',').filter(Boolean) as IntensityType[];
             this.notes = rawData.notes;
             this.lastModified = rawData.last_modified ? new Date(rawData.last_modified) : null;
-
-            // Deserialize sets ("REPS_1:WEIGHT_1;REPS_2:WEIGHT_2; ...")
-            this.sets = rawData.sets!.split(';').map(setString => {
-                const [reps, weight] = setString.split(':');
-                return { 
-                    reps: Number(reps),
-                    weight: Number(weight)
-                }
-            });
-
-            // Deserialize categories ("CATEGORY_1,CATEGORY_2, ...")
+            this.sets = JSON.parse(rawData.sets) as Set[];
             this.categories = rawData.categories ? rawData.categories.split(',') : [];
         }
     }
@@ -59,6 +79,8 @@ export class Exercise {
                 id TEXT PRIMARY KEY NOT NULL,
                 dirty INTEGER NOT NULL DEFAULT 1,
                 name TEXT NOT NULL,
+                volume_type TEXT NOT NULL,
+                intensity_types TEXT NOT NULL,
                 sets TEXT NOT NULL,
                 notes TEXT NOT NULL DEFAULT '',
                 categories TEXT NOT NULL DEFAULT '',
@@ -78,7 +100,6 @@ export class Exercise {
             ORDER BY name;
         `);
 
-        if (rawExercises.length === 0) return [];
         return rawExercises.map(raw => new Exercise(raw));
     }
 
@@ -88,8 +109,24 @@ export class Exercise {
         return exercises[0];
     }
 
-    static async create(name: string, sets: Set[], notes: string, categories: string[], db: SQLiteDatabase) {
-        const exercise = new Exercise(randomUUID(), name, sets, notes, categories);
+    static async create(
+        db: SQLiteDatabase,
+        name: string,
+        volumeType: VolumeType,
+        intensityTypes: IntensityType[],
+        sets: Set[],
+        notes?: string,
+        categories?: string[]
+    ) {
+        const exercise = new Exercise(
+            randomUUID(),
+            name,
+            volumeType,
+            intensityTypes,
+            sets,
+            notes,
+            categories
+        );
         await exercise.save(db);
         return exercise;
     }
@@ -106,10 +143,16 @@ export class Exercise {
         let saveStatement: SQLiteStatement | null = null;
         try {
             saveStatement = await db.prepareAsync(`
-                INSERT INTO exercises (id, name, sets, notes, categories, last_modified)
-                VALUES ($id, $name, $sets, $notes, $categories, $timestamp)
-                ON CONFLICT(id) DO UPDATE SET 
+                INSERT INTO exercises (
+                    id, name, volume_type, intensity_types,
+                    sets, notes, categories, last_modified
+                ) VALUES (
+                    $id, $name, $volumeType, $intensityTypes,
+                    $sets, $notes, $categories, $timestamp
+                ) ON CONFLICT(id) DO UPDATE SET 
                     name = excluded.name,
+                    volume_type = excluded.volume_type,
+                    intensity_types = excluded.intensity_types,
                     sets = excluded.sets,
                     notes = excluded.notes,
                     categories = excluded.categories,
@@ -124,6 +167,8 @@ export class Exercise {
                     await saveStatement!.executeAsync({
                         $id: serialized.id,
                         $name: serialized.name,
+                        $volumeType: serialized.volume_type,
+                        $intensityTypes: serialized.intensity_types,
                         $sets: serialized.sets,
                         $notes: serialized.notes,
                         $categories: serialized.categories,
@@ -144,8 +189,8 @@ export class Exercise {
         if (localOnly) return;
 
         const { error: remoteError } = await supabase.from('exercises').upsert(
-            exercises.map(exercise => ({
-                ...exercise,
+            exercises.map((exercise, i) => ({
+                ...serializedExercises[i],
                 last_modified: exercise.lastModified!.toISOString()
             }))
         );
@@ -188,7 +233,9 @@ export class Exercise {
         return {
             id: this.id,
             name: this.name,
-            sets: this.sets.map(({reps, weight}) => `${reps}:${weight}`).join(';'),
+            volume_type: this.volumeType,
+            intensity_types: this.intensityTypes.join(','),
+            sets: JSON.stringify(this.sets),
             notes: this.notes,
             categories: this.categories.join(','),
             last_modified: (this.lastModified ?? new Date()).toISOString()
@@ -199,13 +246,15 @@ export class Exercise {
 export interface RawExercise {
     id: string,
     name: string,
+    volume_type: VolumeType,
+    intensity_types: string,
     sets: string,
     notes: string,
     categories: string,
     last_modified?: string
 }
 
-export interface Set {
-    reps: number,
-    weight: number
-}
+export type Set = { volume: number; } & Partial<Record<IntensityType, number>>;
+
+export type VolumeType = typeof VOLUME_TYPES[number];
+export type IntensityType = typeof INTENSITY_TYPES[number];

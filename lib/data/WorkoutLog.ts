@@ -2,7 +2,7 @@ import { SQLiteDatabase } from 'expo-sqlite';
 import { Workout } from './Workout';
 import { serializeDate, deserializeDate } from './dates';
 import { Routine } from './Routine'; // newly imported
-import { Exercise } from './Exercise';
+import { Exercise, IntensityType, Set, VolumeType } from './Exercise';
 
 export class WorkoutLog {
     date: Date;
@@ -126,11 +126,14 @@ export class WorkoutLog {
         try {
             const exercises = (await Promise.all(
                 Array.from(this.exercises.entries()).map(
-                    async ([id, { sets }]) => {
+                    async ([id, { volumeType, intensityTypes, sets }]) => {
                         const exercise = await Exercise.pullOne(id, db);
                         if (!exercise) return;
 
+                        exercise.volumeType = volumeType;
+                        exercise.intensityTypes = intensityTypes;
                         exercise.sets = sets;
+
                         return exercise;
                     }
                 )
@@ -148,10 +151,9 @@ function copyExercises(exercises: readonly Exercise[]) {
         exercise.id,
         {
             name: exercise.name,
-            sets: exercise.sets.map(set => ({
-                reps: set.reps,
-                weight: set.weight
-            }))
+            volumeType: exercise.volumeType,
+            intensityTypes: [...exercise.intensityTypes],
+            sets: exercise.sets.map(set => ({ ...set }))
         }
     ]))
 }
@@ -169,10 +171,9 @@ type ExerciseMap = Map<
     string,
     {
         name: string;
-        sets: {
-            reps: number;
-            weight: number;
-        }[];
+        volumeType: VolumeType,
+        intensityTypes: IntensityType[];
+        sets: Set[];
     }
 >;
 
