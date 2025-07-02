@@ -184,8 +184,10 @@ export default function ExerciseScreen() {
             <IntensityTypeModal
                 visible={intensityTypeModalVisible}
                 currentTypes={currentState.intensityTypes}
-                onClose={() => setIntensityTypeModalVisible(false)}
-                onSelect={handleIntensityTypeChange}
+                onClose={(types) => {
+                    setIntensityTypeModalVisible(false);
+                    handleIntensityTypeChange(types);
+                }}
             />
         </EntityDetailScreen>
     );

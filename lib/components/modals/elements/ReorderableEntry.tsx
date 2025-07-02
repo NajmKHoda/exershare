@@ -33,8 +33,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     exerciseContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 12,
-        backgroundColor: colors.backgroundSecondary
+        padding: 12
     },
 
     exerciseDragHandle: {

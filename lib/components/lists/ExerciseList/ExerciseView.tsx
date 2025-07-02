@@ -42,7 +42,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         padding: 15,
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: colors.backgroundSecondary
     },
 
     name: {

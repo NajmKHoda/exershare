@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '../hooks/useThemeColors';
 import Text from './theme/Text';
+import { standardShadow } from '../standardStyles';
 
 interface Props {
     routineName: string,
@@ -41,6 +42,9 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 15,
         paddingVertical: 15,
+
+        ...standardShadow,
+        shadowOffset: { width: 0, height: standardShadow.shadowRadius },
         backgroundColor: colors.backgroundSecondary
     },
 

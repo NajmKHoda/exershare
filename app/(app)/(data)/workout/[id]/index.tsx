@@ -7,22 +7,23 @@ import EntityDetailScreen from '@/lib/components/screens/EntityDetailScreen';
 import LabeledTextField from '@/lib/components/controls/LabeledTextField';
 import ReorderableList, { reorderItems } from 'react-native-reorderable-list';
 import { DataItem } from '@/lib/components/lists/SearchableList';
-import Separator from '@/lib/components/layout/Separator';
+import Separator from '@/lib/components/lists/elements/Separator';
 import ReorderableEntry from '@/lib/components/modals/elements/ReorderableEntry';
 import AddFooter from '@/lib/components/lists/elements/AddFooter';
 import ExerciseSelectModal from '@/lib/components/modals/ExerciseSelectModal';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
+import { standardOutline, standardShadow } from '@/lib/standardStyles';
 
 export default function WorkoutScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const db = useSQLiteContext();
-    const colors = useThemeColors();
     const [workout, setWorkout] = useState<Workout | null>(null);
     const [currentState, setCurrentState] = useState({
         name: '',
         exercises: [] as DataItem[]
     });
     const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
+    const styles = useResolvedStyles(stylesTemplate);
 
     // Load workout if id is provided
     useEffect(() => {
@@ -105,6 +106,7 @@ export default function WorkoutScreen() {
                     exercises: reorderItems(currentState.exercises, from, to)
                 })}
                 ItemSeparatorComponent={Separator}
+                style={styles.exerciseList}
                 contentContainerStyle={styles.exerciseListContainer}
                 renderItem={({ item, index }) => 
                     <ReorderableEntry 
@@ -132,9 +134,14 @@ export default function WorkoutScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const stylesTemplate = (colors: ThemeColors) => StyleSheet.create({
+    exerciseList: {
+        padding: standardShadow.shadowRadius,
+    },
     exerciseListContainer: {
-        borderRadius: 10,
-        overflow: 'hidden'
+        backgroundColor: colors.backgroundSecondary,
+
+        ...standardShadow,
+        ...standardOutline(colors),
     }
 });

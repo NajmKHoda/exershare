@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import SearchField from '@/lib/components/controls/SearchField';
 import TextButton from '@/lib/components/controls/TextButton';
-import Separator from '@/lib/components/layout/Separator';
 import { Plus } from 'lucide-react-native';
+import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
+import StandardList from './StandardList';
 
 interface Props {
     data: DataItem[],
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function SearchableList({ data, itemRenderer, onItemAdd }: Props) {
+    const styles = useResolvedStyles(stylesTemplate);
     const [searchValue, setSearchValue] = useState('');
 
     const filteredData = data.filter(({ name }) => name
@@ -31,26 +33,19 @@ export default function SearchableList({ data, itemRenderer, onItemAdd }: Props)
                         onPress={ onItemAdd } />
                 }
             </View>
-            <FlatList
+            <StandardList
                 data={ filteredData }
                 renderItem={ ({ item }) => itemRenderer(item) }
                 keyExtractor={ ({ id }) => id.toString() }
-                ItemSeparatorComponent={ Separator }
-                contentContainerStyle={ styles.flatListContent }
             />
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const stylesTemplate = (colors: ThemeColors) => StyleSheet.create({
     container: {
         gap: 10,
         alignItems: 'stretch'
-    },
-
-    flatListContent: {
-        borderRadius: 10,
-        overflow: 'hidden'
     },
 
     controlsContainer: {

@@ -1,46 +1,37 @@
-import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import SlideUpModal from '@/lib/components/modals/SlideUpModal';
 import { INTENSITY_TYPES, IntensityType } from '@/lib/data/Exercise';
 import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import { Check } from 'lucide-react-native';
-import Separator from '@/lib/components/layout/Separator';
 import { toTitleCase } from '@/lib/utils/stringUtils';
+import MultiselectList from '../lists/MultiselectList';
+import { useState } from 'react';
 
 interface Props {
     visible: boolean;
     currentTypes: IntensityType[];
-    onClose: () => void;
-    onSelect: (types: IntensityType[]) => void;
+    onClose: (types: IntensityType[]) => void;
 }
 
-export default function IntensityTypeModal({ visible, currentTypes, onClose, onSelect }: Props) {
-    const colors = useThemeColors();
+export default function IntensityTypeModal({ visible, currentTypes, onClose}: Props) {
     const resolvedStyles = useResolvedStyles(styles);
-    const selectedTypes = [...currentTypes];
+    const [selectedTypes, setSelectedTypes] = useState(currentTypes);
 
-    const toggleType = (type: IntensityType) => {
-        const index = selectedTypes.indexOf(type);
-        if (index === -1) {
-            // Add the type if not already selected
-            selectedTypes.push(type);
-        } else {
-            // Remove the type if already selected (only if there's at least one type left)
-            if (selectedTypes.length > 1) {
-                selectedTypes.splice(index, 1);
-            }
-        }
-        onSelect([...selectedTypes]);
-    };
+    function toDataItems(types: readonly IntensityType[]) {
+        return types.map((type, i) => ({
+            id: type,
+            name: toTitleCase(type),
+        }));
+    }
 
     return (
         <SlideUpModal
             visible={visible}
-            onClose={onClose}
+            onClose={() => onClose(currentTypes)}
             title="Select Intensity Types"
             additionalControls={
                 <TouchableOpacity 
-                    onPress={onClose}
+                    onPress={() => onClose(selectedTypes)}
                     style={resolvedStyles.doneButton}
                 >
                     <Text style={resolvedStyles.doneText}>Done</Text>
@@ -50,24 +41,13 @@ export default function IntensityTypeModal({ visible, currentTypes, onClose, onS
             <Text style={resolvedStyles.instruction}>
                 Select one or more intensity types for this exercise
             </Text>
-            <FlatList
-                data={INTENSITY_TYPES}
-                keyExtractor={(item) => item}
-                ItemSeparatorComponent={Separator}
-                renderItem={({ item }) => (
-                    <TouchableOpacity 
-                        style={resolvedStyles.itemContainer}
-                        onPress={() => toggleType(item)}
-                    >
-                        <Text style={resolvedStyles.itemText}>
-                            {toTitleCase(item)}
-                        </Text>
-                        {currentTypes.includes(item) && (
-                            <Check color={colors.accent as string} size={24} />
-                        )}
-                    </TouchableOpacity>
-                )}
-                style={resolvedStyles.list}
+            <MultiselectList
+                search={false}
+                data={toDataItems(INTENSITY_TYPES)}
+                selectedItems={toDataItems(selectedTypes)}
+                setSelectedItems={(selected) => {
+                    setSelectedTypes(selected.map(item => item.id as IntensityType));
+                }}
             />
         </SlideUpModal>
     );

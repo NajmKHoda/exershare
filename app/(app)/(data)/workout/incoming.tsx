@@ -10,7 +10,7 @@ import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
-import Separator from '@/lib/components/layout/Separator';
+import Separator from '@/lib/components/lists/elements/Separator';
 
 export default function IncomingWorkoutScreen() {
     const { incomingEntity, clearIncomingEntity } = useIncomingEntity();

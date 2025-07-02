@@ -8,6 +8,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { Pencil, Share } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import useSQLiteQuery from '../hooks/useSQLiteQuery';
+import { standardShadow } from '../standardStyles';
 
 export default function ActiveRoutineView() {
     const colors = useThemeColors();
@@ -66,7 +67,9 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         borderWidth: 3,
         padding: 25,
         borderColor: colors.accent,
-        backgroundColor: colors.backgroundSecondary
+        backgroundColor: colors.backgroundSecondary,
+        
+        ...standardShadow
     },
 
     info: {

@@ -2,14 +2,16 @@ import SearchableList, { DataItem } from './SearchableList';
 import ListItem from './ListItem';
 import { useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Circle, CircleCheck } from 'lucide-react-native';
+import StandardList from './StandardList';
 
 interface Props {
     data: DataItem[];
     selectedItems: DataItem[];
     setSelectedItems: (selected: DataItem[]) => void;
+    search?: boolean;
 }
 
-export default function MultiselectList({ data, selectedItems, setSelectedItems }: Props) {
+export default function MultiselectList({ data, selectedItems, setSelectedItems, search=true }: Props) {
     const colors = useThemeColors();
 
     const selectedIds = selectedItems.map(item => item.id);
@@ -22,7 +24,7 @@ export default function MultiselectList({ data, selectedItems, setSelectedItems 
         }
     };
 
-    return (
+    return ( search ?
         <SearchableList
             data={ data }
             itemRenderer={(item) => (
@@ -34,6 +36,20 @@ export default function MultiselectList({ data, selectedItems, setSelectedItems 
                     onPress={ () => toggleSelection(item) }
                 />
             )}
+        /> :
+        <StandardList
+            data={ data }
+            keyExtractor={({ id }) => id}
+            renderItem={({ item }) => (
+                <ListItem
+                    label={ item.name }
+                    Icon={ selectedIds.includes(item.id) ? CircleCheck : Circle }
+                    iconColor={ colors.accent as string }
+                    iconSize={ 27 }
+                    onPress={() => toggleSelection(item)}
+                />
+            )}
+            scrollEnabled={false}
         />
     );
 }

@@ -33,8 +33,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 15,
-        backgroundColor: colors.backgroundSecondary
+        padding: 15
     },
 
     label: {

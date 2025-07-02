@@ -1,6 +1,5 @@
-import { View, StyleSheet, FlatList, TextInput } from 'react-native';
+import { View, StyleSheet, TextInput } from 'react-native';
 import { IntensityType, Set, TYPE_DEFAULTS, VolumeType } from '@/lib/data/Exercise';
-import Separator from '../layout/Separator';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable } from 'react-native';
 import Text from '../theme/Text';
@@ -8,6 +7,7 @@ import AddFooter from './elements/AddFooter';
 import { XCircle } from 'lucide-react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { toTitleCase } from '@/lib/utils/stringUtils';
+import StandardList from './StandardList';
 
 interface Props {
     sets: Set[];
@@ -49,11 +49,9 @@ export default function SetList({ sets, volumeType, intensityTypes, onSetsChange
                         <Text key={type} style={resolvedStyles.headerText}>{toTitleCase(type)}</Text>
                     ))}
                 </View>
-                <FlatList
+                <StandardList
                     data={sets}
                     keyExtractor={(_, index) => index.toString()}
-                    ItemSeparatorComponent={Separator}
-                    contentContainerStyle={resolvedStyles.listContainer}
                     ListFooterComponent={
                         <AddFooter onAdd={handleSetAdd} />
                     }
@@ -104,10 +102,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         gap: 5,
     },
-    listContainer: {
-        borderRadius: 10,
-        overflow: 'hidden',
-    },
     header: {
         flexDirection: 'row',
         alignSelf: 'flex-end',
@@ -123,7 +117,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         paddingVertical: 10,
         paddingLeft: 5,
-        backgroundColor: colors.backgroundSecondary
     },
     cell: {
         flex: 1,

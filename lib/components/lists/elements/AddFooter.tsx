@@ -24,6 +24,8 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     addButton: {
         alignItems: 'center',
         paddingVertical: 10,
+        borderBottomLeftRadius: 10,
+        borderBottomRightRadius: 10,
         backgroundColor: colors.accent
     }
 });

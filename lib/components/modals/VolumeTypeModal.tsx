@@ -1,11 +1,11 @@
-import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import SlideUpModal from '@/lib/components/modals/SlideUpModal';
 import { VOLUME_TYPES, VolumeType } from '@/lib/data/Exercise';
-import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import { Check } from 'lucide-react-native';
-import Separator from '@/lib/components/layout/Separator';
+import StandardList from '../lists/StandardList';
+import ListItem from '../lists/ListItem';
 import { toTitleCase } from '@/lib/utils/stringUtils';
+import { ChevronRight } from 'lucide-react-native';
 
 interface Props {
     visible: boolean;
@@ -24,27 +24,21 @@ export default function VolumeTypeModal({ visible, currentType, onClose, onSelec
             onClose={onClose}
             title="Select Volume Type"
         >
-            <FlatList
+            <StandardList
                 data={VOLUME_TYPES}
                 keyExtractor={(item) => item}
-                ItemSeparatorComponent={Separator}
                 renderItem={({ item }) => (
-                    <TouchableOpacity 
-                        style={resolvedStyles.itemContainer}
+                    <ListItem
+                        label={toTitleCase(item)}
+                        Icon={ChevronRight}
                         onPress={() => {
                             onSelect(item);
                             onClose();
                         }}
-                    >
-                        <Text style={resolvedStyles.itemText}>
-                            {toTitleCase(item)}
-                        </Text>
-                        {item === currentType && (
-                            <Check color={colors.accent as string} size={24} />
-                        )}
-                    </TouchableOpacity>
+                    />
                 )}
                 style={resolvedStyles.list}
+                scrollEnabled={false}
             />
         </SlideUpModal>
     );

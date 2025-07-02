@@ -1,10 +1,10 @@
-import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import SlideUpModal from './SlideUpModal';
 import ListItem from '../lists/ListItem';
 import { Edit3, QrCode } from 'lucide-react-native';
-import { useThemeColors } from '@/lib/hooks/useThemeColors';
-import Separator from '../layout/Separator';
+import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
+import Separator from '../lists/elements/Separator';
+import { standardOutline, standardShadow } from '@/lib/standardStyles';
 
 interface Props {
     visible: boolean;
@@ -16,6 +16,7 @@ interface Props {
 
 export default function AddOptionsModal({ visible, onClose, onManualCreate, onScan, entityType }: Props) {
     const colors = useThemeColors();
+    const styles = useResolvedStyles(stylesTemplate);
 
     const handleManualCreate = () => {
         onManualCreate?.();
@@ -52,9 +53,11 @@ export default function AddOptionsModal({ visible, onClose, onManualCreate, onSc
     );
 }
 
-const styles = StyleSheet.create({
+const stylesTemplate = (colors: ThemeColors) => StyleSheet.create({
     container: {
-        borderRadius: 10,
-        overflow: 'hidden'
+        backgroundColor: colors.backgroundSecondary,
+
+        ...standardShadow,
+        ...standardOutline(colors),
     }
 });

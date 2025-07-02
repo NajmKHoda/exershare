@@ -7,11 +7,10 @@ import { Routine } from '@/lib/data/Routine';
 import EntityDetailScreen from '@/lib/components/screens/EntityDetailScreen';
 import LabeledTextField from '@/lib/components/controls/LabeledTextField';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import { FlatList } from 'react-native-gesture-handler';
 import { DataItem } from '@/lib/components/lists/SearchableList';
-import Separator from '@/lib/components/layout/Separator';
 import Text from '@/lib/components/theme/Text';
 import DatabaseSelectModal from '@/lib/components/modals/DatabaseSelectModal';
+import StandardList from '@/lib/components/lists/StandardList';
 
 export default function RoutineScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -100,11 +99,9 @@ export default function RoutineScreen() {
                 initialValue={currentState.name}
                 onValueChange={name => setCurrentState({ ...currentState, name })}
             />
-            <FlatList
+            <StandardList
                 data={currentState.workouts}
-                ItemSeparatorComponent={Separator}
                 keyExtractor={(_, index) => index.toString()}
-                contentContainerStyle={resolvedStyles.listContainer}
                 scrollEnabled={false}
                 renderItem={({ item, index }) => (
                     <View style={resolvedStyles.workoutRow}>
@@ -141,16 +138,11 @@ export default function RoutineScreen() {
 }
 
 const styles = (colors: ThemeColors) => StyleSheet.create({
-    listContainer: {
-        borderRadius: 10,
-        overflow: 'hidden'
-    },
     workoutRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 15,
-        backgroundColor: colors.backgroundSecondary
     },
     selectRegion: {
         flex: 1

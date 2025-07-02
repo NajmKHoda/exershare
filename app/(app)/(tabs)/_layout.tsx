@@ -1,4 +1,5 @@
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
+import { standardShadow } from '@/lib/standardStyles';
 import { Tabs } from 'expo-router';
 import { Dumbbell, Book, LucideIcon } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
@@ -43,6 +44,7 @@ function TabIcon(Icon: LucideIcon) {
 const styles = (colors: ThemeColors) => StyleSheet.create({
     tabBar: {
         backgroundColor: colors.backgroundSecondary,
-        borderTopWidth: 0
+        borderTopWidth: 0,
+        ...standardShadow,
     }
 });

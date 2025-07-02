@@ -8,8 +8,8 @@ export default function Separator() {
 
 const styles = (colors: ThemeColors) => StyleSheet.create({
     separator: {
-        height: 3,
+        height: StyleSheet.hairlineWidth,
         alignSelf: 'stretch',
-        backgroundColor: colors.separator
+        backgroundColor: colors.gray
     }
 });

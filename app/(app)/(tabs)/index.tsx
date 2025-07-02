@@ -1,4 +1,3 @@
-import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
 import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
@@ -7,11 +6,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
-import { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
+import ExerciseView, { ExerciseInfo } from '@/lib/components/lists/ExerciseList/ExerciseView';
 import { Play } from 'lucide-react-native';
 import { Link, useFocusEffect } from 'expo-router';
 import { Routine } from '@/lib/data/Routine';
 import { Workout } from '@/lib/data/Workout';
+import StandardList from '@/lib/components/lists/StandardList';
 
 export default function Index() {
     const colors = useThemeColors();
@@ -136,9 +136,10 @@ export default function Index() {
                 </View>
                 <View>
                     <Text style={ resolvedStyles.exerciseCaption }>EXERCISES</Text>
-                    <View>
-                        <ExerciseList exercises={ exerciseList } />
-                    </View>
+                    <StandardList
+                        data={ exerciseList }
+                        renderItem={ x => <ExerciseView exercise={ x.item } /> }
+                        keyExtractor={ (_, i) => i.toString() } />
                 </View>
                 <Button title='Routine Options' />
             </>

@@ -1,5 +1,5 @@
 import ActiveRoutineView from '@/lib/components/ActiveRoutineView';
-import Separator from '@/lib/components/layout/Separator';
+import Separator from '@/lib/components/lists/elements/Separator';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { StyleSheet, View } from 'react-native';
 import SelectList from '@/lib/components/lists/SelectList';
