@@ -38,9 +38,6 @@ export default function IntensityTypeModal({ visible, currentTypes, onClose}: Pr
                 </TouchableOpacity>
             }
         >
-            <Text style={resolvedStyles.instruction}>
-                Select one or more intensity types for this exercise
-            </Text>
             <MultiselectList
                 search={false}
                 data={toDataItems(INTENSITY_TYPES)}

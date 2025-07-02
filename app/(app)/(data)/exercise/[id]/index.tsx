@@ -10,6 +10,7 @@ import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import VolumeTypeModal from '@/lib/components/modals/VolumeTypeModal';
 import IntensityTypeModal from '@/lib/components/modals/IntensityTypeModal';
+import { toTitleCase } from '@/lib/utils/stringUtils';
 
 export default function ExerciseScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -135,6 +136,13 @@ export default function ExerciseScreen() {
         }
     }
 
+    let intensityText = 'Intensity Types: Several';
+    if (currentState.intensityTypes.length === 1) {
+        intensityText = `Intensity Type: ${toTitleCase(currentState.intensityTypes[0])}`;
+    } else if (currentState.intensityTypes.length === 0) {
+        intensityText = 'Intensity Type: None';
+    }
+
     return (
         <EntityDetailScreen 
             isNewEntity={id === 'new'} 
@@ -151,7 +159,7 @@ export default function ExerciseScreen() {
 
             <View style={resolvedStyles.typeRow}>
                 <Text style={resolvedStyles.typeText}>
-                    Volume Type: {currentState.volumeType}
+                    Volume Type: {toTitleCase(currentState.volumeType)}
                 </Text>
                 <Pressable onPress={() => setVolumeTypeModalVisible(true)}>
                     <Text style={resolvedStyles.changeText}>(Change)</Text>
@@ -160,7 +168,7 @@ export default function ExerciseScreen() {
 
             <View style={resolvedStyles.typeRow}>
                 <Text style={resolvedStyles.typeText}>
-                    Intensity Types: {currentState.intensityTypes.join(', ')}
+                    {intensityText}
                 </Text>
                 <Pressable onPress={() => setIntensityTypeModalVisible(true)}>
                     <Text style={resolvedStyles.changeText}>(Change)</Text>
