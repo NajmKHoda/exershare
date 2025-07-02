@@ -5,7 +5,6 @@ import { Dumbbell, Book, LucideIcon } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 
 export default function TabsLayout() {
-    const colors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
 
     return (
@@ -46,5 +45,6 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         backgroundColor: colors.backgroundSecondary,
         borderTopWidth: 0,
         ...standardShadow,
+        shadowOffset: { width: 0, height: -3 },
     }
 });

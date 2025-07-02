@@ -5,7 +5,7 @@ import { Exercise, IntensityType, Set, TYPE_DEFAULTS, VolumeType } from '@/lib/d
 import EntityDetailScreen from '@/lib/components/screens/EntityDetailScreen';
 import LabeledTextField from '@/lib/components/controls/LabeledTextField';
 import SetList from '@/lib/components/lists/SetList';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Alert } from 'react-native';
 import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import VolumeTypeModal from '@/lib/components/modals/VolumeTypeModal';
@@ -126,21 +126,33 @@ export default function ExerciseScreen() {
     }
 
     async function handleDelete() {
-        if (exercise) {
-            try {
-                await exercise.delete(db);
-                router.back();
-            } catch (error) {
-                console.error('Failed to delete exercise:', error);
-            }
+        if (!exercise) return;
+
+        try {
+            await exercise.delete(db);
+            router.back();
+        } catch (error) {
+            console.error('Failed to delete exercise:', error);
         }
     }
 
-    let intensityText = 'Intensity Types: Several';
+    let intensityText = (
+        <>Intensity Types: <Text style={resolvedStyles.valueText}>
+            Several
+        </Text></>
+    );
     if (currentState.intensityTypes.length === 1) {
-        intensityText = `Intensity Type: ${toTitleCase(currentState.intensityTypes[0])}`;
+        intensityText = (
+            <>Intensity Type: <Text style={resolvedStyles.valueText}>
+                {toTitleCase(currentState.intensityTypes[0])}
+            </Text></>
+        );
     } else if (currentState.intensityTypes.length === 0) {
-        intensityText = 'Intensity Type: None';
+        intensityText = (
+            <>Intensity Type: <Text style={resolvedStyles.valueText}>
+                None
+            </Text></>
+        );
     }
 
     return (
@@ -159,7 +171,7 @@ export default function ExerciseScreen() {
 
             <View style={resolvedStyles.typeRow}>
                 <Text style={resolvedStyles.typeText}>
-                    Volume Type: {toTitleCase(currentState.volumeType)}
+                    Volume Type: <Text style={resolvedStyles.valueText}>{toTitleCase(currentState.volumeType)}</Text>
                 </Text>
                 <Pressable onPress={() => setVolumeTypeModalVisible(true)}>
                     <Text style={resolvedStyles.changeText}>(Change)</Text>
@@ -211,6 +223,9 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     },
     typeText: {
         fontWeight: 'bold'
+    },
+    valueText: {
+        fontWeight: 'regular',
     },
     changeText: {
         color: colors.accent,
