@@ -1,4 +1,4 @@
-import { View, StyleSheet, TextInput } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { IntensityType, Set, TYPE_DEFAULTS, VolumeType } from '@/lib/data/Exercise';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable } from 'react-native';
@@ -8,6 +8,7 @@ import { XCircle } from 'lucide-react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { toTitleCase } from '@/lib/utils/stringUtils';
 import StandardList from './StandardList';
+import DeferredInputField from '../controls/DeferredInputField';
 
 interface Props {
     sets: Set[];
@@ -24,11 +25,15 @@ export default function SetList({ sets, volumeType, intensityTypes, onSetsChange
     function handleChange(index: number, field: keyof Set, value: string) {
         const updatedSets = [...sets];
         const type = field === 'volume' ? volumeType : field;
+        const newValue = Number(value) || TYPE_DEFAULTS[type];
+
         updatedSets[index] = {
             ...updatedSets[index],
-            [field]: Number(value) || TYPE_DEFAULTS[type]
+            [field]: newValue
         };
         onSetsChange?.(updatedSets);
+
+        return newValue.toString();
     };
 
     function handleSetAdd() {
@@ -38,6 +43,24 @@ export default function SetList({ sets, volumeType, intensityTypes, onSetsChange
 
         intensityTypes.forEach((type) => newSet[type] = TYPE_DEFAULTS[type]);
         onSetsChange?.([...sets, newSet]);
+    }
+
+    function formatType(value: string,type: VolumeType | IntensityType): string {
+        switch (type) {
+            case 'weight':
+            return `${value} lbs`;
+            case 'distance':
+            return `${value} mi`;
+            case 'time':
+            return `${value} s`;
+            case 'calories':
+            return `${value} kcal`;
+            case 'speed':
+            return `${value} mph`;
+            // 'reps' and other dimensionless types
+            default:
+            return value;
+        }
     }
 
     return (
@@ -70,18 +93,20 @@ export default function SetList({ sets, volumeType, intensityTypes, onSetsChange
                                     color={(canDelete ? colors.red : colors.gray) as string}
                                 />
                             </Pressable>
-                            <TextInput
+                            <DeferredInputField
                                 style={resolvedStyles.cell}
                                 value={item.volume.toString()}
-                                onChangeText={(text) => handleChange(index, 'volume', text)}
+                                setValue={(text) => handleChange(index, 'volume', text)}
+                                formatUnfocused={val => formatType(val, volumeType)}
                                 keyboardType='numeric'
                             />
                             {intensityTypes.map((type) => (
-                                <TextInput
+                                <DeferredInputField
                                     key={type}
                                     style={resolvedStyles.cell}
                                     value={item[type]!.toString()}
-                                    onChangeText={(text) => handleChange(index, type, text)}
+                                    setValue={(text) => handleChange(index, type, text)}
+                                    formatUnfocused={val => formatType(val, type)}
                                     keyboardType='numeric'
                                 />
                             ))}
