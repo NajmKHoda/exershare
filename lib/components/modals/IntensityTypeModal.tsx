@@ -5,7 +5,7 @@ import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { toTitleCase } from '@/lib/utils/stringUtils';
 import MultiselectList from '../lists/MultiselectList';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Props {
     visible: boolean;
@@ -16,6 +16,10 @@ interface Props {
 export default function IntensityTypeModal({ visible, currentTypes, onClose}: Props) {
     const resolvedStyles = useResolvedStyles(styles);
     const [selectedTypes, setSelectedTypes] = useState(currentTypes);
+
+    useEffect(() => {
+        setSelectedTypes(currentTypes);
+    }, [currentTypes]);
 
     function toDataItems(types: readonly IntensityType[]) {
         return types.map((type, i) => ({
