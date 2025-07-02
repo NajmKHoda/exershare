@@ -1,5 +1,5 @@
 import FormField from '@/lib/components/controls/FormField';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { supabase } from '@/lib/supabase';
 import { Link, useRouter } from 'expo-router';
@@ -33,7 +33,7 @@ export default function SignUp() {
             <FormField name='password' isPassword value={password} onChange={setPassword} style={resolvedStyles.field} />
 
             <Pressable style={resolvedStyles.button} onPress={handleSignUp} disabled={waiting}>
-                <ThemeText style={resolvedStyles.buttonLabel}>{waiting ? 'Signing up...' : 'Sign Up'}</ThemeText>
+                <Text style={resolvedStyles.buttonLabel}>{waiting ? 'Signing up...' : 'Sign Up'}</Text>
             </Pressable>
             <Link style={resolvedStyles.link} href="/login">
                 or log in

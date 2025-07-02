@@ -4,7 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TextButton from '@/lib/components/controls/TextButton';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
 import { supabase } from '@/lib/supabase';
@@ -107,13 +107,13 @@ export default function ScanScreen() {
                         Icon={ChevronLeft} 
                         onPress={() => router.back()} 
                     />
-                    <ThemeText style={resolvedStyles.headerTitle}>Scan QR Code</ThemeText>
+                    <Text style={resolvedStyles.headerTitle}>Scan QR Code</Text>
                     <View style={resolvedStyles.headerSpacer} />
                 </SafeAreaView>
                 <View style={resolvedStyles.permissionContainer}>
-                    <ThemeText style={resolvedStyles.permissionText}>
+                    <Text style={resolvedStyles.permissionText}>
                         Camera permission is required to scan QR codes
-                    </ThemeText>
+                    </Text>
                     <TextButton 
                         label="Grant Permission" 
                         Icon={Camera}
@@ -134,7 +134,7 @@ export default function ScanScreen() {
                     Icon={ChevronLeft} 
                     onPress={() => router.back()} 
                 />
-                <ThemeText style={resolvedStyles.headerTitle}>Scan QR Code</ThemeText>
+                <Text style={resolvedStyles.headerTitle}>Scan QR Code</Text>
                 <View style={resolvedStyles.headerSpacer} />
             </SafeAreaView>
             
@@ -149,9 +149,9 @@ export default function ScanScreen() {
                 />
                 <View style={resolvedStyles.overlay}>
                     <View style={resolvedStyles.scanArea} />
-                    <ThemeText style={resolvedStyles.instructionText}>
+                    <Text style={resolvedStyles.instructionText}>
                         {scanned.current ? 'Processing...' : 'Point camera at QR code to scan'}
-                    </ThemeText>
+                    </Text>
                 </View>
             </View>
         </View>

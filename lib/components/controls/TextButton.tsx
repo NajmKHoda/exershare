@@ -1,6 +1,6 @@
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleProp, StyleSheet, TextStyle } from 'react-native';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 import { LucideIcon } from 'lucide-react-native';
 
 interface Props {
@@ -22,11 +22,11 @@ export default function TextButton({ onPress, label, Icon, style, iconSize }: Pr
     return (
         <Pressable style={resolvedStyles.container} onPress={onPress}>
             <Icon size={fontSize} color={textColor as string} />
-            <ThemeText 
+            <Text 
                 style={[resolvedStyles.buttonText, style]}
             >
                 {label}
-            </ThemeText>
+            </Text>
         </Pressable>
     );
 }

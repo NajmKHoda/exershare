@@ -2,7 +2,7 @@ import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useT
 import { Modal, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import TextButton from '../controls/TextButton';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 import { ChevronLeft } from 'lucide-react-native';
 
 interface Props {
@@ -35,7 +35,7 @@ export default function SlideUpModal({ visible, title, onClose, additionalContro
                                 onPress={ onClose } />
                             { additionalControls }
                         </View>
-                        { title && <ThemeText style={ resolvedStyles.title }>{ title }</ThemeText> }
+                        { title && <Text style={ resolvedStyles.title }>{ title }</Text> }
                         { children }
                     </View>
                 </SafeAreaView>

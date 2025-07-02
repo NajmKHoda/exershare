@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import ThemeText from './theme/ThemeText';
+import Text from './theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '../hooks/useThemeColors';
 import DatabaseSelectModal from './modals/DatabaseSelectModal';
 import { useState } from 'react';
@@ -30,10 +30,10 @@ export default function ActiveRoutineView() {
         <>
             <View style={resolvedStyles.container}>
                 <View style={resolvedStyles.info}>
-                    <ThemeText>ACTIVE ROUTINE</ThemeText>
-                    <ThemeText style={resolvedStyles.activeRoutineName}>
+                    <Text>ACTIVE ROUTINE</Text>
+                    <Text style={resolvedStyles.activeRoutineName}>
                         {activeRoutine?.name ?? 'None'}
-                    </ThemeText>
+                    </Text>
                 </View>
                 <View style={resolvedStyles.options}>
                     <Pressable onPress={() => setModalVisible(true)}>

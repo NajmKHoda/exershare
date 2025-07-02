@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import TextButton from '../controls/TextButton';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import MultiselectList from '../lists/MultiselectList';
 import { DataItem } from '../lists/SearchableList';

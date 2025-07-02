@@ -1,8 +1,8 @@
 import ExerciseList from '@/lib/components/lists/ExerciseList/ExerciseList';
 import RoutineHeader from '@/lib/components/RoutineHeader';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import { ActivityIndicator, Button, StyleSheet, View, Pressable, Text } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, View, Pressable } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
@@ -135,7 +135,7 @@ export default function Index() {
                     </Link>
                 </View>
                 <View>
-                    <ThemeText style={ resolvedStyles.exerciseCaption }>EXERCISES</ThemeText>
+                    <Text style={ resolvedStyles.exerciseCaption }>EXERCISES</Text>
                     <View>
                         <ExerciseList exercises={ exerciseList } />
                     </View>

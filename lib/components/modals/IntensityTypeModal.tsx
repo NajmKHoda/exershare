@@ -1,7 +1,7 @@
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import SlideUpModal from '@/lib/components/modals/SlideUpModal';
 import { INTENSITY_TYPES, IntensityType } from '@/lib/data/Exercise';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Check } from 'lucide-react-native';
 import Separator from '@/lib/components/layout/Separator';
@@ -43,13 +43,13 @@ export default function IntensityTypeModal({ visible, currentTypes, onClose, onS
                     onPress={onClose}
                     style={resolvedStyles.doneButton}
                 >
-                    <ThemeText style={resolvedStyles.doneText}>Done</ThemeText>
+                    <Text style={resolvedStyles.doneText}>Done</Text>
                 </TouchableOpacity>
             }
         >
-            <ThemeText style={resolvedStyles.instruction}>
+            <Text style={resolvedStyles.instruction}>
                 Select one or more intensity types for this exercise
-            </ThemeText>
+            </Text>
             <FlatList
                 data={INTENSITY_TYPES}
                 keyExtractor={(item) => item}
@@ -59,9 +59,9 @@ export default function IntensityTypeModal({ visible, currentTypes, onClose, onS
                         style={resolvedStyles.itemContainer}
                         onPress={() => toggleType(item)}
                     >
-                        <ThemeText style={resolvedStyles.itemText}>
+                        <Text style={resolvedStyles.itemText}>
                             {toTitleCase(item)}
-                        </ThemeText>
+                        </Text>
                         {currentTypes.includes(item) && (
                             <Check color={colors.accent as string} size={24} />
                         )}

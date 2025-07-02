@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
 import { Workout } from '@/lib/data/Workout';
 import { Exercise } from '@/lib/data/Exercise';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
@@ -82,28 +82,28 @@ export default function IncomingWorkoutScreen() {
                     Icon={ChevronLeft} 
                     onPress={() => router.back()} 
                 />
-                <ThemeText style={resolvedStyles.headerTitle}>Incoming Workout</ThemeText>
+                <Text style={resolvedStyles.headerTitle}>Incoming Workout</Text>
                 <View style={resolvedStyles.headerSpacer} />
             </SafeAreaView>
 
             <ScrollView style={resolvedStyles.content} contentContainerStyle={resolvedStyles.contentContainer}>
                 <View style={resolvedStyles.section}>
-                    <ThemeText style={resolvedStyles.sectionTitle}>Workout Details</ThemeText>
+                    <Text style={resolvedStyles.sectionTitle}>Workout Details</Text>
                     
                     <View style={resolvedStyles.detailRow}>
-                        <ThemeText style={resolvedStyles.label}>Name:</ThemeText>
-                        <ThemeText style={resolvedStyles.value}>{workout.name}</ThemeText>
+                        <Text style={resolvedStyles.label}>Name:</Text>
+                        <Text style={resolvedStyles.value}>{workout.name}</Text>
                     </View>
 
                     <View style={resolvedStyles.detailRow}>
-                        <ThemeText style={resolvedStyles.label}>Exercises:</ThemeText>
-                        <ThemeText style={resolvedStyles.value}>{exercises.length} exercise(s)</ThemeText>
+                        <Text style={resolvedStyles.label}>Exercises:</Text>
+                        <Text style={resolvedStyles.value}>{exercises.length} exercise(s)</Text>
                     </View>
                 </View>
 
                 {exercises.length > 0 && (
                     <View style={resolvedStyles.section}>
-                        <ThemeText style={resolvedStyles.sectionTitle}>Exercises</ThemeText>
+                        <Text style={resolvedStyles.sectionTitle}>Exercises</Text>
                         <View style={resolvedStyles.exercisesContainer}>
                             {exercises.map((exercise, index) => {
                                 // Parse sets from the raw data
@@ -118,30 +118,30 @@ export default function IncomingWorkoutScreen() {
                                 return (
                                     <View key={exercise.id + index.toString()}>
                                         <View style={resolvedStyles.exerciseItem}>
-                                            <ThemeText style={resolvedStyles.exerciseName}>{exercise.name}</ThemeText>
+                                            <Text style={resolvedStyles.exerciseName}>{exercise.name}</Text>
                                             
                                             {exercise.notes && (
                                                 <View style={resolvedStyles.exerciseDetail}>
-                                                    <ThemeText style={resolvedStyles.exerciseLabel}>Notes:</ThemeText>
-                                                    <ThemeText style={resolvedStyles.exerciseValue}>{exercise.notes}</ThemeText>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Notes:</Text>
+                                                    <Text style={resolvedStyles.exerciseValue}>{exercise.notes}</Text>
                                                 </View>
                                             )}
 
                                             {categories.length > 0 && (
                                                 <View style={resolvedStyles.exerciseDetail}>
-                                                    <ThemeText style={resolvedStyles.exerciseLabel}>Categories:</ThemeText>
-                                                    <ThemeText style={resolvedStyles.exerciseValue}>{categories.join(', ')}</ThemeText>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Categories:</Text>
+                                                    <Text style={resolvedStyles.exerciseValue}>{categories.join(', ')}</Text>
                                                 </View>
                                             )}
 
                                             {sets.length > 0 && (
                                                 <View style={resolvedStyles.exerciseDetail}>
-                                                    <ThemeText style={resolvedStyles.exerciseLabel}>Sets:</ThemeText>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Sets:</Text>
                                                     <View style={resolvedStyles.setsDisplay}>
                                                         {sets.map((set, setIndex) => (
-                                                            <ThemeText key={setIndex} style={resolvedStyles.setInfo}>
+                                                            <Text key={setIndex} style={resolvedStyles.setInfo}>
                                                                 {set.reps} reps × {set.weight} lbs
-                                                            </ThemeText>
+                                                            </Text>
                                                         ))}
                                                     </View>
                                                 </View>

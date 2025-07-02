@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert, ScrollView } from "react-native"
+import { View, TouchableOpacity, StyleSheet, SafeAreaView, Alert, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { ArrowLeft, ChevronDown, ChevronUp, Check } from "lucide-react-native"
 import { useSQLiteContext } from "expo-sqlite"
@@ -9,6 +9,7 @@ import { Routine } from "@/lib/data/Routine"
 import { WorkoutLog } from "@/lib/data/WorkoutLog"
 import { useResolvedStyles, type ThemeColors } from "@/lib/hooks/useThemeColors"
 import { VolumeType, IntensityType, TYPE_DEFAULTS } from "@/lib/data/Exercise"
+import Text from "@/lib/components/theme/Text"
 
 export default function WorkoutProgressScreen() {
   const router = useRouter()

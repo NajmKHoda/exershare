@@ -5,7 +5,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
 import { Exercise } from '@/lib/data/Exercise';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
@@ -86,46 +86,46 @@ export default function IncomingExerciseScreen() {
                     Icon={ChevronLeft} 
                     onPress={() => router.back()} 
                 />
-                <ThemeText style={resolvedStyles.headerTitle}>Incoming Exercise</ThemeText>
+                <Text style={resolvedStyles.headerTitle}>Incoming Exercise</Text>
                 <View style={resolvedStyles.headerSpacer} />
             </SafeAreaView>
 
             <ScrollView style={resolvedStyles.content} contentContainerStyle={resolvedStyles.contentContainer}>
                 <View style={resolvedStyles.section}>
-                    <ThemeText style={resolvedStyles.sectionTitle}>Exercise Details</ThemeText>
+                    <Text style={resolvedStyles.sectionTitle}>Exercise Details</Text>
                     
                     <View style={resolvedStyles.detailRow}>
-                        <ThemeText style={resolvedStyles.label}>Name:</ThemeText>
-                        <ThemeText style={resolvedStyles.value}>{exerciseData.name}</ThemeText>
+                        <Text style={resolvedStyles.label}>Name:</Text>
+                        <Text style={resolvedStyles.value}>{exerciseData.name}</Text>
                     </View>
 
                     {exerciseData.notes && (
                         <View style={resolvedStyles.detailRow}>
-                            <ThemeText style={resolvedStyles.label}>Notes:</ThemeText>
-                            <ThemeText style={resolvedStyles.value}>{exerciseData.notes}</ThemeText>
+                            <Text style={resolvedStyles.label}>Notes:</Text>
+                            <Text style={resolvedStyles.value}>{exerciseData.notes}</Text>
                         </View>
                     )}
 
                     {categories.length > 0 && (
                         <View style={resolvedStyles.detailRow}>
-                            <ThemeText style={resolvedStyles.label}>Categories:</ThemeText>
-                            <ThemeText style={resolvedStyles.value}>{categories.join(', ')}</ThemeText>
+                            <Text style={resolvedStyles.label}>Categories:</Text>
+                            <Text style={resolvedStyles.value}>{categories.join(', ')}</Text>
                         </View>
                     )}
                 </View>
 
                 {sets.length > 0 && (
                     <View style={resolvedStyles.section}>
-                        <ThemeText style={resolvedStyles.sectionTitle}>Sets</ThemeText>
+                        <Text style={resolvedStyles.sectionTitle}>Sets</Text>
                         <View style={resolvedStyles.setsContainer}>
                             <View style={resolvedStyles.setsHeader}>
-                                <ThemeText style={resolvedStyles.setsHeaderText}>Reps</ThemeText>
-                                <ThemeText style={resolvedStyles.setsHeaderText}>Weight (lbs)</ThemeText>
+                                <Text style={resolvedStyles.setsHeaderText}>Reps</Text>
+                                <Text style={resolvedStyles.setsHeaderText}>Weight (lbs)</Text>
                             </View>
                             {sets.map((set, index) => (
                                 <View key={index} style={resolvedStyles.setRow}>
-                                    <ThemeText style={resolvedStyles.setValue}>{set.reps}</ThemeText>
-                                    <ThemeText style={resolvedStyles.setValue}>{set.weight}</ThemeText>
+                                    <Text style={resolvedStyles.setValue}>{set.reps}</Text>
+                                    <Text style={resolvedStyles.setValue}>{set.weight}</Text>
                                 </View>
                             ))}
                         </View>

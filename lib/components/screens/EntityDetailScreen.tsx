@@ -5,7 +5,7 @@ import TextButton from '../controls/TextButton';
 import { ChevronLeft, Save, Trash, Share2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 
 interface EntityDetailScreenProps {
     onSave: () => unknown;
@@ -35,7 +35,7 @@ export default function EntityDetailScreen({
         <View style={resolvedStyles.container}>
             <SafeAreaView edges={['top']} style={resolvedStyles.header}>
                 <TextButton label="Back" style={resolvedStyles.back} Icon={ChevronLeft} onPress={() => router.back()} />
-                <ThemeText style={resolvedStyles.title}>{title}</ThemeText>
+                <Text style={resolvedStyles.title}>{title}</Text>
                 {entityId && !isNewEntity && (
                     <TextButton 
                         label="Share" 

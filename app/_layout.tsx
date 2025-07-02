@@ -9,8 +9,18 @@ import { SessionProvider } from '@/lib/hooks/useSession';
 import DatabaseSynchronizer from '@/lib/data/DatabaseSynchronizer';
 import { DatabaseListenerProvider } from '@/lib/hooks/useDatabaseListener';
 import { IncomingEntityProvider } from '@/lib/hooks/useIncomingEntity';
+import { Inter_100Thin, Inter_400Regular, Inter_600SemiBold, Inter_700Bold, useFonts } from '@expo-google-fonts/inter';
 
 export default function RootLayout() {
+    const [loaded, error] = useFonts({
+        Inter_100Thin,
+        Inter_400Regular,
+        Inter_600SemiBold,
+        Inter_700Bold,
+    });
+
+    if (!loaded && !error) return null;
+
     return (
         <SessionProvider>
         <SQLiteProvider

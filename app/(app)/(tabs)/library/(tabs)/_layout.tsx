@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import LibraryTabBar from '@/lib/components/navigation/LibraryTabBar';
 import { syncData } from '@/lib/data/sync';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -17,7 +17,7 @@ export default function Layout() {
                 edges={[ 'top' ]}
                 style={resolvedStyles.headerContainer}
             >
-                <ThemeText style={resolvedStyles.headerTitle}>Library</ThemeText>
+                <Text style={resolvedStyles.headerTitle}>Library</Text>
             </SafeAreaView>
             <Tabs
                 screenOptions={{

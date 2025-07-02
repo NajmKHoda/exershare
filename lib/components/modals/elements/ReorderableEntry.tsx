@@ -1,5 +1,5 @@
 import { View, Pressable, StyleSheet } from 'react-native';
-import ThemeText from '../../theme/ThemeText';
+import Text from '../../theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { useReorderableDrag } from 'react-native-reorderable-list';
 import { DataItem } from '../../lists/SearchableList';
@@ -20,7 +20,7 @@ export default function ReorderableEntry({ item, index, onRemove }: Props) {
         <View style={resolvedStyles.exerciseContainer}>
             <Pressable style={resolvedStyles.exerciseDragHandle} onLongPress={drag}>
                 <MoveVertical size={24} color={colors.primary as string} />
-                <ThemeText style={resolvedStyles.exerciseText}>{item.name}</ThemeText>
+                <Text style={resolvedStyles.exerciseText}>{item.name}</Text>
             </Pressable>
             <Pressable onPress={() => onRemove(index)}>
                 <XCircle size={24} color={colors.red as string} />

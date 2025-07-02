@@ -1,5 +1,5 @@
 import { View, TextInput, StyleSheet } from 'react-native';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 
 interface Props {
@@ -15,7 +15,7 @@ export default function LabeledTextField({ name, initialValue, value, onValueCha
 
     return (
         <View style={resolvedStyles.container}>
-            <ThemeText style={resolvedStyles.label}>{name}:</ThemeText>
+            <Text style={resolvedStyles.label}>{name}:</Text>
             <View style={resolvedStyles.inputContainer}>
                 <TextInput
                     style={resolvedStyles.input}

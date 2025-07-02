@@ -1,6 +1,6 @@
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable, StyleSheet, View } from 'react-native';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { LucideIcon } from 'lucide-react-native';
 
 interface Props {
@@ -20,7 +20,7 @@ export default function ListItem({ label, Icon, iconColor, iconSize, onPress }: 
             style={resolvedStyles.container}
             onPress={onPress}
         >
-            <ThemeText style={resolvedStyles.label}>{label}</ThemeText>
+            <Text style={resolvedStyles.label}>{label}</Text>
             <Icon
                 size={iconSize ?? 24}
                 color={iconColor ?? colors.primary as string} />

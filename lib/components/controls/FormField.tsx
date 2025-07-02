@@ -1,5 +1,5 @@
 import { KeyboardTypeOptions, Pressable, StyleProp, StyleSheet, TextInput, View, ViewStyle } from 'react-native';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { useState } from 'react';
 import { Eye, EyeClosed } from 'lucide-react-native';
@@ -19,7 +19,7 @@ export default function FormField({ name, isPassword = false, keyboardType = 'de
 
     return (
         <View style={[resolvedStyles.container, userStyle]}>
-            <ThemeText style={resolvedStyles.label}>{ name.toUpperCase() }</ThemeText>
+            <Text style={resolvedStyles.label}>{ name.toUpperCase() }</Text>
             <View style={resolvedStyles.fieldContainer}>
                 <TextInput
                     keyboardType={keyboardType}

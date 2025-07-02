@@ -1,4 +1,4 @@
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { useSession } from '@/lib/hooks/useSession';
 import { supabase } from '@/lib/supabase';
 import { Redirect, Stack } from 'expo-router';
@@ -32,11 +32,11 @@ export default function AuthenticationGuard() {
     }, [session]);
 
     if (DEV_EMAIL && DEV_PASSWORD && !session)
-        return <ThemeText>Logging in with dev credentials...</ThemeText>;
+        return <Text>Logging in with dev credentials...</Text>;
     /* DEBUG END */
 
     if (isSessionLoading) {
-        return <ThemeText>Loading...</ThemeText>;
+        return <Text>Loading...</Text>;
     }
 
     if (!session) {

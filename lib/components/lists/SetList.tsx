@@ -3,7 +3,7 @@ import { IntensityType, Set, TYPE_DEFAULTS, VolumeType } from '@/lib/data/Exerci
 import Separator from '../layout/Separator';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Pressable } from 'react-native';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 import AddFooter from './elements/AddFooter';
 import { XCircle } from 'lucide-react-native';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -44,9 +44,9 @@ export default function SetList({ sets, volumeType, intensityTypes, onSetsChange
         <ScrollView horizontal contentContainerStyle={resolvedStyles.scrollContainer}>
             <View style={resolvedStyles.container}>
                 <View style={resolvedStyles.header}>
-                    <ThemeText style={resolvedStyles.headerText}>{toTitleCase(volumeType)}</ThemeText>
+                    <Text style={resolvedStyles.headerText}>{toTitleCase(volumeType)}</Text>
                     {intensityTypes.map((type) => (
-                        <ThemeText key={type} style={resolvedStyles.headerText}>{toTitleCase(type)}</ThemeText>
+                        <Text key={type} style={resolvedStyles.headerText}>{toTitleCase(type)}</Text>
                     ))}
                 </View>
                 <FlatList

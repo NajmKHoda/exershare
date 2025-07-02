@@ -1,6 +1,6 @@
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { StyleSheet, View } from 'react-native';
-import ThemeText from '../../theme/ThemeText';
+import Text from '../../theme/Text';
 import { Check, MoreHorizontal } from 'lucide-react-native';
 
 interface Props {
@@ -30,7 +30,7 @@ export default function ExerciseView({ exercise }: Props) {
 
     return (
         <View style={resolvedStyles.container}>
-            <ThemeText style={resolvedStyles.name}>{ name }</ThemeText>
+            <Text style={resolvedStyles.name}>{ name }</Text>
             { completionSymbol }
         </View>
     );

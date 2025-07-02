@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import { XCircle } from 'lucide-react-native';
 import { Routine } from '@/lib/data/Routine';
@@ -10,7 +10,7 @@ import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useT
 import { FlatList } from 'react-native-gesture-handler';
 import { DataItem } from '@/lib/components/lists/SearchableList';
 import Separator from '@/lib/components/layout/Separator';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import DatabaseSelectModal from '@/lib/components/modals/DatabaseSelectModal';
 
 export default function RoutineScreen() {
@@ -109,10 +109,10 @@ export default function RoutineScreen() {
                 renderItem={({ item, index }) => (
                     <View style={resolvedStyles.workoutRow}>
                         <Pressable style={resolvedStyles.selectRegion} onPress={() => setDayToSet(index)}>
-                            <ThemeText style={resolvedStyles.entryText}>
+                            <Text style={resolvedStyles.entryText}>
                                 <Text style={{ fontWeight: 'bold' }}>{weekDays[index]}: </Text>
                                 {item?.name ?? 'Rest Day'}
-                            </ThemeText>
+                            </Text>
                         </Pressable>
                         <Pressable onPress={() => setCurrentState({
                             ...currentState,

@@ -7,7 +7,7 @@ import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
 import { Routine } from '@/lib/data/Routine';
 import { Workout } from '@/lib/data/Workout';
 import { Exercise } from '@/lib/data/Exercise';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
@@ -90,42 +90,42 @@ export default function IncomingRoutineScreen() {
                     Icon={ChevronLeft} 
                     onPress={() => router.back()} 
                 />
-                <ThemeText style={resolvedStyles.headerTitle}>Incoming Routine</ThemeText>
+                <Text style={resolvedStyles.headerTitle}>Incoming Routine</Text>
                 <View style={resolvedStyles.headerSpacer} />
             </SafeAreaView>
 
             <ScrollView style={resolvedStyles.content} contentContainerStyle={resolvedStyles.contentContainer}>
                 <View style={resolvedStyles.section}>
-                    <ThemeText style={resolvedStyles.sectionTitle}>Routine Details</ThemeText>
+                    <Text style={resolvedStyles.sectionTitle}>Routine Details</Text>
                     
                     <View style={resolvedStyles.detailRow}>
-                        <ThemeText style={resolvedStyles.label}>Name:</ThemeText>
-                        <ThemeText style={resolvedStyles.value}>{routine.name}</ThemeText>
+                        <Text style={resolvedStyles.label}>Name:</Text>
+                        <Text style={resolvedStyles.value}>{routine.name}</Text>
                     </View>
 
                     <View style={resolvedStyles.detailRow}>
-                        <ThemeText style={resolvedStyles.label}>Workouts:</ThemeText>
-                        <ThemeText style={resolvedStyles.value}>{workouts.length} workout(s)</ThemeText>
+                        <Text style={resolvedStyles.label}>Workouts:</Text>
+                        <Text style={resolvedStyles.value}>{workouts.length} workout(s)</Text>
                     </View>
 
                     <View style={resolvedStyles.detailRow}>
-                        <ThemeText style={resolvedStyles.label}>Exercises:</ThemeText>
-                        <ThemeText style={resolvedStyles.value}>{exercises.length} exercise(s)</ThemeText>
+                        <Text style={resolvedStyles.label}>Exercises:</Text>
+                        <Text style={resolvedStyles.value}>{exercises.length} exercise(s)</Text>
                     </View>
                 </View>
 
                 <View style={resolvedStyles.section}>
-                    <ThemeText style={resolvedStyles.sectionTitle}>Weekly Schedule</ThemeText>
+                    <Text style={resolvedStyles.sectionTitle}>Weekly Schedule</Text>
                     <View style={resolvedStyles.scheduleContainer}>
                         {routine.workout_ids.map((workoutId, dayIndex) => {
                             const workout = workoutId ? workoutMap.get(workoutId) : null;
                             return (
                                 <View key={dayIndex}>
                                     <View style={resolvedStyles.dayItem}>
-                                        <ThemeText style={resolvedStyles.dayName}>{weekDays[dayIndex]}:</ThemeText>
-                                        <ThemeText style={resolvedStyles.dayWorkout}>
+                                        <Text style={resolvedStyles.dayName}>{weekDays[dayIndex]}:</Text>
+                                        <Text style={resolvedStyles.dayWorkout}>
                                             {workout ? workout.name : 'Rest Day'}
-                                        </ThemeText>
+                                        </Text>
                                     </View>
                                     {dayIndex < 6 && <Separator />}
                                 </View>
@@ -136,22 +136,22 @@ export default function IncomingRoutineScreen() {
 
                 {workouts.length > 0 && (
                     <View style={resolvedStyles.section}>
-                        <ThemeText style={resolvedStyles.sectionTitle}>Workouts</ThemeText>
+                        <Text style={resolvedStyles.sectionTitle}>Workouts</Text>
                         <View style={resolvedStyles.workoutsContainer}>
                             {workouts.map((workout, index) => (
                                 <View key={workout.id + index.toString()}>
                                     <View style={resolvedStyles.workoutItem}>
-                                        <ThemeText style={resolvedStyles.workoutName}>{workout.name}</ThemeText>
+                                        <Text style={resolvedStyles.workoutName}>{workout.name}</Text>
                                         
                                         <View style={resolvedStyles.workoutDetail}>
-                                            <ThemeText style={resolvedStyles.workoutLabel}>Exercises:</ThemeText>
+                                            <Text style={resolvedStyles.workoutLabel}>Exercises:</Text>
                                             <View style={resolvedStyles.exercisesList}>
                                                 {workout.exercise_ids.map((exerciseId, exerciseIndex) => {
                                                     const exercise = exerciseMap.get(exerciseId);
                                                     return exercise ? (
-                                                        <ThemeText key={exerciseId + exerciseIndex.toString()} style={resolvedStyles.exerciseListItem}>
+                                                        <Text key={exerciseId + exerciseIndex.toString()} style={resolvedStyles.exerciseListItem}>
                                                             {exerciseIndex + 1}. {exercise.name}
-                                                        </ThemeText>
+                                                        </Text>
                                                     ) : null;
                                                 })}
                                             </View>
@@ -166,7 +166,7 @@ export default function IncomingRoutineScreen() {
 
                 {exercises.length > 0 && (
                     <View style={resolvedStyles.section}>
-                        <ThemeText style={resolvedStyles.sectionTitle}>Exercises</ThemeText>
+                        <Text style={resolvedStyles.sectionTitle}>Exercises</Text>
                         <View style={resolvedStyles.exercisesContainer}>
                             {exercises.map((exercise, index) => {
                                 // Parse sets from the raw data
@@ -181,35 +181,35 @@ export default function IncomingRoutineScreen() {
                                 return (
                                     <View key={exercise.id + index.toString()}>
                                         <View style={resolvedStyles.exerciseItem}>
-                                            <ThemeText style={resolvedStyles.exerciseName}>{exercise.name}</ThemeText>
+                                            <Text style={resolvedStyles.exerciseName}>{exercise.name}</Text>
                                             
                                             {exercise.notes && (
                                                 <View style={resolvedStyles.exerciseDetail}>
-                                                    <ThemeText style={resolvedStyles.exerciseLabel}>Notes:</ThemeText>
-                                                    <ThemeText style={resolvedStyles.exerciseValue}>{exercise.notes}</ThemeText>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Notes:</Text>
+                                                    <Text style={resolvedStyles.exerciseValue}>{exercise.notes}</Text>
                                                 </View>
                                             )}
 
                                             {categories.length > 0 && (
                                                 <View style={resolvedStyles.exerciseDetail}>
-                                                    <ThemeText style={resolvedStyles.exerciseLabel}>Categories:</ThemeText>
-                                                    <ThemeText style={resolvedStyles.exerciseValue}>{categories.join(', ')}</ThemeText>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Categories:</Text>
+                                                    <Text style={resolvedStyles.exerciseValue}>{categories.join(', ')}</Text>
                                                 </View>
                                             )}
 
                                             {sets.length > 0 && (
                                                 <View style={resolvedStyles.exerciseDetail}>
-                                                    <ThemeText style={resolvedStyles.exerciseLabel}>Sets:</ThemeText>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Sets:</Text>
                                                     <View style={resolvedStyles.setsDisplay}>
                                                         {sets.slice(0, 3).map((set, setIndex) => (
-                                                            <ThemeText key={setIndex} style={resolvedStyles.setInfo}>
+                                                            <Text key={setIndex} style={resolvedStyles.setInfo}>
                                                                 {set.reps} reps × {set.weight} lbs
-                                                            </ThemeText>
+                                                            </Text>
                                                         ))}
                                                         {sets.length > 3 && (
-                                                            <ThemeText style={resolvedStyles.setInfo}>
+                                                            <Text style={resolvedStyles.setInfo}>
                                                                 ... and {sets.length - 3} more
-                                                            </ThemeText>
+                                                            </Text>
                                                         )}
                                                     </View>
                                                 </View>

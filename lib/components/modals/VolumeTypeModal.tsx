@@ -1,7 +1,7 @@
 import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import SlideUpModal from '@/lib/components/modals/SlideUpModal';
 import { VOLUME_TYPES, VolumeType } from '@/lib/data/Exercise';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { Check } from 'lucide-react-native';
 import Separator from '@/lib/components/layout/Separator';
@@ -36,9 +36,9 @@ export default function VolumeTypeModal({ visible, currentType, onClose, onSelec
                             onClose();
                         }}
                     >
-                        <ThemeText style={resolvedStyles.itemText}>
+                        <Text style={resolvedStyles.itemText}>
                             {toTitleCase(item)}
-                        </ThemeText>
+                        </Text>
                         {item === currentType && (
                             <Check color={colors.accent as string} size={24} />
                         )}

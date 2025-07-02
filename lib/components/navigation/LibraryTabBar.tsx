@@ -1,7 +1,7 @@
 import { View, Pressable, StyleSheet, PlatformColor } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import ThemeText from '../theme/ThemeText';
+import Text from '../theme/Text';
 
 export default function LibraryTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const colors = useThemeColors();
@@ -19,12 +19,12 @@ export default function LibraryTabBar({ state, descriptors, navigation }: Bottom
                         key={ route.key }
                         onPress={ () => navigation.navigate(route.name) }
                     >
-                        <ThemeText style={[
+                        <Text style={[
                             resolvedStyles.tabText,
                             isSelected && resolvedStyles.tabTextSelected
                         ]}>
                             { label }
-                        </ThemeText>
+                        </Text>
                     </Pressable>
                 );
             })}

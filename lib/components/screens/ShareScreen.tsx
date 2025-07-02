@@ -3,7 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { supabase } from '@/lib/supabase';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TextButton from '@/lib/components/controls/TextButton';
@@ -90,11 +90,11 @@ export default function ShareScreen({ id, type, entityTable }: ShareQRCodeProps)
             <View style={resolvedStyles.container}>
                 <SafeAreaView edges={['top']} style={resolvedStyles.header}>
                     <TextButton label="Back" style={resolvedStyles.back} Icon={ChevronLeft} onPress={() => router.back()} />
-                    <ThemeText style={resolvedStyles.headerTitle}>Share {type}</ThemeText>
+                    <Text style={resolvedStyles.headerTitle}>Share {type}</Text>
                     <View style={resolvedStyles.headerSpacer} />
                 </SafeAreaView>
                 <View style={resolvedStyles.errorContainer}>
-                    <ThemeText style={resolvedStyles.errorText}>{error}</ThemeText>
+                    <Text style={resolvedStyles.errorText}>{error}</Text>
                 </View>
             </View>
         );
@@ -106,12 +106,12 @@ export default function ShareScreen({ id, type, entityTable }: ShareQRCodeProps)
                 <TextButton label="Back" style={resolvedStyles.back} Icon={ChevronLeft} onPress={() => router.back()} />
             </SafeAreaView>
             <View style={resolvedStyles.contentContainer}>
-                <ThemeText style={resolvedStyles.title}>
+                <Text style={resolvedStyles.title}>
                     Share "{name}"
-                </ThemeText>
-                <ThemeText style={resolvedStyles.subtitle}>
+                </Text>
+                <Text style={resolvedStyles.subtitle}>
                     Scan this QR code to import the {type}
-                </ThemeText>
+                </Text>
                 
                 <View style={resolvedStyles.qrContainer}>
                     {shareToken ? (
@@ -125,15 +125,15 @@ export default function ShareScreen({ id, type, entityTable }: ShareQRCodeProps)
                             backgroundColor={'#fff'}
                         />
                     ) : (
-                        <ThemeText style={resolvedStyles.errorText}>
+                        <Text style={resolvedStyles.errorText}>
                             Unable to generate QR code
-                        </ThemeText>
+                        </Text>
                     )}
                 </View>
                 
-                <ThemeText style={resolvedStyles.note}>
+                <Text style={resolvedStyles.note}>
                     This QR code will expire when you leave this screen
-                </ThemeText>
+                </Text>
             </View>
         </View>
     );

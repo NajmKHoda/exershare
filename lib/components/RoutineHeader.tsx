@@ -2,7 +2,7 @@ import { StyleSheet, View, Pressable } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '../hooks/useThemeColors';
-import ThemeText from './theme/ThemeText';
+import Text from './theme/Text';
 
 interface Props {
     routineName: string,
@@ -21,11 +21,11 @@ export default function RoutineHeader({ routineName, workoutName, date, onDayCha
                 <ChevronLeft size={48} color={colors.primary} />
             </Pressable>
             <View style={ resolvedStyles.info }>
-                <ThemeText style={ resolvedStyles.secondaryInfo }>{ routineName.toUpperCase() }</ThemeText>
-                <ThemeText style={ resolvedStyles.workoutName }>{ workoutName }</ThemeText>
-                <ThemeText style={ resolvedStyles.secondaryInfo }>{
+                <Text style={ resolvedStyles.secondaryInfo }>{ routineName.toUpperCase() }</Text>
+                <Text style={ resolvedStyles.workoutName }>{ workoutName }</Text>
+                <Text style={ resolvedStyles.secondaryInfo }>{
                     date.toLocaleDateString('en-US', { dateStyle: 'full' })
-                }</ThemeText>
+                }</Text>
             </View>
             <Pressable onPress={ () => onDayChange && onDayChange(1) }>
                 <ChevronRight size={48} color={colors.primary} />

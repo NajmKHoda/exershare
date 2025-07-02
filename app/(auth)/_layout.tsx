@@ -1,4 +1,4 @@
-import ThemeText from '@/lib/components/theme/ThemeText';
+import Text from '@/lib/components/theme/Text';
 import { Slot } from 'expo-router';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,7 +11,7 @@ export default function AuthLayout() {
         <LinearGradient colors={['#00bfff', '#00e98a']} style={resolvedStyles.background}>
             <KeyboardAvoidingView behavior='padding' style={resolvedStyles.container}>
                 <View style={resolvedStyles.formContainer}>
-                    <ThemeText style={resolvedStyles.title}>Exershare</ThemeText>
+                    <Text style={resolvedStyles.title}>Exershare</Text>
                     <Slot />
                 </View>
             </KeyboardAvoidingView>

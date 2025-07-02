@@ -276,7 +276,7 @@ PODS:
     - ZXingObjC/PDF417
   - ExpoFileSystem (18.1.10):
     - ExpoModulesCore
-  - ExpoFont (13.3.1):
+  - ExpoFont (13.3.2):
     - ExpoModulesCore
   - ExpoHead (5.1.0):
     - ExpoModulesCore
@@ -2622,7 +2622,7 @@ SPEC CHECKSUMS:
   ExpoAsset: 3bc9adb7dbbf27ae82c18ca97eb988a3ae7e73b1
   ExpoCamera: 1667b34b8ba4b8015561808e38dd0a281a29da1b
   ExpoFileSystem: c36eb8155eb2381c83dda7dc210e3eec332368b6
-  ExpoFont: abbb91a911eb961652c2b0a22eef801860425ed6
+  ExpoFont: cf508bc2e6b70871e05386d71cab927c8524cc8e
   ExpoHead: 1e65b47330de2164c628da2bddf73d57cac123bf
   ExpoKeepAwake: bf0811570c8da182bfb879169437d4de298376e7
   ExpoLinearGradient: 7734c8059972fcf691fb4330bcdf3390960a152d

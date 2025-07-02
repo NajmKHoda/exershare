@@ -5,8 +5,8 @@ import { Exercise, IntensityType, Set, TYPE_DEFAULTS, VolumeType } from '@/lib/d
 import EntityDetailScreen from '@/lib/components/screens/EntityDetailScreen';
 import LabeledTextField from '@/lib/components/controls/LabeledTextField';
 import SetList from '@/lib/components/lists/SetList';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import ThemeText from '@/lib/components/theme/ThemeText';
+import { View, StyleSheet, Pressable } from 'react-native';
+import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import VolumeTypeModal from '@/lib/components/modals/VolumeTypeModal';
 import IntensityTypeModal from '@/lib/components/modals/IntensityTypeModal';
@@ -150,18 +150,18 @@ export default function ExerciseScreen() {
             />
 
             <View style={resolvedStyles.typeRow}>
-                <ThemeText style={resolvedStyles.typeText}>
+                <Text style={resolvedStyles.typeText}>
                     Volume Type: {currentState.volumeType}
-                </ThemeText>
+                </Text>
                 <Pressable onPress={() => setVolumeTypeModalVisible(true)}>
                     <Text style={resolvedStyles.changeText}>(Change)</Text>
                 </Pressable>
             </View>
 
             <View style={resolvedStyles.typeRow}>
-                <ThemeText style={resolvedStyles.typeText}>
+                <Text style={resolvedStyles.typeText}>
                     Intensity Types: {currentState.intensityTypes.join(', ')}
-                </ThemeText>
+                </Text>
                 <Pressable onPress={() => setIntensityTypeModalVisible(true)}>
                     <Text style={resolvedStyles.changeText}>(Change)</Text>
                 </Pressable>
