@@ -1,4 +1,4 @@
-import { addDatabaseChangeListener, useSQLiteContext } from 'expo-sqlite';
+import { addDatabaseChangeListener } from 'expo-sqlite';
 import { createContext, useContext, useEffect, useRef, useCallback } from 'react';
 
 const DatabaseListenerContext = createContext<{
@@ -10,12 +10,14 @@ export function DatabaseListenerProvider ({ children }: { children: React.ReactN
     const listeners = useRef<Map<string, Set<ListenerCallback>>>(new Map());
 
     useEffect(() => {
-        addDatabaseChangeListener(({ tableName, rowId }) => {
+        const masterListener = addDatabaseChangeListener(({ tableName, rowId }) => {
             const listenerSet = listeners.current.get(tableName);
             if (listenerSet) {
                 listenerSet.forEach(listener => listener(rowId));
             }
         })
+
+        return () => masterListener.remove();
     }, []);
 
     const addChangeListener = useCallback((tableName: string, listener: ListenerCallback) => {

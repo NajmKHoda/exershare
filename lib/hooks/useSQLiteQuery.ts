@@ -32,7 +32,7 @@ export default function useSQLiteQuery<T>(query: string, multiple: boolean = fal
         fetchData();
 
         return () => { isMounted = false; };
-    }, [query, multiple, queryTrigger]);
+    }, [db, query, multiple, queryTrigger]);
 
     async function rerunQuery() {
         setQueryTrigger(prev => !prev);

@@ -1,7 +1,7 @@
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { standardShadow } from '@/lib/standardStyles';
 import { Tabs } from 'expo-router';
-import { Dumbbell, Book, LucideIcon } from 'lucide-react-native';
+import { Dumbbell, Book, LucideIcon, Settings } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 
 export default function TabsLayout() {
@@ -23,6 +23,12 @@ export default function TabsLayout() {
                 options={{
                     title: 'Library',
                     tabBarIcon: TabIcon(Book)
+                }} />
+            <Tabs.Screen
+                name='settings'
+                options={{
+                    title: 'Settings',
+                    tabBarIcon: TabIcon(Settings)
                 }} />
         </Tabs>
     );

@@ -17,7 +17,7 @@ export default function DatabaseSynchronizer() {
         if (isInternetReachable && session) {
             syncData(db);
         }
-    }, [isInternetReachable, session, isSessionLoading]);
+    }, [isInternetReachable, session, isSessionLoading, db]);
 
     useEffect(() => {
         const channel = supabase.channel('remote_changes')

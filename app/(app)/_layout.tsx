@@ -1,8 +1,12 @@
 import Text from '@/lib/components/theme/Text';
+import { initDatabase } from '@/lib/data/database';
+import DatabaseSynchronizer from '@/lib/data/DatabaseSynchronizer';
+import { DatabaseListenerProvider } from '@/lib/hooks/useDatabaseListener';
 import { useSession } from '@/lib/hooks/useSession';
 import { supabase } from '@/lib/supabase';
 import { Redirect, Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { SQLiteProvider } from 'expo-sqlite';
+import { useEffect, useState } from 'react';
 
 const DEV_EMAIL = process.env.EXPO_PUBLIC_DEV_EMAIL;
 const DEV_PASSWORD = process.env.EXPO_PUBLIC_DEV_PASSWORD;
@@ -10,7 +14,6 @@ const DEV_PASSWORD = process.env.EXPO_PUBLIC_DEV_PASSWORD;
 export default function AuthenticationGuard() {
     const { session, isSessionLoading } = useSession();
 
-    /* DEBUG START */
     useEffect(() => {
         async function autoLogin() {
             if (DEV_EMAIL && DEV_PASSWORD && !session) {
@@ -29,11 +32,10 @@ export default function AuthenticationGuard() {
         }
 
         autoLogin();
-    }, [session]);
+    }, []);
 
     if (DEV_EMAIL && DEV_PASSWORD && !session)
         return <Text>Logging in with dev credentials...</Text>;
-    /* DEBUG END */
 
     if (isSessionLoading) {
         return <Text>Loading...</Text>;
@@ -43,5 +45,16 @@ export default function AuthenticationGuard() {
         return <Redirect href='/login' />;
     }
 
-    return <Stack screenOptions={{ headerShown: false }} />;
+    return (
+        <SQLiteProvider
+            databaseName={`exershare-${session.user.id}.db`}
+            onInit={initDatabase}
+            options={{ enableChangeListener: true }}
+        >
+        <DatabaseSynchronizer />
+        <DatabaseListenerProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+        </DatabaseListenerProvider>
+        </SQLiteProvider>
+    );
 }
