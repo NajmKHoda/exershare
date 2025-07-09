@@ -17,13 +17,22 @@ export default function SignUp() {
 
     async function handleSignUp() {
         setWaiting(true);
-        const { error } =  await supabase.auth.signUp({
+        const { error: authError } =  await supabase.auth.signUp({
             email: email,
             password: password
         });
-        setWaiting(false);
+        if (authError) {
+            setWaiting(false);
+            return;
+        }
 
-        if (!error) router.push('/'); 
+        const { error: usernameError } = await supabase.from('profiles').insert({ username })
+        if (usernameError) {
+            setWaiting(false);
+            return;
+        }
+
+        router.push('/');
     }
 
     return (

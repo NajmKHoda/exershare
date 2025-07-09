@@ -4,6 +4,7 @@ import { Routine } from './Routine';
 import { Workout } from './Workout';
 import { WorkoutLog } from './WorkoutLog';
 import { serializeDate } from './dates';
+import { supabase } from '../supabase';
 
 export async function initDatabase(db: SQLiteDatabase) {
     await Exercise.init(db);
@@ -17,6 +18,7 @@ export async function initDatabase(db: SQLiteDatabase) {
             active_routine_id TEXT,
             last_log_date TEXT NOT NULL,
             last_sync_date TEXT,
+            username TEXT,
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
                 ON DELETE SET NULL
                 ON UPDATE CASCADE
@@ -27,6 +29,13 @@ export async function initDatabase(db: SQLiteDatabase) {
         INSERT OR IGNORE INTO user (id, last_log_date)
             VALUES (1, ?);
     `, serializeDate(new Date()));
+
+    const { data } = await supabase.from('profiles')
+        .select('username')
+        .single();
+    if (!data) return;
+
+    await db.runAsync(`UPDATE user SET username = ?;`, [data.username]);
 }
 
 export async function resetDatabase(db: SQLiteDatabase) {

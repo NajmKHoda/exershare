@@ -5,6 +5,7 @@ import StandardList from '@/lib/components/lists/StandardList';
 import Text from '@/lib/components/theme/Text';
 import { resetDatabase } from '@/lib/data/database';
 import { syncData } from '@/lib/data/sync';
+import useSQLiteQuery from '@/lib/hooks/useSQLiteQuery';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { standardShadow } from '@/lib/standardStyles';
 import { supabase } from '@/lib/supabase';
@@ -30,6 +31,11 @@ const SETTINGS_OPTIONS: SectionListData<SettingsOption, { title: string }>[] = [
 
 export default function SettingsLayout() {
     const db = useSQLiteContext();
+    const [query] = useSQLiteQuery<{ username: string }>(`
+        SELECT username FROM user;`,
+        false,
+        'user'
+    );
     const colors = useThemeColors();
     const router = useRouter();
     const styles = useResolvedStyles(stylesTemplate);
@@ -60,11 +66,14 @@ Are you sure you want to continue?`,
             <SafeAreaView edges={['top']} style={styles.profileContainer}>
                 <CircleUser size={128} color={colors.primary} />
                 <View style={styles.profileDetails}>
-                    <Text style={styles.username}>Username</Text>
-                    <Text>Joined 01/01/2025</Text>
+                    <Text style={styles.username}>
+                        {query?.username ?? 'Guest'}
+                    </Text>
                     <TextButton
                         label='Log Out'
                         Icon={LogOut}
+                        style={styles.logOut}
+                        iconSize={styles.logOut.fontSize}
                         onPress={() => {
                             supabase.auth.signOut()
                             .then(() => router.push('/login'))
@@ -120,6 +129,9 @@ const stylesTemplate = (colors: ThemeColors) => StyleSheet.create({
     username: {
         fontSize: 24,
         fontWeight: 'bold',
+    },
+    logOut: {
+        fontSize: 20,
     },
     body: {
         flex: 1,
