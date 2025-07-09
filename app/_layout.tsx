@@ -5,11 +5,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SessionProvider } from '@/lib/hooks/useSession';
 import { IncomingEntityProvider } from '@/lib/hooks/useIncomingEntity';
-import { Inter_100Thin, Inter_400Regular, Inter_600SemiBold, Inter_700Bold, useFonts } from '@expo-google-fonts/inter';
+import { Inter_100Thin, Inter_200ExtraLight, Inter_400Regular, Inter_600SemiBold, Inter_700Bold, useFonts } from '@expo-google-fonts/inter';
 
 export default function RootLayout() {
     const [loaded, error] = useFonts({
         Inter_100Thin,
+        Inter_200ExtraLight,
         Inter_400Regular,
         Inter_600SemiBold,
         Inter_700Bold,

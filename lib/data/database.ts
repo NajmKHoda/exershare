@@ -28,3 +28,15 @@ export async function initDatabase(db: SQLiteDatabase) {
             VALUES (1, ?);
     `, serializeDate(new Date()));
 }
+
+export async function resetDatabase(db: SQLiteDatabase) {
+    await db.execAsync(`
+        DELETE FROM exercises;
+        DELETE FROM workouts;
+        DELETE FROM routines;
+        DELETE FROM workout_logs;
+        UPDATE user SET last_sync_date = NULL;
+    `);
+
+    await initDatabase(db);
+}

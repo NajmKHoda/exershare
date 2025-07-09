@@ -4,6 +4,8 @@ import { StyleSheet, TextProps, Text as RNText, TextStyle } from 'react-native';
 const weightMap: Record<string, string> = {
     '100': 'Inter_100Thin',
     'thin': 'Inter_100Thin',
+    '200': 'Inter_200ExtraLight',
+    'ultralight': 'Inter_200ExtraLight',
     '400': 'Inter_400Regular',
     'normal': 'Inter_400Regular',
     'regular': 'Inter_400Regular',
