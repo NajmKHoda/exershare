@@ -1,6 +1,6 @@
 import { SQLiteDatabase, SQLiteStatement } from 'expo-sqlite';
 import { Exercise } from './Exercise';
-import { randomUUID } from '../uuid';
+import { randomUUID } from 'expo-crypto';
 import { supabase } from '../supabase';
 
 export class Workout {

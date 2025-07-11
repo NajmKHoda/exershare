@@ -7,12 +7,14 @@ import { supabase } from '@/lib/supabase';
 import { Redirect, Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
+import { CryptoDigestAlgorithm, digestStringAsync } from 'expo-crypto';
 
 const DEV_EMAIL = process.env.EXPO_PUBLIC_DEV_EMAIL;
 const DEV_PASSWORD = process.env.EXPO_PUBLIC_DEV_PASSWORD;
 
 export default function AuthenticationGuard() {
     const { session, isSessionLoading } = useSession();
+    const [encryptedDBName, setEncryptedDBName] = useState<string | null>(null);
 
     useEffect(() => {
         async function autoLogin() {
@@ -34,6 +36,15 @@ export default function AuthenticationGuard() {
         autoLogin();
     }, []);
 
+    useEffect(() => {
+        setEncryptedDBName(null);
+        if (!session) return;
+
+        digestStringAsync(CryptoDigestAlgorithm.SHA1, session.user.id)
+            .then(hash => setEncryptedDBName(hash))
+            .catch(error => console.error('Error generating database name:', error));
+    }, [session])
+
     if (DEV_EMAIL && DEV_PASSWORD && !session)
         return <Text>Logging in with dev credentials...</Text>;
 
@@ -45,9 +56,13 @@ export default function AuthenticationGuard() {
         return <Redirect href='/login' />;
     }
 
+    if (!encryptedDBName) {
+        return <Text>Loading database...</Text>;
+    }
+    
     return (
         <SQLiteProvider
-            databaseName={`exershare-${session.user.id}.db`}
+            databaseName={`exershare-${encryptedDBName}.db`}
             onInit={initDatabase}
             options={{ enableChangeListener: true }}
         >
