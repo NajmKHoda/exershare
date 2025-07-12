@@ -1,6 +1,7 @@
 import { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../supabase';
+import { router } from 'expo-router';
 
 export const SessionContext = createContext<SessionData | null>(null);
 
@@ -14,7 +15,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             setIsSessionLoading(false);
         });
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_, session) => setSession(session)
+            (event, session) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    console.log('Password recovery event detected');
+                    router.push('/forgot-password');
+                }
+                setSession(session);
+            }
         );
         return () => subscription.unsubscribe();
     }, [])

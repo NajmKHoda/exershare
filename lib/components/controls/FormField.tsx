@@ -43,7 +43,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         alignSelf: 'stretch',
     },
     label: {
-        fontWeight: 'thin',
+        fontWeight: 'ultralight',
         marginBottom: 2,
     },
     fieldContainer: {
