@@ -3,23 +3,29 @@ import { Slot } from 'expo-router';
 import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
+import { ScrollView } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AuthLayout() {
-    const resolvedStyles = useResolvedStyles(styles);
+    const styles = useResolvedStyles(stylesTemplate);
 
     return (
-        <LinearGradient colors={['#00bfff', '#00e98a']} style={resolvedStyles.background}>
-            <KeyboardAvoidingView behavior='padding' style={resolvedStyles.container}>
-                <View style={resolvedStyles.formContainer}>
-                    <Text style={resolvedStyles.title}>Exershare</Text>
-                    <Slot />
-                </View>
-            </KeyboardAvoidingView>
+        <LinearGradient colors={['#00bfff', '#00e98a']} style={styles.background}>
+            <SafeAreaView edges={['top']} style={styles.background}>
+                <KeyboardAvoidingView behavior='padding' style={styles.container}>
+                    <ScrollView contentContainerStyle={styles.scrollContainer}>
+                        <View style={styles.formContainer}>
+                            <Text style={styles.title}>Exershare</Text>
+                            <Slot />
+                        </View>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
         </LinearGradient>
     )
 }
 
-const styles = (colors: ThemeColors) => StyleSheet.create({
+const stylesTemplate = (colors: ThemeColors) => StyleSheet.create({
     background: {
         flex: 1,
     },
@@ -27,6 +33,10 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         paddingHorizontal: 16,
+    },
+    scrollContainer: {
+        flex: 1,
+        justifyContent: 'center',
     },
     formContainer: {
         padding: 24,
