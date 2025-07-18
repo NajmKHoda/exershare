@@ -3,6 +3,7 @@ import { Exercise, RawExercise } from './Exercise';
 import { RawWorkout, Workout } from './Workout';
 import { RawRoutine, Routine } from './Routine';
 import { supabase } from '../supabase';
+import { RawLog, WorkoutLog } from './WorkoutLog';
 
 export async function syncData(db: SQLiteDatabase) {
     const [
@@ -12,7 +13,8 @@ export async function syncData(db: SQLiteDatabase) {
         dirtyWorkouts,
         removedWorkouts,
         dirtyRoutines,
-        removedRoutines
+        removedRoutines,
+        dirtyLogs
     ] = await Promise.all([
         db.getFirstAsync<{ last_sync_date: string }>('SELECT last_sync_date FROM user'),
 
@@ -23,7 +25,9 @@ export async function syncData(db: SQLiteDatabase) {
         db.getAllAsync<{ id: string, deleted_at: string }>('SELECT * FROM deleted_workouts'),
 
         Routine.pullMany(db, 'dirty = 1', false),
-        db.getAllAsync<{ id: string, deleted_at: string }>('SELECT * FROM deleted_routines')
+        db.getAllAsync<{ id: string, deleted_at: string }>('SELECT * FROM deleted_routines'),
+
+        WorkoutLog.getDirtyLogs(db)
     ])
 
     const lastSyncDate = lastSyncResult ? new Date(lastSyncResult.last_sync_date).toISOString() : null;
@@ -35,7 +39,8 @@ export async function syncData(db: SQLiteDatabase) {
         _workouts: dirtyWorkouts.map(workout => workout.toJSON()),
         _deleted_workouts: removedWorkouts,
         _routines: dirtyRoutines.map(routine => routine.toJSON()),
-        _deleted_routines: removedRoutines
+        _deleted_routines: removedRoutines,
+        _logs: dirtyLogs.map(log => log.serialize())
     }) as { data: SyncResult, error: any };
 
     if (error) {
@@ -47,11 +52,13 @@ export async function syncData(db: SQLiteDatabase) {
         newExercises,
         newWorkouts,
         newRoutines,
+        newLogs,
         deletedExercises,
         deletedRoutines,
         deletedWorkouts
     } = data;
 
+    await WorkoutLog.saveMany(db, newLogs.map(rl => new WorkoutLog(rl)), false, true);
     await Exercise.saveMany(db, newExercises.map(re => new Exercise(re)), false, true);
     await Workout.saveMany(db, newWorkouts.map(rw => new Workout(
         rw.id,
@@ -95,6 +102,7 @@ export async function syncData(db: SQLiteDatabase) {
             UPDATE exercises SET dirty = 0 WHERE dirty = 1;
             UPDATE workouts SET dirty = 0 WHERE dirty = 1;
             UPDATE routines SET dirty = 0 WHERE dirty = 1;
+            UPDATE workout_logs SET dirty = 0 WHERE dirty = 1;
 
             DELETE FROM deleted_exercises;
             DELETE FROM deleted_workouts;
@@ -109,6 +117,7 @@ type SyncResult = {
     newExercises: RawExercise[];
     newWorkouts: (RawWorkout & { exercise_ids: string[] })[];
     newRoutines: (RawRoutine & { workout_ids: string[] })[];
+    newLogs: RawLog[];
     deletedExercises: string[];
     deletedWorkouts: string[];
     deletedRoutines: string[];

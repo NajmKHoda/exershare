@@ -2,7 +2,7 @@ import RoutineHeader from '@/lib/components/RoutineHeader';
 import Text from '@/lib/components/theme/Text';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import { ActivityIndicator, Button, StyleSheet, View, Pressable } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import RestDayPlaceholder from '@/lib/components/RestDayPlaceholder';
 import { WorkoutLog } from '@/lib/data/WorkoutLog';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -24,7 +24,7 @@ export default function Index() {
     });
     useFocusEffect(
         useCallback(() => {
-            getTodayLog();
+            getLog();
             Routine.pullActive(db)
                 .then(routine => setActiveRoutine({ current: routine, loading: false }))
                 .catch(() => setActiveRoutine({ current: null, loading: false }));
@@ -32,40 +32,33 @@ export default function Index() {
     )
 
     // Date values for the current view
-    const [date, setDate] = useState<Date>(new Date());
-    const dateTimestamp = new Date(date).setHours(0, 0, 0, 0);
-    const todayTimestamp = new Date().setHours(0, 0, 0, 0);
-    
+    const [date, setDate] = useState<Date>(new Date(
+        new Date().setHours(0, 0, 0, 0)
+    ));
+    const dateTimestamp = date.getTime();
+
+    const today = () => new Date().setHours(0, 0, 0, 0);
+    const renderToday = today();
+    const isToday = dateTimestamp === renderToday;
+
     // Loads the log of the view date from the database
     const [log, setLog] = useState<LoadState<WorkoutLog>>({
         current: null,
         loading: true
     });
-    const useLog = dateTimestamp <= todayTimestamp;
-    const isToday = dateTimestamp === todayTimestamp;
-
-    useEffect(() => {
-        // If the date is in the future, don't load a log
-        if (!useLog) {
-            setLog({ current: null, loading: false });
-            return;
-        }
-        getTodayLog();
-    }, [dateTimestamp]);
-
-    // Update logs when the today-date changes
-    useEffect(() => {
-        if (activeRoutine.loading) return;
-        WorkoutLog.updateLogs(activeRoutine.current, db)
-            .finally(() => getTodayLog());
-    }, [todayTimestamp, activeRoutine]);
+    
+    // The log should only be used if:
+    //   - We are in the past, or
+    //   - We are looking at today's date and the log (might) exist.
+    const useLog = dateTimestamp < renderToday ||
+        (isToday && (log.loading || log.current));
 
     // Populate information for the view date
     let exerciseList: ExerciseInfo[];
     let routineName: string;
     let workoutName: string;
     let workout: Workout | null = null;
-    if (!useLog) {
+    if (!useLog || (isToday && !log.current)) {
         const weekDay = date.getDay();
         workout = activeRoutine.current?.workouts[weekDay] ?? null;
 
@@ -93,21 +86,30 @@ export default function Index() {
 
             return listEntry;
         }) ?? [];
-        routineName = log.current?.routineName ?? 'No Routine';
-        workoutName = log.current?.workoutName ?? 'Rest Day';
+        routineName = log.current?.routineName ?? 'No Data';
+        workoutName = log.current?.workoutName ?? 'No Data';
     }
 
     function onDayChange(amount: number) {
         const newDate = new Date(date);
         newDate.setDate(newDate.getDate() + amount);
+
         setDate(newDate);
-        setLog({ current: null, loading: true });
+        getLog(newDate);
     }
 
-    function getTodayLog() {
-        WorkoutLog.getLog(date, db)
+    function getLog(logDate: Date = date) {
+        // If the log date is in the future, do not load it
+        if (logDate.getTime() > today()) {
+            setLog({ current: null, loading: false });
+            return;
+        }
+
+        // Load the log for the specified date
+        setLog({ current: null, loading: true });
+        WorkoutLog.getLog(logDate, db)
             .then(loadedLog => setLog({ current: loadedLog, loading: false }))
-            .catch(() => setLog({ current: null, loading: false }));
+            .catch(err => setLog({ current: null, loading: false }));
     }
 
     let body: React.ReactNode;

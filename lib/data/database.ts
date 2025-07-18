@@ -14,21 +14,18 @@ export async function initDatabase(db: SQLiteDatabase) {
 
     await db.execAsync(`
         CREATE TABLE IF NOT EXISTS user (
-            id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1),
+            id INTEGER PRIMARY KEY NOT NULL CHECK(id = 1) DEFAULT 1,
             active_routine_id TEXT,
-            last_log_date TEXT NOT NULL,
             last_sync_date TEXT,
             username TEXT,
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
                 ON DELETE SET NULL
                 ON UPDATE CASCADE
         );
+
+        INSERT OR IGNORE INTO user (id) VALUES (1);
     `);
 
-    await db.runAsync(`
-        INSERT OR IGNORE INTO user (id, last_log_date)
-            VALUES (1, ?);
-    `, serializeDate(new Date()));
 
     const { data } = await supabase.from('profiles')
         .select('username')

@@ -1,8 +1,8 @@
 import { SQLiteDatabase } from 'expo-sqlite';
 import { Workout } from './Workout';
 import { serializeDate, deserializeDate } from './dates';
-import { Routine } from './Routine'; // newly imported
 import { Exercise, IntensityType, Set, VolumeType } from './Exercise';
+import { supabase } from '../supabase';
 
 export class WorkoutLog {
     date: Date;
@@ -10,6 +10,7 @@ export class WorkoutLog {
     workoutName: string;
     exercises: ExerciseMap;
     completion: CompletionLog[];
+    lastModified: Date | null;
 
     constructor(rawLog: RawLog);
     constructor(date: Date, workout: Workout, routineName: string);
@@ -19,16 +20,19 @@ export class WorkoutLog {
         workoutName: string,
         exercises: ExerciseMap,
         completion: CompletionLog[],
+        lastModified?: Date | null
     );
     constructor(
         first: Date | RawLog,
         second?: string | Workout,
         third?: string,
         exercises?: ExerciseMap,
-        completion?: CompletionLog[]
+        completion?: CompletionLog[],
+        lastModified: Date | null = null
     ) {
         if (first instanceof Date) {
-            this.date = first;
+            this.date = new Date(first.setHours(0, 0, 0, 0));
+            this.lastModified = lastModified ? new Date(lastModified) : null;
             if (second instanceof Workout) {
                 this.routineName = third!;
                 this.workoutName = second.name;
@@ -50,6 +54,7 @@ export class WorkoutLog {
             this.workoutName = first.workout_name;
             this.exercises = new Map(Object.entries(JSON.parse(first.exercises)));
             this.completion = JSON.parse(first.completion);
+            this.lastModified = new Date(first.last_modified);
         }
     }
 
@@ -60,9 +65,20 @@ export class WorkoutLog {
                 routine_name TEXT NOT NULL,
                 workout_name TEXT NOT NULL,
                 exercises TEXT NOT NULL,
-                completion TEXT NOT NULL
+                completion TEXT NOT NULL,
+                last_modified TEXT NOT NULL DEFAULT current_timestamp,
+                dirty INTEGER NOT NULL DEFAULT 1
             );
         `);
+    }
+
+    static async getDirtyLogs(db: SQLiteDatabase) {
+        const rawLogs = await db.getAllAsync<RawLog>(`
+            SELECT * FROM workout_logs WHERE dirty = 1
+            ORDER BY date DESC;
+        `);
+
+        return rawLogs.map(raw => new WorkoutLog(raw));
     }
 
     static async getLog(date: Date, db: SQLiteDatabase) {
@@ -73,53 +89,88 @@ export class WorkoutLog {
         return result ? new WorkoutLog(result) : null;
     }
 
-    static async updateLogs(activeRoutine: Routine | null, db: SQLiteDatabase) {
-        const todayTimestamp = new Date().setHours(0, 0, 0, 0);
-        const result = await db.getFirstAsync<{ last_log_date: string }>(`
-            SELECT last_log_date FROM user;
-        `);
-        const lastLogTimestamp = result ? deserializeDate(result.last_log_date).getTime() : todayTimestamp;
+    static async saveMany(
+        db: SQLiteDatabase,
+        logs: WorkoutLog[],
+        overwriteTimestamp: boolean = true,
+        localOnly: boolean = false
+    ) {
+        const serialized = logs.map(log => log.serialize());
+        const newTimestamp = new Date();
 
-        // This probably only happens due to time zone differences(?)
-        if (lastLogTimestamp > todayTimestamp) return;
+        let saveStatement: any = null;
+        try {
+            saveStatement = await db.prepareAsync(`
+                INSERT INTO workout_logs (
+                    date, routine_name, workout_name,
+                    exercises, completion, last_modified, dirty
+                ) VALUES (
+                    $date, $routineName, $workoutName,
+                    $exercises, $completion, $last_modified, $dirty
+                ) ON CONFLICT(date) DO UPDATE SET
+                    routine_name = excluded.routine_name,
+                    workout_name = excluded.workout_name,
+                    exercises = excluded.exercises,
+                    completion = excluded.completion,
+                    last_modified = excluded.last_modified,
+                    dirty = excluded.dirty
+            `);
 
-        // Update the last log date
-        if (lastLogTimestamp < todayTimestamp) {
-            const dateString = serializeDate(new Date());
-            await db.runAsync(`UPDATE user SET last_log_date = ?`, dateString);
+            await Promise.all(
+                logs.map(async (log, i) => {
+                    const serializedLog = serialized[i];
+                    const newModified = overwriteTimestamp ? newTimestamp : log.lastModified ?? newTimestamp;
+
+                    await saveStatement.executeAsync({
+                        $date: serializeDate(log.date),
+                        $routineName: serializedLog.routine_name,
+                        $workoutName: serializedLog.workout_name,
+                        $exercises: serializedLog.exercises,
+                        $completion: serializedLog.completion,
+                        $last_modified: newModified.toISOString(),
+                        $dirty: localOnly ? 0 : 1
+                    });
+
+                    log.lastModified = newModified;
+                })
+            );
+        } catch (error) {
+            console.error('Error saving workout logs locally:', error);
+            return;
+        } finally {
+            await saveStatement?.finalizeAsync();
         }
-		
-        if (!activeRoutine) return;
-		
-        let curDate = new Date(lastLogTimestamp);
-        curDate.setHours(0, 0, 0, 0);
-		
-        while (curDate.getTime() <= todayTimestamp) {
-            const curWorkout = activeRoutine.workouts[curDate.getDay()];
-            if (curWorkout) {
-                const log = new WorkoutLog(new Date(curDate), curWorkout, activeRoutine.name);
-                await log.save(db, false);
-            }
 
-            curDate.setDate(curDate.getDate() + 1);
+        if (localOnly) return;
+
+        // Attempt syncing with Supabase
+        const { error } = await supabase.from('workout_logs').upsert(
+            logs.map((log, i) => ({
+                ...serialized[i],
+                last_modified: log.lastModified!.toISOString()
+            }))
+        );
+        if (error) return;
+        try {
+            const placeholders = logs.map(() => '?').join(',');
+            await db.runAsync(
+                `UPDATE workout_logs SET dirty = 0 WHERE date IN (${placeholders});`,
+                logs.map(log => serializeDate(log.date))
+            );
+        } catch (error) {
+            console.error('Error updating workout log dirty flags:', error);
         }
     }
 
-    async save(db: SQLiteDatabase, overwrite: boolean = true) {
-        const serializedExercises = JSON.stringify(Object.fromEntries(this.exercises.entries()));
-        const serializedCompletion = JSON.stringify(this.completion);
-        const resolver = overwrite ? 'REPLACE' : 'IGNORE';
-        
-        await db.runAsync(`
-            INSERT OR ${resolver} INTO workout_logs (date, routine_name, workout_name, exercises, completion)
-            VALUES ($date, $routineName, $workoutName, $exercises, $completion);
-        `, {
-            $date: serializeDate(this.date),
-            $routineName: this.routineName,
-            $workoutName: this.workoutName,
-            $exercises: serializedExercises,
-            $completion: serializedCompletion
-        });
+    async save(
+        db: SQLiteDatabase,
+        timestamp: Date | null = null,
+        localOnly: boolean = false
+    ) {
+        if (timestamp !== null) {
+            this.lastModified = timestamp;
+        }
+        await WorkoutLog.saveMany(db, [this], timestamp === null, localOnly);
     }
 
     async applySetChanges(db: SQLiteDatabase) {
@@ -144,6 +195,17 @@ export class WorkoutLog {
             console.error("Error applying set changes:", error);
         }
     }
+
+    serialize(): RawLog {
+        return {
+            date: serializeDate(this.date),
+            routine_name: this.routineName,
+            workout_name: this.workoutName,
+            exercises: JSON.stringify(Object.fromEntries(this.exercises.entries())),
+            completion: JSON.stringify(this.completion),
+            last_modified: (this.lastModified ?? new Date()).toISOString()
+        }
+    }
 }
 
 function copyExercises(exercises: readonly Exercise[]) {
@@ -158,12 +220,13 @@ function copyExercises(exercises: readonly Exercise[]) {
     ]))
 }
 
-interface RawLog {
+export interface RawLog {
     date: string;
     routine_name: string;
     workout_name: string;
     exercises: string;
     completion: string;
+    last_modified: string;
 }
 
 // Maps ID to exercise information
