@@ -40,3 +40,5 @@ app-example
 
 .vscode/
 .github/
+supabase/test
+supabase/functions/generate_routine/systemPrompt.txt
