@@ -9,7 +9,7 @@ export class Routine {
     name: string;
     lastModified: Date | null = null;
     readonly workouts: readonly (Workout | null)[];
-    private readonly workoutIds: readonly (string | null)[];
+    readonly workoutIds: readonly (string | null)[];
 
     constructor(id: string, name: string, workouts: (Workout | null)[], lastModified?: Date | null);
     constructor(id: string, name: string, workoutIds: (string | null)[], lastModified?: Date | null);

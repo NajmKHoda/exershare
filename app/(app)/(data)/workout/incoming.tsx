@@ -4,11 +4,10 @@ import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
-import { Workout } from '@/lib/data/Workout';
-import { Exercise } from '@/lib/data/Exercise';
+import { Exercise, IntensityType, VolumeType } from '@/lib/data/Exercise';
 import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
-import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
 import Separator from '@/lib/components/lists/elements/Separator';
 
@@ -36,11 +35,8 @@ export default function IncomingWorkoutScreen() {
             setSaving(true);
             
             // Save all exercises first
-            await Exercise.saveMany(db, exercises.map(e => new Exercise(e)), false, true);
-
-            // Create new Workout instance with the exercise IDs
-            const newWorkout = new Workout(workout.id, workout.name, exercises.map(e => e.id));
-            await newWorkout.save(db);
+            await Exercise.saveMany(db, exercises);
+            await workout.save(db);
             
             // Clear the incoming entity and navigate back
             clearIncomingEntity();
@@ -71,6 +67,11 @@ export default function IncomingWorkoutScreen() {
                 }
             ]
         );
+    };
+
+    // Format type names for display
+    const formatType = (type: string): string => {
+        return type.charAt(0).toUpperCase() + type.slice(1);
     };
 
     return (
@@ -106,20 +107,30 @@ export default function IncomingWorkoutScreen() {
                         <Text style={resolvedStyles.sectionTitle}>Exercises</Text>
                         <View style={resolvedStyles.exercisesContainer}>
                             {exercises.map((exercise, index) => {
-                                // Parse sets from the raw data
-                                const sets = exercise.sets?.split(';').map(setString => {
-                                    const [reps, weight] = setString.split(':');
-                                    return { reps: Number(reps), weight: Number(weight) };
-                                }) || [];
-
-                                // Parse categories
-                                const categories = exercise.categories ? exercise.categories.split(',') : [];
+                                // Get intensity types as an array
+                                const { categories, intensityTypes } = exercise;
 
                                 return (
                                     <View key={exercise.id + index.toString()}>
                                         <View style={resolvedStyles.exerciseItem}>
                                             <Text style={resolvedStyles.exerciseName}>{exercise.name}</Text>
                                             
+                                            <View style={resolvedStyles.exerciseDetail}>
+                                                <Text style={resolvedStyles.exerciseLabel}>Volume Type:</Text>
+                                                <Text style={resolvedStyles.exerciseValue}>
+                                                    {formatType(exercise.volumeType)}
+                                                </Text>
+                                            </View>
+
+                                            {intensityTypes.length > 0 && (
+                                                <View style={resolvedStyles.exerciseDetail}>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Intensity Types:</Text>
+                                                    <Text style={resolvedStyles.exerciseValue}>
+                                                        {intensityTypes.map(formatType).join(', ')}
+                                                    </Text>
+                                                </View>
+                                            )}
+
                                             {exercise.notes && (
                                                 <View style={resolvedStyles.exerciseDetail}>
                                                     <Text style={resolvedStyles.exerciseLabel}>Notes:</Text>
@@ -134,13 +145,18 @@ export default function IncomingWorkoutScreen() {
                                                 </View>
                                             )}
 
-                                            {sets.length > 0 && (
+                                            {exercise.sets && exercise.sets.length > 0 && (
                                                 <View style={resolvedStyles.exerciseDetail}>
                                                     <Text style={resolvedStyles.exerciseLabel}>Sets:</Text>
                                                     <View style={resolvedStyles.setsDisplay}>
-                                                        {sets.map((set, setIndex) => (
+                                                        {exercise.sets.map((set, setIndex) => (
                                                             <Text key={setIndex} style={resolvedStyles.setInfo}>
-                                                                {set.reps} reps × {set.weight} lbs
+                                                                {set.volume} {formatType(exercise.volumeType)}
+                                                                {intensityTypes.map(type => 
+                                                                    set[type] !== undefined 
+                                                                        ? ` × ${set[type]} ${formatType(type)}` 
+                                                                        : ''
+                                                                ).join('')}
                                                             </Text>
                                                         ))}
                                                     </View>

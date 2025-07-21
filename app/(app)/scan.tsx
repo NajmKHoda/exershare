@@ -9,6 +9,9 @@ import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useT
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
 import { supabase } from '@/lib/supabase';
 import { ChevronLeft, Camera } from 'lucide-react-native';
+import { Exercise } from '@/lib/data/Exercise';
+import { Workout } from '@/lib/data/Workout';
+import { Routine } from '@/lib/data/Routine';
 
 export default function ScanScreen() {
     const [permission, requestPermission] = useCameraPermissions();
@@ -52,10 +55,7 @@ export default function ScanScreen() {
             }
 
             // Store raw data with entity type
-            setIncomingEntity({
-                type: type as 'exercise' | 'workout' | 'routine',
-                ...entityData
-            });
+            setIncomingEntity(entityData);
 
             // Navigate to the appropriate incoming screen
             router.replace(`/${type}/incoming` as any);
@@ -71,7 +71,12 @@ export default function ScanScreen() {
         });
         
         if (error) throw error;
-        return data;
+        return { 
+            type: 'exercise' as const,
+            data: {
+                exercise: new Exercise(data) 
+            }
+        };
     };
 
     const downloadWorkout = async (token: string) => {
@@ -80,7 +85,17 @@ export default function ScanScreen() {
         });
         
         if (error) throw error;
-        return data;
+        return {
+            type: 'workout' as const,
+            data: {
+                workout: new Workout(
+                    data.workout.id,
+                    data.workout.name,
+                    data.workout.exercise_ids
+                ),
+                exercises: data.exercises.map((e: any) => new Exercise(e)) as Exercise[]
+            }
+        };
     };
 
     const downloadRoutine = async (token: string) => {
@@ -89,8 +104,22 @@ export default function ScanScreen() {
         });
         
         if (error) throw error;
-
-        return data;
+        return {
+            type: 'routine' as const,
+            data: {
+                routine: new Routine(
+                    data.routine.id,
+                    data.routine.name,
+                    data.routine.workout_ids
+                ),
+                workouts: data.workouts.map((w: any) => new Workout(
+                    w.id,
+                    w.name,
+                    w.exercise_ids
+                )) as Workout[],
+                exercises: data.exercises.map((e: any) => new Exercise(e)) as Exercise[]
+            }
+        };
     };
 
     if (!permission) {

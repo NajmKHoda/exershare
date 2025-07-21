@@ -4,11 +4,11 @@ import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
-import { Exercise } from '@/lib/data/Exercise';
 import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
-import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
+import { IntensityType } from '@/lib/data/Exercise';
 
 export default function IncomingExerciseScreen() {
     const { incomingEntity, clearIncomingEntity } = useIncomingEntity();
@@ -27,15 +27,14 @@ export default function IncomingExerciseScreen() {
         return null;
     }
 
-    const exerciseData = incomingEntity.data.exercise;
+    const { exercise } = incomingEntity.data;
 
     const handleAccept = async () => {
         try {
             setSaving(true);
             
             // Create new Exercise instance from the raw data
-            const newExercise = new Exercise(exerciseData);
-            await newExercise.save(db);
+            await exercise.save(db);
             
             // Clear the incoming entity and navigate back
             clearIncomingEntity();
@@ -68,14 +67,13 @@ export default function IncomingExerciseScreen() {
         );
     };
 
-    // Parse sets from the raw data
-    const sets = exerciseData.sets?.split(';').map(setString => {
-        const [reps, weight] = setString.split(':');
-        return { reps: Number(reps), weight: Number(weight) };
-    }) || [];
+    // Format volume type and intensity types for display
+    const formatType = (type: string): string => {
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    };
 
     // Parse categories
-    const categories = exerciseData.categories ? exerciseData.categories.split(',') : [];
+    const categories = exercise.categories || [];
 
     return (
         <View style={resolvedStyles.container}>
@@ -96,13 +94,27 @@ export default function IncomingExerciseScreen() {
                     
                     <View style={resolvedStyles.detailRow}>
                         <Text style={resolvedStyles.label}>Name:</Text>
-                        <Text style={resolvedStyles.value}>{exerciseData.name}</Text>
+                        <Text style={resolvedStyles.value}>{exercise.name}</Text>
                     </View>
 
-                    {exerciseData.notes && (
+                    <View style={resolvedStyles.detailRow}>
+                        <Text style={resolvedStyles.label}>Volume Type:</Text>
+                        <Text style={resolvedStyles.value}>{formatType(exercise.volumeType)}</Text>
+                    </View>
+
+                    {exercise.intensityTypes.length > 0 && (
+                        <View style={resolvedStyles.detailRow}>
+                            <Text style={resolvedStyles.label}>Intensity Types:</Text>
+                            <Text style={resolvedStyles.value}>
+                                {exercise.intensityTypes.map(formatType).join(', ')}
+                            </Text>
+                        </View>
+                    )}
+
+                    {exercise.notes && (
                         <View style={resolvedStyles.detailRow}>
                             <Text style={resolvedStyles.label}>Notes:</Text>
-                            <Text style={resolvedStyles.value}>{exerciseData.notes}</Text>
+                            <Text style={resolvedStyles.value}>{exercise.notes}</Text>
                         </View>
                     )}
 
@@ -114,18 +126,28 @@ export default function IncomingExerciseScreen() {
                     )}
                 </View>
 
-                {sets.length > 0 && (
+                {exercise.sets.length > 0 && (
                     <View style={resolvedStyles.section}>
                         <Text style={resolvedStyles.sectionTitle}>Sets</Text>
                         <View style={resolvedStyles.setsContainer}>
                             <View style={resolvedStyles.setsHeader}>
-                                <Text style={resolvedStyles.setsHeaderText}>Reps</Text>
-                                <Text style={resolvedStyles.setsHeaderText}>Weight (lbs)</Text>
+                                <Text style={resolvedStyles.setsHeaderText}>
+                                    {formatType(exercise.volumeType)}
+                                </Text>
+                                {exercise.intensityTypes.map((type: IntensityType) => (
+                                    <Text key={type} style={resolvedStyles.setsHeaderText}>
+                                        {formatType(type)}
+                                    </Text>
+                                ))}
                             </View>
-                            {sets.map((set, index) => (
+                            {exercise.sets.map((set, index) => (
                                 <View key={index} style={resolvedStyles.setRow}>
-                                    <Text style={resolvedStyles.setValue}>{set.reps}</Text>
-                                    <Text style={resolvedStyles.setValue}>{set.weight}</Text>
+                                    <Text style={resolvedStyles.setValue}>{set.volume}</Text>
+                                    {exercise.intensityTypes.map((type: IntensityType) => (
+                                        <Text key={type} style={resolvedStyles.setValue}>
+                                            {set[type] !== undefined ? set[type] : '-'}
+                                        </Text>
+                                    ))}
                                 </View>
                             ))}
                         </View>

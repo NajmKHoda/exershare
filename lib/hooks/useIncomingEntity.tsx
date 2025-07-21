@@ -1,25 +1,25 @@
 import { createContext, useContext, useState, PropsWithChildren } from 'react';
-import { RawExercise } from '../data/Exercise';
-import { FullRawWorkout } from '../data/Workout';
-import { FullRawRoutine } from '../data/Routine';
+import { Exercise, RawExercise } from '../data/Exercise';
+import { FullRawWorkout, Workout } from '../data/Workout';
+import { FullRawRoutine, Routine } from '../data/Routine';
 
 type IncomingEntityData = {
     type: 'exercise';
     data: {
-       exercise: RawExercise;
+       exercise: Exercise;
     }
 } | {
     type: 'workout';
     data: {
-        workout: FullRawWorkout;
-        exercises: RawExercise[];
+        workout: Workout;
+        exercises: Exercise[];
     }
 } | {
     type: 'routine';
     data: {
-        routine: FullRawRoutine;
-        workouts: FullRawWorkout[];
-        exercises: RawExercise[];
+        routine: Routine;
+        workouts: Workout[];
+        exercises: Exercise[];
     }
 }
 
@@ -52,7 +52,7 @@ export function IncomingEntityProvider({ children }: PropsWithChildren) {
 export function useIncomingEntity() {
     const context = useContext(IncomingEntityContext);
     if (!context) {
-        throw new Error('useIncomingEntity must be used within an IncomingEntityProvider');
+        throw new Error('No incoming entity available.');
     }
     return context;
 }

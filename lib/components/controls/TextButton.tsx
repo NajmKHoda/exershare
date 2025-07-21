@@ -8,19 +8,20 @@ interface Props {
     label: string,
     Icon: LucideIcon,
     iconSize?: number,
-    style?: StyleProp<TextStyle>
+    style?: StyleProp<TextStyle>,
+    disabled?: boolean;
 }
 
-export default function TextButton({ onPress, label, Icon, style, iconSize }: Props) {
+export default function TextButton({ onPress, label, Icon, style, iconSize, disabled = false }: Props) {
     const colors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
 
     const flattenedStyles = StyleSheet.flatten(style);
-    const textColor = flattenedStyles?.color || colors.accent;
+    const textColor = flattenedStyles?.color || (disabled ? colors.gray : colors.accent);
     const fontSize = flattenedStyles?.fontSize || iconSize || 16;
 
     return (
-        <Pressable style={resolvedStyles.container} onPress={onPress}>
+        <Pressable style={resolvedStyles.container} onPress={onPress} disabled={disabled}>
             <Icon size={fontSize} color={textColor as string} />
             <Text 
                 style={[resolvedStyles.buttonText, style]}

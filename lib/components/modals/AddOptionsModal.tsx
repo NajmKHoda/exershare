@@ -1,10 +1,11 @@
 import { View, StyleSheet } from 'react-native';
 import SlideUpModal from './SlideUpModal';
 import ListItem from '../lists/ListItem';
-import { Edit3, QrCode } from 'lucide-react-native';
+import { Edit3, QrCode, Sparkles } from 'lucide-react-native';
 import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
 import Separator from '../lists/elements/Separator';
 import { standardOutline, standardShadow } from '@/lib/standardStyles';
+import { useRouter } from 'expo-router';
 
 interface Props {
     visible: boolean;
@@ -17,6 +18,7 @@ interface Props {
 export default function AddOptionsModal({ visible, onClose, onManualCreate, onScan, entityType }: Props) {
     const colors = useThemeColors();
     const styles = useResolvedStyles(stylesTemplate);
+    const router = useRouter();
 
     const handleManualCreate = () => {
         onManualCreate?.();
@@ -42,6 +44,20 @@ export default function AddOptionsModal({ visible, onClose, onManualCreate, onSc
                     onPress={handleManualCreate}
                 />
                 <Separator />
+                {entityType === 'routine' && (
+                    <>
+                        <ListItem
+                            label="Generate with AI"
+                            Icon={Sparkles}
+                            iconColor={colors.primary as string}
+                            onPress={() => {
+                                router.push('/generate-routine');
+                                onClose?.();
+                            }}
+                        />
+                        <Separator />
+                    </>
+                )}
                 <ListItem
                     label="Scan QR Code"
                     Icon={QrCode}

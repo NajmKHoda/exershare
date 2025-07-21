@@ -29,8 +29,12 @@ Deno.serve(async (req) => {
   for (const exercise of data.exercises) {
     const uuid = crypto.randomUUID();
     numberToUUID.set(exercise.id, uuid);
-    exercise.intensity_types = exercise.intensity_types.join(',')
-    exercise.categories = exercise.categories.join(',')
+
+    // To comply with RawExercise type
+    exercise.intensity_types = exercise.intensity_types.join(',');
+    exercise.categories = exercise.categories.join(',');
+    exercise.sets = JSON.stringify(exercise.sets);
+    
     exercise.id = uuid;
   }
 

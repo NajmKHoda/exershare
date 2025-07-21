@@ -4,12 +4,11 @@ import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
-import { Routine } from '@/lib/data/Routine';
 import { Workout } from '@/lib/data/Workout';
-import { Exercise } from '@/lib/data/Exercise';
+import { Exercise, Set } from '@/lib/data/Exercise';
 import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
-import { ThemeColors, useResolvedStyles, useThemeColors } from '@/lib/hooks/useThemeColors';
+import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
 import Separator from '@/lib/components/lists/elements/Separator';
 
@@ -38,11 +37,9 @@ export default function IncomingRoutineScreen() {
         try {
             setSaving(true);
             
-            await Exercise.saveMany(db, exercises.map(e => new Exercise(e)));
-            await Workout.saveMany(db, workouts.map(w => new Workout(w.id, w.name, w.exercise_ids)));
-
-            const newRoutine = new Routine(routine.id, routine.name, routine.workout_ids);
-            await newRoutine.save(db);
+            await Exercise.saveMany(db, exercises);
+            await Workout.saveMany(db, workouts);
+            await routine.save(db);
             
             // Clear the incoming entity and navigate back
             clearIncomingEntity();
@@ -117,7 +114,7 @@ export default function IncomingRoutineScreen() {
                 <View style={resolvedStyles.section}>
                     <Text style={resolvedStyles.sectionTitle}>Weekly Schedule</Text>
                     <View style={resolvedStyles.scheduleContainer}>
-                        {routine.workout_ids.map((workoutId, dayIndex) => {
+                        {routine.workoutIds.map((workoutId, dayIndex) => {
                             const workout = workoutId ? workoutMap.get(workoutId) : null;
                             return (
                                 <View key={dayIndex}>
@@ -146,7 +143,7 @@ export default function IncomingRoutineScreen() {
                                         <View style={resolvedStyles.workoutDetail}>
                                             <Text style={resolvedStyles.workoutLabel}>Exercises:</Text>
                                             <View style={resolvedStyles.exercisesList}>
-                                                {workout.exercise_ids.map((exerciseId, exerciseIndex) => {
+                                                {workout.exerciseIds.map((exerciseId, exerciseIndex) => {
                                                     const exercise = exerciseMap.get(exerciseId);
                                                     return exercise ? (
                                                         <Text key={exerciseId + exerciseIndex.toString()} style={resolvedStyles.exerciseListItem}>
@@ -168,21 +165,25 @@ export default function IncomingRoutineScreen() {
                     <View style={resolvedStyles.section}>
                         <Text style={resolvedStyles.sectionTitle}>Exercises</Text>
                         <View style={resolvedStyles.exercisesContainer}>
-                            {exercises.map((exercise, index) => {
-                                // Parse sets from the raw data
-                                const sets = exercise.sets?.split(';').map(setString => {
-                                    const [reps, weight] = setString.split(':');
-                                    return { reps: Number(reps), weight: Number(weight) };
-                                }) || [];
-
-                                // Parse categories
-                                const categories = exercise.categories ? exercise.categories.split(',') : [];
+                            {exercises.map((exercise, index) => {     
+                                const { sets, categories, volumeType, intensityTypes } = exercise;
 
                                 return (
                                     <View key={exercise.id + index.toString()}>
                                         <View style={resolvedStyles.exerciseItem}>
                                             <Text style={resolvedStyles.exerciseName}>{exercise.name}</Text>
                                             
+                                            {(volumeType || intensityTypes.length > 0) && (
+                                                <View style={resolvedStyles.exerciseDetail}>
+                                                    <Text style={resolvedStyles.exerciseLabel}>Type:</Text>
+                                                    <Text style={resolvedStyles.exerciseValue}>
+                                                        {volumeType && `Volume: ${volumeType}`}
+                                                        {volumeType && intensityTypes.length > 0 && ', '}
+                                                        {intensityTypes.length > 0 && `Intensity: ${intensityTypes.join(', ')}`}
+                                                    </Text>
+                                                </View>
+                                            )}
+
                                             {exercise.notes && (
                                                 <View style={resolvedStyles.exerciseDetail}>
                                                     <Text style={resolvedStyles.exerciseLabel}>Notes:</Text>
@@ -193,7 +194,7 @@ export default function IncomingRoutineScreen() {
                                             {categories.length > 0 && (
                                                 <View style={resolvedStyles.exerciseDetail}>
                                                     <Text style={resolvedStyles.exerciseLabel}>Categories:</Text>
-                                                    <Text style={resolvedStyles.exerciseValue}>{categories.join(', ')}</Text>
+                                                    <Text style={resolvedStyles.exerciseValue}>{exercise.categories.join(', ')}</Text>
                                                 </View>
                                             )}
 
@@ -203,7 +204,17 @@ export default function IncomingRoutineScreen() {
                                                     <View style={resolvedStyles.setsDisplay}>
                                                         {sets.slice(0, 3).map((set, setIndex) => (
                                                             <Text key={setIndex} style={resolvedStyles.setInfo}>
-                                                                {set.reps} reps × {set.weight} lbs
+                                                                {volumeType === 'reps' ? `${set.volume} reps` : 
+                                                                 volumeType === 'time' ? `${set.volume} sec` :
+                                                                 volumeType === 'distance' ? `${set.volume} mi` :
+                                                                 volumeType === 'calories' ? `${set.volume} cal` :
+                                                                 `${set.volume}`}
+                                                                {intensityTypes.map(type => 
+                                                                    set[type] ? ` × ${set[type]} ${type === 'weight' ? 'lbs' : 
+                                                                                            type === 'speed' ? 'mph' : 
+                                                                                            type === 'incline' ? '%' : 
+                                                                                            ''}` : ''
+                                                                ).join('')}
                                                             </Text>
                                                         ))}
                                                         {sets.length > 3 && (

@@ -8,7 +8,7 @@ export class Workout {
     name: string;
     lastModified: Date | null;
     readonly exercises: readonly Exercise[];
-    private readonly exerciseIds: readonly string[];
+    readonly exerciseIds: readonly string[];
 
     constructor(id: string, name: string, exercises: Exercise[], lastModified?: Date | null);
     constructor(id: string, name: string, exerciseIds: string[], lastModified?: Date | null);
