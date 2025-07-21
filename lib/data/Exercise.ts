@@ -1,19 +1,20 @@
 import { SQLiteDatabase, SQLiteStatement } from 'expo-sqlite';
 import { randomUUID } from 'expo-crypto';
 import { supabase } from '../supabase';
+import { MeasurementSystem } from '../utils/units';
 
 export const VOLUME_TYPES = ['reps', 'distance', 'time', 'calories'] as const;
 export const INTENSITY_TYPES = ['weight', 'speed', 'incline', 'resistance', 'level'] as const;
-export const TYPE_DEFAULTS: Record<VolumeType | IntensityType, number> = {
-    reps: 12,
-    distance: 1.0,
-    time: 60,
-    calories: 200,
-    weight: 25,
-    speed: 5.0,
-    incline: 0.0,
-    resistance: 1.0,
-    level: 1.0
+export const TYPE_DEFAULTS: Record<VolumeType | IntensityType, Record<MeasurementSystem, number>> = {
+    reps: { metric: 12, imperial: 12 },
+    distance: { metric: 1.5, imperial: 1.0 },
+    time: { metric: 60.0, imperial: 60.0 },
+    calories: { metric: 200.0, imperial: 200.0 },
+    weight: { metric: 15.0, imperial: 30.0 },
+    speed: { metric: 8.0, imperial: 5.0 },
+    incline: { metric: 5.0, imperial: 5.0 },
+    resistance: { metric: 1.0, imperial: 1.0 },
+    level: { metric: 1.0, imperial: 1.0 }
 }
 
 export class Exercise {

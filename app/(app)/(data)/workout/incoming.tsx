@@ -4,18 +4,21 @@ import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIncomingEntity } from '@/lib/hooks/useIncomingEntity';
-import { Exercise, IntensityType, VolumeType } from '@/lib/data/Exercise';
+import { Exercise } from '@/lib/data/Exercise';
 import Text from '@/lib/components/theme/Text';
 import TextButton from '@/lib/components/controls/TextButton';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
 import Separator from '@/lib/components/lists/elements/Separator';
+import { useUserPreferences } from '@/lib/hooks/useUserPreferences';
+import { formatValue } from '@/lib/utils/units';
 
 export default function IncomingWorkoutScreen() {
     const { incomingEntity, clearIncomingEntity } = useIncomingEntity();
     const db = useSQLiteContext();
     const resolvedStyles = useResolvedStyles(styles);
     const [saving, setSaving] = useState(false);
+    const { units } = useUserPreferences();
 
     // Redirect if no incoming entity or wrong type
     useEffect(() => {
@@ -151,11 +154,9 @@ export default function IncomingWorkoutScreen() {
                                                     <View style={resolvedStyles.setsDisplay}>
                                                         {exercise.sets.map((set, setIndex) => (
                                                             <Text key={setIndex} style={resolvedStyles.setInfo}>
-                                                                {set.volume} {formatType(exercise.volumeType)}
+                                                                {formatValue(set.volume, exercise.volumeType, units)}
                                                                 {intensityTypes.map(type => 
-                                                                    set[type] !== undefined 
-                                                                        ? ` × ${set[type]} ${formatType(type)}` 
-                                                                        : ''
+                                                                    ` × ${formatValue(set[type]!, type, units)}`
                                                                 ).join('')}
                                                             </Text>
                                                         ))}

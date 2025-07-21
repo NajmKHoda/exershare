@@ -11,6 +11,8 @@ import TextButton from '@/lib/components/controls/TextButton';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
 import Separator from '@/lib/components/lists/elements/Separator';
+import { formatValue } from '@/lib/utils/units';
+import { useUserPreferences } from '@/lib/hooks/useUserPreferences';
 
 const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -19,6 +21,7 @@ export default function IncomingRoutineScreen() {
     const db = useSQLiteContext();
     const resolvedStyles = useResolvedStyles(styles);
     const [saving, setSaving] = useState(false);
+    const { units } = useUserPreferences();
 
     // Redirect if no incoming entity or wrong type
     useEffect(() => {
@@ -204,16 +207,9 @@ export default function IncomingRoutineScreen() {
                                                     <View style={resolvedStyles.setsDisplay}>
                                                         {sets.slice(0, 3).map((set, setIndex) => (
                                                             <Text key={setIndex} style={resolvedStyles.setInfo}>
-                                                                {volumeType === 'reps' ? `${set.volume} reps` : 
-                                                                 volumeType === 'time' ? `${set.volume} sec` :
-                                                                 volumeType === 'distance' ? `${set.volume} mi` :
-                                                                 volumeType === 'calories' ? `${set.volume} cal` :
-                                                                 `${set.volume}`}
+                                                                {formatValue(set.volume, volumeType, units)}
                                                                 {intensityTypes.map(type => 
-                                                                    set[type] ? ` × ${set[type]} ${type === 'weight' ? 'lbs' : 
-                                                                                            type === 'speed' ? 'mph' : 
-                                                                                            type === 'incline' ? '%' : 
-                                                                                            ''}` : ''
+                                                                    ` × ${formatValue(set[type]!, type, units)}`
                                                                 ).join('')}
                                                             </Text>
                                                         ))}

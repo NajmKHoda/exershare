@@ -18,6 +18,7 @@ export async function initDatabase(db: SQLiteDatabase) {
             active_routine_id TEXT,
             last_sync_date TEXT,
             username TEXT,
+            units TEXT DEFAULT 'imperial' CHECK(units IN ('metric', 'imperial')),
             FOREIGN KEY (active_routine_id) REFERENCES routines(id)
                 ON DELETE SET NULL
                 ON UPDATE CASCADE

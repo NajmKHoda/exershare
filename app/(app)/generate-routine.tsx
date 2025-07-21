@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, TextInput, KeyboardAvoidingView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
@@ -138,133 +138,136 @@ export default function GenerateRoutineScreen() {
         <View style={{ width: 24 }} />
       </View>
       
-      <ScrollView style={resolvedStyles.scrollView} contentContainerStyle={resolvedStyles.scrollContent}>
-        {/* Goal selection */}
-        <View style={resolvedStyles.section}>
-          <Text style={resolvedStyles.sectionTitle}>Fitness Goal</Text>
-          <View style={resolvedStyles.optionsContainer}>
-            {GOALS.map((goalOption) => (
-              <Pressable
-                key={goalOption}
-                style={[
-                  resolvedStyles.optionButton,
-                  goal === goalOption && resolvedStyles.selectedOptionButton
-                ]}
-                onPress={() => setGoal(goalOption)}
-              >
-                <Text style={
-                  goal === goalOption && resolvedStyles.selectedOptionText
-                }>
-                  {goalOption.charAt(0).toUpperCase() + goalOption.slice(1)}
-                </Text>
-              </Pressable>
-            ))}
+      <KeyboardAvoidingView behavior='padding' style={{ flex: 1 }}>
+        <ScrollView style={resolvedStyles.scrollView} contentContainerStyle={resolvedStyles.scrollContent}>
+          {/* Goal selection */}
+          <View style={resolvedStyles.section}>
+            <Text style={resolvedStyles.sectionTitle}>Fitness Goal</Text>
+            <View style={resolvedStyles.optionsContainer}>
+              {GOALS.map((goalOption) => (
+                <Pressable
+                  key={goalOption}
+                  style={[
+                    resolvedStyles.optionButton,
+                    goal === goalOption && resolvedStyles.selectedOptionButton
+                  ]}
+                  onPress={() => setGoal(goalOption)}
+                >
+                  <Text style={
+                    goal === goalOption && resolvedStyles.selectedOptionText
+                  }>
+                    {goalOption.charAt(0).toUpperCase() + goalOption.slice(1)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
-        </View>
-        
-        {/* Days per week */}
-        <View style={resolvedStyles.formField}>
-          <Text style={resolvedStyles.label}>Days Per Week (1-7)</Text>
-          <FormField
-            name=""
-            keyboardType="numeric"
-            value={daysPerWeek}
-            onChange={setDaysPerWeek}
-            style={resolvedStyles.input}
-          />
-        </View>
-        
-        {/* Time per workout */}
-        <View style={resolvedStyles.formField}>
-          <Text style={resolvedStyles.label}>Hours Per Workout (0.25-3)</Text>
-          <FormField
-            name=""
-            keyboardType="numeric"
-            value={timePerWorkout}
-            onChange={setTimePerWorkout}
-            style={resolvedStyles.input}
-          />
-        </View>
-        
-        {/* Experience level */}
-        <View style={resolvedStyles.section}>
-          <Text style={resolvedStyles.sectionTitle}>Experience Level</Text>
-          <View style={resolvedStyles.optionsContainer}>
-            {EXPERIENCE_LEVELS.map((level) => (
-              <Pressable
-                key={level}
-                style={[
-                  resolvedStyles.optionButton,
-                  experienceLevel === level && resolvedStyles.selectedOptionButton
-                ]}
-                onPress={() => setExperienceLevel(level)}
-              >
-                <Text style={
-                  experienceLevel === level && resolvedStyles.selectedOptionText
-                }>
-                  {level}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-        
-        {/* Equipment */}
-        <View style={resolvedStyles.section}>
-          <Text style={resolvedStyles.sectionTitle}>Available Equipment</Text>
-          <View style={resolvedStyles.equipmentGrid}>
-            {EQUIPMENT_OPTIONS.map((equipment) => (
-              <Pressable
-                key={equipment}
-                style={[
-                  resolvedStyles.equipmentButton,
-                  equipmentAvailable.includes(equipment) && resolvedStyles.selectedEquipmentButton
-                ]}
-                onPress={() => toggleEquipment(equipment)}
-              >
-                <Text style={[
-                  resolvedStyles.equipmentText,
-                  equipmentAvailable.includes(equipment) && resolvedStyles.selectedEquipmentText
-                ]}>
-                  {equipment}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-        
-        {/* Custom instructions */}
-        <View style={resolvedStyles.formField}>
-          <Text style={resolvedStyles.label}>Custom Instructions (Optional)</Text>
-          <View style={resolvedStyles.textAreaContainer}>
-            <TextInput
-              style={resolvedStyles.textArea}
-              multiline={true}
-              numberOfLines={4}
-              value={customInstructions}
-              onChangeText={setCustomInstructions}
-              placeholder="Add any specific requirements or focus areas"
-              placeholderTextColor={colors.gray}
+          
+          
+          {/* Days per week */}
+          <View style={resolvedStyles.formField}>
+            <Text style={resolvedStyles.label}>Days Per Week (1-7)</Text>
+            <FormField
+              name=""
+              keyboardType="numeric"
+              value={daysPerWeek}
+              onChange={setDaysPerWeek}
+              style={resolvedStyles.input}
             />
           </View>
-        </View>
-        
-        {/* Error message */}
-        {error && (
-          <Text style={resolvedStyles.errorText}>{error}</Text>
-        )}
-        
-        {/* Generate button */}
-        <View style={resolvedStyles.buttonContainer}>
-          <TextButton
-            label="Generate Routine"
-            Icon={Sparkles}
-            onPress={handleGenerate}
-            disabled={isLoading}
-            style={resolvedStyles.generateButton}
-          />
-        </View>
-      </ScrollView>
+          
+          {/* Time per workout */}
+          <View style={resolvedStyles.formField}>
+            <Text style={resolvedStyles.label}>Hours Per Workout (0.25-3)</Text>
+            <FormField
+              name=""
+              keyboardType="numeric"
+              value={timePerWorkout}
+              onChange={setTimePerWorkout}
+              style={resolvedStyles.input}
+            />
+          </View>
+          
+          {/* Experience level */}
+          <View style={resolvedStyles.section}>
+            <Text style={resolvedStyles.sectionTitle}>Experience Level</Text>
+            <View style={resolvedStyles.optionsContainer}>
+              {EXPERIENCE_LEVELS.map((level) => (
+                <Pressable
+                  key={level}
+                  style={[
+                    resolvedStyles.optionButton,
+                    experienceLevel === level && resolvedStyles.selectedOptionButton
+                  ]}
+                  onPress={() => setExperienceLevel(level)}
+                >
+                  <Text style={
+                    experienceLevel === level && resolvedStyles.selectedOptionText
+                  }>
+                    {level}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          
+          {/* Equipment */}
+          <View style={resolvedStyles.section}>
+            <Text style={resolvedStyles.sectionTitle}>Available Equipment</Text>
+            <View style={resolvedStyles.equipmentGrid}>
+              {EQUIPMENT_OPTIONS.map((equipment) => (
+                <Pressable
+                  key={equipment}
+                  style={[
+                    resolvedStyles.equipmentButton,
+                    equipmentAvailable.includes(equipment) && resolvedStyles.selectedEquipmentButton
+                  ]}
+                  onPress={() => toggleEquipment(equipment)}
+                >
+                  <Text style={[
+                    resolvedStyles.equipmentText,
+                    equipmentAvailable.includes(equipment) && resolvedStyles.selectedEquipmentText
+                  ]}>
+                    {equipment}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          
+          {/* Custom instructions */}
+          <View style={resolvedStyles.formField}>
+            <Text style={resolvedStyles.label}>Custom Instructions (Optional)</Text>
+            <View style={resolvedStyles.textAreaContainer}>
+              <TextInput
+                style={resolvedStyles.textArea}
+                multiline={true}
+                numberOfLines={4}
+                value={customInstructions}
+                onChangeText={setCustomInstructions}
+                placeholder="Add any specific requirements or focus areas"
+                placeholderTextColor={colors.gray}
+              />
+            </View>
+          </View>
+          
+          {/* Error message */}
+          {error && (
+            <Text style={resolvedStyles.errorText}>{error}</Text>
+          )}
+          
+          {/* Generate button */}
+          <View style={resolvedStyles.buttonContainer}>
+            <TextButton
+              label="Generate Routine"
+              Icon={Sparkles}
+              onPress={handleGenerate}
+              disabled={isLoading}
+              style={resolvedStyles.generateButton}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -368,6 +371,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 8,
     minHeight: 100,
     textAlignVertical: 'top',
+    color: colors.primary
   },
   buttonContainer: {
     marginTop: 8,

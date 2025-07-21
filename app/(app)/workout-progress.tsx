@@ -8,8 +8,10 @@ import { useSQLiteContext } from "expo-sqlite"
 import { Routine } from "@/lib/data/Routine"
 import { WorkoutLog } from "@/lib/data/WorkoutLog"
 import { useResolvedStyles, type ThemeColors } from "@/lib/hooks/useThemeColors"
-import { VolumeType, IntensityType, TYPE_DEFAULTS } from "@/lib/data/Exercise"
+import { IntensityType, Set } from "@/lib/data/Exercise"
 import Text from "@/lib/components/theme/Text"
+import { convertValue, TYPE_UNITS } from '@/lib/utils/units'
+import { useUserPreferences } from '@/lib/hooks/useUserPreferences'
 
 export default function WorkoutProgressScreen() {
   const router = useRouter()
@@ -20,6 +22,7 @@ export default function WorkoutProgressScreen() {
   const [loading, setLoading] = useState(true)
 
   // State for modified volume and intensity values
+  const { units } = useUserPreferences();
   const [modifiedVolume, setModifiedVolume] = useState<number>(0)
   const [modifiedIntensities, setModifiedIntensities] = useState<Partial<Record<IntensityType, number>>>({})
 
@@ -33,12 +36,12 @@ export default function WorkoutProgressScreen() {
       const currentExercise = getCurrentExercise()
       const currentSet = getCurrentSet()
       if (currentExercise && currentSet) {
-        setModifiedVolume(currentSet.volume)
-        
+        setModifiedVolume(convertValue(currentSet.volume, currentExercise.volumeType, 'metric', units))
+
         // Extract intensity values from current set
         const intensities: Partial<Record<IntensityType, number>> = {}
         currentExercise.intensityTypes.forEach(type => {
-          intensities[type] = currentSet[type] || 0
+          intensities[type] = convertValue(currentSet[type]!, type, 'metric', units)
         })
         setModifiedIntensities(intensities)
       }
@@ -153,9 +156,12 @@ export default function WorkoutProgressScreen() {
     const updatedSets = [...exerciseData.sets]
     
     // Create a new set with the modified values
-    const newSet = { volume: modifiedVolume, ...modifiedIntensities }
-    updatedSets[currentSetIndex] = newSet
+    const newSet: Set = { volume: modifiedVolume }
+    Object.entries(modifiedIntensities).forEach(([type, value]) => {
+      newSet[type as IntensityType] = convertValue(value, type as IntensityType, units, 'metric')
+    })
 
+    updatedSets[currentSetIndex] = newSet
     updatedExercises.set(currentExercise.id, {
       ...exerciseData,
       sets: updatedSets,
@@ -274,29 +280,6 @@ export default function WorkoutProgressScreen() {
     }))
   }
 
-  // Format the volume type name for display
-  const getVolumeTypeLabel = (volumeType: VolumeType) => {
-    switch(volumeType) {
-      case 'reps': return 'reps';
-      case 'distance': return 'miles';
-      case 'time': return 'seconds';
-      case 'calories': return 'calories';
-      default: return volumeType;
-    }
-  }
-
-  // Format the intensity type name for display
-  const getIntensityTypeLabel = (intensityType: IntensityType) => {
-    switch(intensityType) {
-      case 'weight': return 'lbs';
-      case 'speed': return 'mph';
-      case 'incline': return '%';
-      case 'resistance': return 'level';
-      case 'level': return 'level';
-      default: return intensityType;
-    }
-  }
-
   if (loading || !workoutLog) {
     return (
       <SafeAreaView style={styles.container}>
@@ -366,8 +349,8 @@ export default function WorkoutProgressScreen() {
                 </TouchableOpacity>
 
                 <View style={styles.valueDisplay}>
-                  <Text style={styles.valueNumber}>{modifiedVolume}</Text>
-                  <Text style={styles.valueLabel}>{getVolumeTypeLabel(currentExercise.volumeType)}</Text>
+                  <Text style={styles.valueNumber}>{Number.parseFloat(modifiedVolume.toFixed(2))}</Text>
+                  <Text style={styles.valueLabel}>{TYPE_UNITS[currentExercise.volumeType][units].long}</Text>
                 </View>
 
                 <TouchableOpacity onPress={() => adjustVolume(true)} style={styles.adjustButton}>
@@ -386,7 +369,7 @@ export default function WorkoutProgressScreen() {
 
                   <View style={styles.valueDisplay}>
                     <Text style={styles.intensityNumber}>
-                      {modifiedIntensities[type] || 0} {getIntensityTypeLabel(type)}
+                      {Number.parseFloat(modifiedIntensities[type]?.toFixed(2) ?? '0')} {TYPE_UNITS[type][units].short}
                     </Text>
                     <Text style={styles.valueLabel}>{type}</Text>
                   </View>

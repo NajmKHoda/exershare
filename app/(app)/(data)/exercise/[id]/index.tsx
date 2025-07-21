@@ -11,24 +11,28 @@ import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import VolumeTypeModal from '@/lib/components/modals/VolumeTypeModal';
 import IntensityTypeModal from '@/lib/components/modals/IntensityTypeModal';
 import { toTitleCase } from '@/lib/utils/stringUtils';
+import { useUserPreferences } from '@/lib/hooks/useUserPreferences';
+import { convertValue } from '@/lib/utils/units';
 
 export default function ExerciseScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const db = useSQLiteContext();
     const router = useRouter();
+
     const resolvedStyles = useResolvedStyles(styles);
     const [exercise, setExercise] = useState<Exercise | null>(null);
     const [volumeTypeModalVisible, setVolumeTypeModalVisible] = useState(false);
     const [intensityTypeModalVisible, setIntensityTypeModalVisible] = useState(false);
+
+    const { units } = useUserPreferences();
     const [currentState, setCurrentState] = useState({
         name: '',
         volumeType: 'reps' as VolumeType,
         intensityTypes: ['weight'] as IntensityType[],
-        sets: [
-            { volume: 12, weight: 25 },
-            { volume: 12, weight: 25 },
-            { volume: 12, weight: 25 }
-        ] as Set[],
+        sets: Array.from({ length: 3 }, () => ({
+            volume: TYPE_DEFAULTS.reps[units],
+            weight: TYPE_DEFAULTS.weight[units]
+        })) as Set[],
         notes: '',
         categories: [] as string[]
     });
@@ -42,13 +46,23 @@ export default function ExerciseScreen() {
                 const loadedExercise = await Exercise.pullOne(id, db);
                 if (loadedExercise) {
                     setExercise(loadedExercise);
+                    const { name, volumeType, intensityTypes, sets, notes, categories } = loadedExercise;
+
                     setCurrentState({
-                        name: loadedExercise.name,
-                        volumeType: loadedExercise.volumeType || 'reps',
-                        intensityTypes: loadedExercise.intensityTypes || ['weight'],
-                        sets: loadedExercise.sets,
-                        notes: loadedExercise.notes,
-                        categories: loadedExercise.categories
+                        name,
+                        volumeType,
+                        intensityTypes,
+                        sets: sets.map(set => {
+                            const newSet: Set = {
+                                volume: convertValue(set.volume, volumeType, 'metric', units)
+                            };
+                            intensityTypes.forEach(type => {
+                                newSet[type] = convertValue(set[type]!, type, 'metric', units);
+                            });
+                            return newSet;
+                        }),
+                        notes: notes,
+                        categories: categories
                     });
                 }
             } catch (error) {
@@ -63,7 +77,7 @@ export default function ExerciseScreen() {
     function handleVolumeTypeChange(newVolumeType: VolumeType) {
         const refreshedSets = currentState.sets.map(set => ({
             ...set,
-            volume: TYPE_DEFAULTS[newVolumeType]
+            volume: TYPE_DEFAULTS[newVolumeType][units]
         }));
 
         setCurrentState({
@@ -77,11 +91,7 @@ export default function ExerciseScreen() {
         const refreshedSets = currentState.sets.map(set => {
             const newSet: Set = { volume: set.volume };
             newIntensityTypes.forEach((type) => {
-                if (type in set) {
-                    newSet[type] = set[type]
-                } else {
-                    newSet[type] = TYPE_DEFAULTS[type];
-                }
+                newSet[type] = set[type] ?? TYPE_DEFAULTS[type][units];
             });
             return newSet;
         });
@@ -94,29 +104,38 @@ export default function ExerciseScreen() {
     }
 
     async function handleSave() {
+        const { name, volumeType, intensityTypes, sets, notes, categories } = currentState;
+        const metricSets = sets.map(set => {
+            const newSet: Set = { volume: convertValue(set.volume, volumeType, units, 'metric') };
+            intensityTypes.forEach(type => {
+                newSet[type] = convertValue(set[type]!, type, units, 'metric');
+            });
+            return newSet;
+        });
+
         try {
             if (exercise) {
                 // Update existing exercise
                 const updatedExercise = new Exercise(
                     exercise.id,
-                    currentState.name,
-                    currentState.volumeType,
-                    currentState.intensityTypes,
-                    currentState.sets,
-                    currentState.notes,
-                    currentState.categories,
+                    name,
+                    volumeType,
+                    intensityTypes,
+                    metricSets,
+                    notes,
+                    categories,
                 );
                 await updatedExercise.save(db);
             } else {
                 // Create new exercise
                 await Exercise.create(
                     db,
-                    currentState.name,
-                    currentState.volumeType,
-                    currentState.intensityTypes,
-                    currentState.sets,
-                    currentState.notes,
-                    currentState.categories
+                    name,
+                    volumeType,
+                    intensityTypes,
+                    metricSets,
+                    notes,
+                    categories
                 );
             }
             router.back();

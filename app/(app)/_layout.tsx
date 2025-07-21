@@ -8,6 +8,7 @@ import { Redirect, Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { CryptoDigestAlgorithm, digestStringAsync } from 'expo-crypto';
+import { UserPreferencesProvider } from '@/lib/hooks/useUserPreferences';
 
 const DEV_EMAIL = process.env.EXPO_PUBLIC_DEV_EMAIL;
 const DEV_PASSWORD = process.env.EXPO_PUBLIC_DEV_PASSWORD;
@@ -68,7 +69,9 @@ export default function AuthenticationGuard() {
         >
         <DatabaseSynchronizer />
         <DatabaseListenerProvider>
+        <UserPreferencesProvider>
             <Stack screenOptions={{ headerShown: false }} />
+        </UserPreferencesProvider>
         </DatabaseListenerProvider>
         </SQLiteProvider>
     );

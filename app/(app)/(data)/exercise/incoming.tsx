@@ -9,12 +9,15 @@ import TextButton from '@/lib/components/controls/TextButton';
 import { ThemeColors, useResolvedStyles } from '@/lib/hooks/useThemeColors';
 import { ChevronLeft, Check, X } from 'lucide-react-native';
 import { IntensityType } from '@/lib/data/Exercise';
+import { formatValue } from '@/lib/utils/units';
+import { useUserPreferences } from '@/lib/hooks/useUserPreferences';
 
 export default function IncomingExerciseScreen() {
     const { incomingEntity, clearIncomingEntity } = useIncomingEntity();
     const db = useSQLiteContext();
     const resolvedStyles = useResolvedStyles(styles);
     const [saving, setSaving] = useState(false);
+    const { units } = useUserPreferences();
 
     // Redirect if no incoming entity or wrong type
     useEffect(() => {
@@ -142,10 +145,12 @@ export default function IncomingExerciseScreen() {
                             </View>
                             {exercise.sets.map((set, index) => (
                                 <View key={index} style={resolvedStyles.setRow}>
-                                    <Text style={resolvedStyles.setValue}>{set.volume}</Text>
+                                    <Text style={resolvedStyles.setValue}>
+                                        {formatValue(set.volume, exercise.volumeType, units)}
+                                    </Text>
                                     {exercise.intensityTypes.map((type: IntensityType) => (
                                         <Text key={type} style={resolvedStyles.setValue}>
-                                            {set[type] !== undefined ? set[type] : '-'}
+                                            {formatValue(set[type]!, type, units)}
                                         </Text>
                                     ))}
                                 </View>

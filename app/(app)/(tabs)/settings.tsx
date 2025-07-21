@@ -2,6 +2,7 @@ import TextButton from '@/lib/components/controls/TextButton';
 import Separator from '@/lib/components/lists/elements/Separator';
 import ListItem from '@/lib/components/lists/ListItem';
 import StandardList from '@/lib/components/lists/StandardList';
+import UnitSelectModal from '@/lib/components/modals/UnitSelectModal';
 import Text from '@/lib/components/theme/Text';
 import { resetDatabase } from '@/lib/data/database';
 import { syncData } from '@/lib/data/sync';
@@ -11,12 +12,22 @@ import { standardShadow } from '@/lib/standardStyles';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { CircleUser, LogOut, LucideIcon, RefreshCw, UserX } from 'lucide-react-native';
-import { Fragment, useMemo } from 'react';
-import { Alert, ScrollView, SectionList, SectionListData, StyleSheet, View } from 'react-native';
+import { CircleUser, LogOut, LucideIcon, RefreshCw, Ruler } from 'lucide-react-native';
+import { Fragment, useMemo, useState } from 'react';
+import { Alert, ScrollView, SectionListData, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SETTINGS_OPTIONS: SectionListData<SettingsOption, { title: string }>[] = [
+    {
+        title: 'preferences',
+        data: [
+            {
+                id: 'change-units',
+                title: 'Change Units',
+                icon: Ruler,
+            }
+        ]
+    },
     {
         title: 'data',
         data: [
@@ -39,6 +50,7 @@ export default function SettingsLayout() {
     const colors = useThemeColors();
     const router = useRouter();
     const styles = useResolvedStyles(stylesTemplate);
+    const [unitSelectVisible, setUnitSelectVisible] = useState(false);
 
     const callbacks: Record<string, () => void> = useMemo(() => ({
         'clean-and-resync': () => {
@@ -59,6 +71,7 @@ Are you sure you want to continue?`,
                 ]
             )
         },
+        'change-units': () => setUnitSelectVisible(true)
     }), [db])
 
     return (
@@ -102,6 +115,10 @@ Are you sure you want to continue?`,
                     </Fragment>
                 ))}
             </ScrollView>
+            <UnitSelectModal
+                visible={unitSelectVisible}
+                onClose={() => setUnitSelectVisible(false)}
+            />
         </View>
     );
 }
@@ -145,7 +162,8 @@ const stylesTemplate = (colors: ThemeColors) => StyleSheet.create({
     },
     sectionHeader: {
         fontWeight: 'ultralight',
-        marginBottom: 8,
+        marginTop: 6,
+        marginBottom: 4,
     }
 });
 

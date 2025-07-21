@@ -9,6 +9,8 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { toTitleCase } from '@/lib/utils/stringUtils';
 import StandardList from './StandardList';
 import DeferredInputField from '../controls/DeferredInputField';
+import { useUserPreferences } from '@/lib/hooks/useUserPreferences';
+import { convertValue, formatValue } from '@/lib/utils/units';
 
 interface Props {
     sets: Set[];
@@ -20,47 +22,31 @@ interface Props {
 export default function SetList({ sets, volumeType, intensityTypes, onSetsChange }: Props) {
     const colors = useThemeColors();
     const resolvedStyles = useResolvedStyles(styles);
+    const { units } = useUserPreferences();
+
     const canDelete = sets.length > 1;
 
     function handleChange(index: number, field: keyof Set, value: string) {
         const updatedSets = [...sets];
         const type = field === 'volume' ? volumeType : field;
-        const newValue = Number(value) || TYPE_DEFAULTS[type];
 
-        updatedSets[index] = {
-            ...updatedSets[index],
-            [field]: newValue
-        };
+        let newValue = Number.parseFloat(value);
+        if (isNaN(newValue))
+            newValue = TYPE_DEFAULTS[type][units];
+
+        updatedSets[index] = { ...updatedSets[index], [field]: newValue };
         onSetsChange?.(updatedSets);
 
-        return newValue.toString();
+        return limit(newValue);
     };
 
     function handleSetAdd() {
         const newSet: Set = {
-            volume: TYPE_DEFAULTS[volumeType]
+            volume: TYPE_DEFAULTS[volumeType][units]
         };
 
-        intensityTypes.forEach((type) => newSet[type] = TYPE_DEFAULTS[type]);
+        intensityTypes.forEach((type) => newSet[type] = TYPE_DEFAULTS[type][units]);
         onSetsChange?.([...sets, newSet]);
-    }
-
-    function formatType(value: string,type: VolumeType | IntensityType): string {
-        switch (type) {
-            case 'weight':
-            return `${value} lbs`;
-            case 'distance':
-            return `${value} mi`;
-            case 'time':
-            return `${value} s`;
-            case 'calories':
-            return `${value} kcal`;
-            case 'speed':
-            return `${value} mph`;
-            // 'reps' and other dimensionless types
-            default:
-            return value;
-        }
     }
 
     return (
@@ -95,18 +81,18 @@ export default function SetList({ sets, volumeType, intensityTypes, onSetsChange
                             </Pressable>
                             <DeferredInputField
                                 style={resolvedStyles.cell}
-                                value={item.volume.toString()}
+                                value={limit(item.volume)}
                                 setValue={(text) => handleChange(index, 'volume', text)}
-                                formatUnfocused={val => formatType(val, volumeType)}
+                                formatUnfocused={val => formatValue(Number(val), volumeType, units)}
                                 keyboardType='numeric'
                             />
                             {intensityTypes.map((type) => (
                                 <DeferredInputField
                                     key={type}
                                     style={resolvedStyles.cell}
-                                    value={item[type]!.toString()}
+                                    value={limit(item[type]!)}
                                     setValue={(text) => handleChange(index, type, text)}
-                                    formatUnfocused={val => formatType(val, type)}
+                                    formatUnfocused={val => formatValue(Number(val), type, units)}
                                     keyboardType='numeric'
                                 />
                             ))}
@@ -117,6 +103,10 @@ export default function SetList({ sets, volumeType, intensityTypes, onSetsChange
         </ScrollView>
     );
 };
+
+function limit(num: number) {
+    return Number.parseFloat(num.toFixed(2)).toString();
+}
 
 const CELL_WIDTH = 120;
 const styles = (colors: ThemeColors) => StyleSheet.create({
