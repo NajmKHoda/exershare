@@ -143,7 +143,13 @@ export default function Index() {
                         renderItem={ x => <ExerciseView exercise={ x.item } /> }
                         keyExtractor={ (_, i) => i.toString() } />
                 </View>
-                <Button title='Routine Options' />
+                <Link
+                    href={`/routine/${activeRoutine.current?.id ?? ''}`}
+                    asChild
+                    disabled={!activeRoutine.current}
+                >
+                    <Button title='Routine Options'/>
+                </Link>
             </>
         )
     }
