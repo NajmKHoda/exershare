@@ -35,8 +35,10 @@ export default function SlideUpModal({ visible, title, onClose, additionalContro
                                 onPress={ onClose } />
                             { additionalControls }
                         </View>
-                        { title && <Text style={ resolvedStyles.title }>{ title }</Text> }
-                        { children }
+                        <View style={ resolvedStyles.content }>
+                            { title && <Text style={ resolvedStyles.title }>{ title }</Text> }
+                            { children }
+                        </View>
                     </View>
                 </SafeAreaView>
             </SafeAreaProvider>
@@ -65,6 +67,10 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center'
+    },
+
+    content: {
+        flex: 1,
     },
 
     backButton: {

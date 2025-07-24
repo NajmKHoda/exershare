@@ -51,6 +51,7 @@ export default function RoutinesScreen() {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         gap: 10
     },
 

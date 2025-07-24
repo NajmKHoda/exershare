@@ -30,7 +30,7 @@ export default function ExerciseView({ exercise }: Props) {
 
     return (
         <View style={resolvedStyles.container}>
-            <Text style={resolvedStyles.name}>{ name }</Text>
+            <Text numberOfLines={1} style={resolvedStyles.name}>{ name }</Text>
             { completionSymbol }
         </View>
     );
@@ -40,11 +40,14 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         padding: 15,
+        gap: 10,
         justifyContent: 'space-between',
         alignItems: 'center',
     },
 
     name: {
+        flexShrink: 1,
+        textOverflow: 'ellipsis',
         fontSize: 20,
         lineHeight: 22
     }

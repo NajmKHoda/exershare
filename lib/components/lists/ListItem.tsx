@@ -20,7 +20,7 @@ export default function ListItem({ label, Icon, iconColor, iconSize, onPress }: 
             style={resolvedStyles.container}
             onPress={onPress}
         >
-            <Text style={resolvedStyles.label}>{label}</Text>
+            <Text numberOfLines={1}style={resolvedStyles.label}>{label}</Text>
             <Icon
                 size={iconSize ?? 24}
                 color={iconColor ?? colors.primary as string} />
@@ -33,10 +33,13 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 15
+        padding: 15,
+        gap: 10,
     },
 
     label: {
+        flexShrink: 1,
+        textOverflow: 'ellipsis',
         fontSize: 20,
         lineHeight: 20
     }

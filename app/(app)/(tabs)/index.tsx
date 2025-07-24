@@ -139,6 +139,7 @@ export default function Index() {
                 <View>
                     <Text style={ resolvedStyles.exerciseCaption }>EXERCISES</Text>
                     <StandardList
+                        style={ resolvedStyles.exerciseList }
                         data={ exerciseList }
                         renderItem={ x => <ExerciseView exercise={ x.item } /> }
                         keyExtractor={ (_, i) => i.toString() } />
@@ -196,8 +197,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
     },
 
     exerciseList: {
-        alignItems: 'stretch',
-        gap: 5,
+        flex: 0
     },
 
     exerciseCaption: {

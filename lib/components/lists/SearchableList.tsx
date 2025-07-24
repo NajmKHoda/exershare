@@ -44,6 +44,7 @@ export default function SearchableList({ data, itemRenderer, onItemAdd }: Props)
 
 const stylesTemplate = (colors: ThemeColors) => StyleSheet.create({
     container: {
+        flex: 1,
         gap: 10,
         alignItems: 'stretch'
     },

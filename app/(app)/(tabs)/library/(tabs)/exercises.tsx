@@ -52,7 +52,9 @@ export default function ExercisesScreen() {
 
 const styles = StyleSheet.create({
     container: {
-        gap: 10
+        flex: 1,
+        paddingBottom: 10,
+        gap: 10,
     }
 });
 
