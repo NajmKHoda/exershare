@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, TextInput, KeyboardAvoidingView } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, TextInput, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
@@ -268,6 +268,14 @@ export default function GenerateRoutineScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {isLoading && (
+        <View style={resolvedStyles.loadingOverlay}>
+          <ActivityIndicator size='large' />
+          <Text style={resolvedStyles.loadingText}>
+            Generating routine.{'\n'}This may take a moment...
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -276,6 +284,17 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    gap: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 24,
   },
   header: {
     flexDirection: 'row',

@@ -209,7 +209,7 @@ export default function IncomingRoutineScreen() {
                                                             <Text key={setIndex} style={resolvedStyles.setInfo}>
                                                                 {formatValue(set.volume, volumeType, units)}
                                                                 {intensityTypes.map(type => 
-                                                                    ` × ${formatValue(set[type]!, type, units)}`
+                                                                    set[type] ? ` × ${formatValue(set[type]!, type, units)}` : ''
                                                                 ).join('')}
                                                             </Text>
                                                         ))}

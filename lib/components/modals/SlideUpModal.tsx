@@ -71,6 +71,7 @@ const styles = (colors: ThemeColors) => StyleSheet.create({
 
     content: {
         flex: 1,
+        gap: 10,
     },
 
     backButton: {

@@ -24,7 +24,7 @@ export default function TextButton({ onPress, label, Icon, style, iconSize, disa
         <Pressable style={resolvedStyles.container} onPress={onPress} disabled={disabled}>
             <Icon size={fontSize} color={textColor as string} />
             <Text 
-                style={[resolvedStyles.buttonText, style]}
+                style={[resolvedStyles.buttonText, style, { color: textColor }]}
             >
                 {label}
             </Text>
