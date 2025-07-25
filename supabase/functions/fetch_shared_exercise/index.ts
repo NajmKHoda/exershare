@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
   // Get the exercise using the entity_id from the share token
   const { data: exerciseData, error: exerciseError } = await supabase
     .from('exercises')
-    .select('name, sets, notes, categories')
+    .select('name, sets, notes, categories, volume_type, intensity_types')
     .eq('id', shareToken.entity_id)
     .single();
 

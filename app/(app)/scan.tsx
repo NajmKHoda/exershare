@@ -29,7 +29,6 @@ export default function ScanScreen() {
     const handleBarCodeScanned = async ({ data }: { data: string }) => {
         if (scanned.current) return;
         scanned.current = true;
-
         try {
             const qrData = JSON.parse(data);
             const { token, type } = qrData;
@@ -66,21 +65,21 @@ export default function ScanScreen() {
     };
 
     const fetchSharedExercise = async (token: string) => {
-        const { data, error } = await supabase.functions.invoke('fetch_shared_exercise', {
+        const { data: { data }, error } = await supabase.functions.invoke('fetch_shared_exercise', {
             body: { token }
         });
-        
+
         if (error) throw error;
         return { 
             type: 'exercise' as const,
             data: {
-                exercise: new Exercise(data) 
+                exercise: new Exercise(data.exercise) 
             }
         };
     };
 
     const downloadWorkout = async (token: string) => {
-        const { data, error } = await supabase.functions.invoke('download_workout', {
+        const { data: { data }, error } = await supabase.functions.invoke('download_workout', {
             body: { token }
         });
         
@@ -99,7 +98,7 @@ export default function ScanScreen() {
     };
 
     const downloadRoutine = async (token: string) => {
-        const { data, error } = await supabase.functions.invoke('download_routine', {
+        const { data: { data }, error } = await supabase.functions.invoke('download_routine', {
             body: { token }
         });
         
